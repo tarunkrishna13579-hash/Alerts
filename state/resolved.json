@@ -1,0 +1,207 @@
+{
+"ADP": {
+"type": "linkedin"
+},
+"AMD": {
+"type": "linkedin"
+},
+"Accenture": {
+"api": "https://accenture.wd103.myworkdayjobs.com/wday/cxs/accenture/AccentureCareers",
+"type": "workday",
+"web": "https://accenture.wd103.myworkdayjobs.com/en-US/AccentureCareers"
+},
+"Adobe": {
+"api": "https://adobe.wd5.myworkdayjobs.com/wday/cxs/adobe/external_experienced",
+"type": "workday",
+"web": "https://adobe.wd5.myworkdayjobs.com/en-US/external_experienced"
+},
+"American Express": {
+"type": "linkedin"
+},
+"Ascendion": {
+"type": "linkedin"
+},
+"Autodesk": {
+"api": "https://autodesk.wd1.myworkdayjobs.com/wday/cxs/autodesk/Ext",
+"type": "workday",
+"web": "https://autodesk.wd1.myworkdayjobs.com/en-US/Ext"
+},
+"Bank of America": {
+"api": "https://ghr.wd1.myworkdayjobs.com/wday/cxs/ghr/lateral-us",
+"type": "workday",
+"web": "https://ghr.wd1.myworkdayjobs.com/en-US/lateral-us"
+},
+"Broadridge": {
+"api": "https://broadridge.wd5.myworkdayjobs.com/wday/cxs/broadridge/Careers",
+"type": "workday",
+"web": "https://broadridge.wd5.myworkdayjobs.com/en-US/Careers"
+},
+"Capital One": {
+"api": "https://capitalone.wd12.myworkdayjobs.com/wday/cxs/capitalone/Capital_One",
+"type": "workday",
+"web": "https://capitalone.wd12.myworkdayjobs.com/en-US/Capital_One"
+},
+"Cisco": {
+"api": "https://cisco.wd5.myworkdayjobs.com/wday/cxs/cisco/Cisco_Careers",
+"type": "workday",
+"web": "https://cisco.wd5.myworkdayjobs.com/en-US/Cisco_Careers"
+},
+"Commvault": {
+"type": "linkedin"
+},
+"Dell Technologies": {
+"type": "linkedin"
+},
+"Deloitte USI": {
+"type": "linkedin"
+},
+"EPAM Systems": {
+"type": "linkedin"
+},
+"EY GDS": {
+"type": "linkedin"
+},
+"Experian": {
+"type": "linkedin"
+},
+"FIS": {
+"api": "https://fis.wd5.myworkdayjobs.com/wday/cxs/fis/SearchJobs",
+"type": "workday",
+"web": "https://fis.wd5.myworkdayjobs.com/en-US/SearchJobs"
+},
+"Finastra": {
+"api": "https://finastra.wd3.myworkdayjobs.com/wday/cxs/finastra/FINC",
+"type": "workday",
+"web": "https://finastra.wd3.myworkdayjobs.com/en-US/FINC"
+},
+"Flipkart": {
+"type": "linkedin"
+},
+"Freshworks": {
+"company_id": "Freshworks",
+"type": "smartrecruiters"
+},
+"Goldman Sachs": {
+"type": "linkedin"
+},
+"HighRadius": {
+"type": "linkedin"
+},
+"Honeywell": {
+"type": "linkedin"
+},
+"Informatica": {
+"type": "linkedin"
+},
+"Infosys Finacle": {
+"type": "linkedin"
+},
+"Intuit": {
+"type": "linkedin"
+},
+"JPMorgan Chase": {
+"host": "jpmc.fa.oraclecloud.com",
+"site": "CX_1001",
+"type": "oraclehcm"
+},
+"Mahindra Comviva": {
+"type": "linkedin"
+},
+"Mastercard": {
+"api": "https://mastercard.wd1.myworkdayjobs.com/wday/cxs/mastercard/CorporateCareers",
+"type": "workday",
+"web": "https://mastercard.wd1.myworkdayjobs.com/en-US/CorporateCareers"
+},
+"NVIDIA": {
+"api": "https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite",
+"type": "workday",
+"web": "https://nvidia.wd5.myworkdayjobs.com/en-US/NVIDIAExternalCareerSite"
+},
+"NetApp": {
+"type": "linkedin"
+},
+"Nutanix": {
+"type": "linkedin"
+},
+"Oracle \u2014 other engineering teams": {
+"type": "linkedin"
+},
+"PayPal": {
+"domain": "paypal.com",
+"sub": "paypal",
+"type": "eightfold"
+},
+"Pegasystems": {
+"type": "linkedin"
+},
+"Publicis Sapient": {
+"type": "linkedin"
+},
+"Qualcomm": {
+"api": "https://qualcomm.wd12.myworkdayjobs.com/wday/cxs/qualcomm/External",
+"type": "workday",
+"web": "https://qualcomm.wd12.myworkdayjobs.com/en-US/External"
+},
+"SAP": {
+"type": "linkedin"
+},
+"Salesforce": {
+"api": "https://salesforce.wd12.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site",
+"type": "workday",
+"web": "https://salesforce.wd12.myworkdayjobs.com/en-US/External_Career_Site"
+},
+"Samsung R&D (SRI-Bangalore)": {
+"api": "https://sec.wd3.myworkdayjobs.com/wday/cxs/sec/Samsung_Careers",
+"type": "workday",
+"web": "https://sec.wd3.myworkdayjobs.com/en-US/Samsung_Careers"
+},
+"ServiceNow": {
+"type": "linkedin"
+},
+"Siemens": {
+"type": "linkedin"
+},
+"State Street": {
+"api": "https://statestreet.wd1.myworkdayjobs.com/wday/cxs/statestreet/Global",
+"type": "workday",
+"web": "https://statestreet.wd1.myworkdayjobs.com/en-US/Global"
+},
+"Synchrony": {
+"api": "https://synchronyfinancial.wd5.myworkdayjobs.com/wday/cxs/synchronyfinancial/careers",
+"type": "workday",
+"web": "https://synchronyfinancial.wd5.myworkdayjobs.com/en-US/careers"
+},
+"Target": {
+"api": "https://target.wd5.myworkdayjobs.com/wday/cxs/target/targetcareers",
+"type": "workday",
+"web": "https://target.wd5.myworkdayjobs.com/en-US/targetcareers"
+},
+"Temenos": {
+"api": "https://temenos.wd103.myworkdayjobs.com/wday/cxs/temenos/Temenoscareers",
+"type": "workday",
+"web": "https://temenos.wd103.myworkdayjobs.com/en-US/Temenoscareers"
+},
+"Teradata": {
+"type": "linkedin"
+},
+"Thomson Reuters": {
+"api": "https://thomsonreuters.wd5.myworkdayjobs.com/wday/cxs/thomsonreuters/External_Career_Site",
+"type": "workday",
+"web": "https://thomsonreuters.wd5.myworkdayjobs.com/en-US/External_Career_Site"
+},
+"Thoughtworks": {
+"board": "thoughtworks",
+"type": "greenhouse"
+},
+"Visa": {
+"api": "https://visa.wd5.myworkdayjobs.com/wday/cxs/visa/Visa",
+"type": "workday",
+"web": "https://visa.wd5.myworkdayjobs.com/en-US/Visa"
+},
+"Walmart Global Tech": {
+"type": "linkedin"
+},
+"Wells Fargo": {
+"type": "linkedin"
+}
+}
