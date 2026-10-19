@@ -30,6 +30,8 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+          ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
           MODE: ${{ github.event.inputs.mode }}
         run: |
           if [ "$MODE" = "selftest" ]; then python watcher.py --selftest; else python watcher.py; fi
