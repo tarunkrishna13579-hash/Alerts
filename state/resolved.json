@@ -171,8 +171,9 @@
 "why": "no job feed found on its career page"
 },
 "Salesforce": {
-"type": "linkedin",
-"why": "HTTP 422 x9, HTTP 429 x1"
+"api": "https://salesforce.wd12.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site",
+"type": "workday",
+"web": "https://salesforce.wd12.myworkdayjobs.com/en-US/External_Career_Site"
 },
 "Samsung R&D (SRI-Bangalore)": {
 "api": "https://sec.wd3.myworkdayjobs.com/wday/cxs/sec/Samsung_Careers",
