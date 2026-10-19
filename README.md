@@ -55,3 +55,21 @@ Limits: Adzuna's text is a short snippet, so "experience" may show "not stated";
 ## Title filter
 companies.yaml -> filters.use_title_filter: false  means job TITLES are ignored: any job in Hyderabad/Bangalore,
 posted in the last 2 days, whose description asks for Java (and whose required experience fits 2 years) is sent.
+
+## Persistent job database (no duplicate alerts)
+- `state/db.json` is the memory. Every job gets a record: company, title, official requisition id, URL, source, posted label,
+  first-seen / last-checked, experience found, eligibility (eligible / unverified / ineligible / duplicate), publication
+  (pending / published) and first-published time. It is committed to the repo after each run, so every run (timer, manual, restart) shares it.
+- Identity = company + official requisition id. A different id is a different vacancy even if the title is identical.
+  Job-board copies (Adzuna) are matched to official-site copies by company + title + city and recorded as duplicates.
+- Known jobs are skipped without downloading or analysing the description again.
+- A job is marked published only after Telegram confirms delivery; failures stay pending and are retried (never re-analysed).
+- Re-listings of a known requisition (Workday page path changes -1 -> -2) are recorded and NOT re-sent (repost_alert: false).
+- Reports at 10:00, 16:00 and 23:00 IST show counts: new, known skipped, duplicates, eligible / unverified / ineligible, sent, failed, re-listed, top companies.
+
+## Experience rules (what an alert guarantees)
+Every alert shows the employer's VERIFIED overall experience in their own words, plus the exact JD sentence. Skill-specific years
+(e.g. "3+ years Java", "2+ years AWS") are kept on a separate line and are never shown as the overall requirement.
+Overall is taken only from statements about the whole role in mandatory sections; preferred lines are ignored; if the overall requirement
+is missing, conflicting, or the description is incomplete the job is stored as NEEDS_REVIEW and appears only in the 10/16/23 IST report, never as a match.
+Fit uses experience.my_years (2.2) in companies.yaml; COMPANIES.md lists all 53 companies and how each is covered.

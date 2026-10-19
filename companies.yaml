@@ -20,16 +20,27 @@ filters:
   max_age_days: 2           # only jobs posted today / yesterday / 2 days ago (older ones are ignored)
   search_terms: [java, java hyderabad, java bengaluru, software engineer hyderabad, software engineer bengaluru, backend]
 
+repost_alert: false          # true = also alert when an already-sent job is re-listed (default: never re-send)
+
 report:
+  digest_hours_ist: [10, 16, 23]   # status report with counts at these hours (IST)
   every_hours: 4        # if no job alert was sent for this long, you get a "no new jobs" message
   quiet_start: 23       # no such messages between 11pm and 7am IST
   quiet_end: 7
 
 experience:
-  my_years: 2               # your experience
-  max_min_years: 2          # accept a job only if its MINIMUM required years is <= this
-                            # (2 -> accepts 0-3, 1-3, 2-4, 2-5, "2+"; rejects 3-5, "3+"). Change to 3 to be looser.
-  send_if_unknown: true     # JD doesn't state years -> still alert, marked "not stated"
+  my_years: 2.2             # your experience (years)
+  tolerance: 0              # overall minimum may exceed my_years by this much (0 = "3+ years" is rejected, "2+" accepted)
+  range_slack: 0.5          # a range like 0-2 still counts if its top is within this of my_years
+  skill_tolerance: 1.0      # a MANDATORY skill-specific requirement may exceed your years in that skill by this much
+  skill_years:              # your years per skill (from your Oracle FLEXCUBE work); skills not listed are shown but never block a job
+    Java: 2.2
+    Spring Boot: 2.2
+    Spring: 2.2
+    Microservices: 2.2
+    Kafka: 2.2
+    Redis: 2.2
+    REST APIs: 2.2
 
 skills:
   must_have: Java

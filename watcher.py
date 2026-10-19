@@ -21,8 +21,11 @@ MAX_ALERTS, MAX_DETAIL, LI_EVERY, LI_PER_RUN = 20, 12, 30 * 60, 10
 def get(url, **kw):  return requests.get(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
 def post(url, **kw): return requests.post(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
 def clean(h):
-    h = html.unescape(h or ""); h = re.sub(r"<[^>]+>", " ", h)
-    return re.sub(r"\s+", " ", html.unescape(h)).strip()
+    h = html.unescape(h or "")
+    h = re.sub(r"(?i)</(?:p|div|li|ul|ol|h\d|tr|section)>|<br\s*/?>", "\n", h)
+    h = html.unescape(re.sub(r"<[^>]+>", " ", h))
+    h = re.sub(r"[ \t\r\f\xa0]+", " ", h)
+    return re.sub(r"\s*\n\s*", "\n", h).strip()
 def age_days(s):
     s = (s or "").lower()
     if "today" in s or "just now" in s: return 0
@@ -70,6 +73,11 @@ def wd_location_facets(facets):
                 found.setdefault(p, []).append(it["id"])
     walk(facets, None)
     return found
+def wd_req_id(j, path):
+    """official requisition id; the trailing -1/-2 on the page path is Workday's re-listing counter, not part of the id"""
+    for b in (j.get("bulletFields") or []):
+        if re.search(r"\d{4,}", str(b)): return str(b).strip()
+    return re.sub(r"-\d{1,2}$", "", path.rsplit("_", 1)[-1])
 def wd_list(r):
     """newest-first with the city filter applied by Workday itself; falls back to scanning newest jobs worldwide"""
     first = wd_req(r["api"], {"appliedFacets": {}, "limit": 20, "offset": 0, "searchText": ""})
@@ -88,9 +96,8 @@ def wd_list(r):
         for j in posts:
             p = j.get("externalPath")
             if not p: continue
-            bf = j.get("bulletFields") or []
             ag = age_days(j.get("postedOn", "")); ages.append(ag)
-            out.append(dict(id=p, req=(bf[0] if bf else p.rsplit("_", 1)[-1]), title=j.get("title", ""),
+            out.append(dict(id=p, req=wd_req_id(j, p), title=j.get("title", ""),
                             loc=j.get("locationsText", ""), url=r["web"] + p, posted=j.get("postedOn", ""), age=ag))
         if len(posts) < 20 or (ages and all(a is not None and a > F["max_age_days"] for a in ages)): break
         page += 1
@@ -185,6 +192,24 @@ def li_detail(r, j):
     return clean(m.group(1)) if m else "", None
 
 
+def page_text(url):
+    """full job text from an employer page: schema.org JobPosting JSON-LD if present, else the visible page text"""
+    r = get(url, timeout=25, allow_redirects=True); r.raise_for_status()
+    for m in re.finditer(r'<script[^>]+application/ld\+json[^>]*>(.*?)</script>', r.text, re.S | re.I):
+        try: data = json.loads(m.group(1))
+        except Exception: continue
+        for d in (data if isinstance(data, list) else [data]):
+            if isinstance(d, dict) and d.get("@type") == "JobPosting" and d.get("description"): return clean(d["description"])
+    return clean(re.sub(r"(?is)<(script|style|noscript).*?</\1>", " ", r.text))[:30000]
+def adz_detail(r, j):
+    try:
+        t = page_text(j["url"])
+        if len(t) >= max(600, int(len(j.get("desc", "")) * 1.5)): return t, None
+    except Exception as e:
+        print(f"   full page not readable ({reason(e) if isinstance(e, requests.RequestException) else type(e).__name__})")
+    j["incomplete"] = True
+    return j.get("desc", ""), None
+
 ADZ_ON = bool(os.getenv("ADZUNA_APP_ID") and os.getenv("ADZUNA_APP_KEY"))
 def adzuna_jobs():
     """free job-board API: recent Java jobs in our cities; used for companies with no direct career feed"""
@@ -200,12 +225,12 @@ def adzuna_jobs():
                                 loc=(x.get("location") or {}).get("display_name", ""), url=x.get("redirect_url", ""),
                                 posted=(x.get("created") or "")[:10], age=iso_age(x.get("created") or ""),
                                 desc=clean(x.get("description", "")), company=((x.get("company") or {}).get("display_name") or ""),
-                                trust_java=True))
+                                trust_java=True, snippet=True))
     return dedupe(out)
 
 LIST = dict(workday=wd_list, greenhouse=gh_list, lever=lv_list, smartrecruiters=sr_list,
             eightfold=ef_list, oraclehcm=oh_list, linkedin=li_list)
-DETAIL = dict(workday=wd_detail, smartrecruiters=sr_detail, oraclehcm=oh_detail, linkedin=li_detail)
+DETAIL = dict(workday=wd_detail, smartrecruiters=sr_detail, oraclehcm=oh_detail, linkedin=li_detail, adzuna=adz_detail)
 LABEL = dict(workday="Workday", greenhouse="Greenhouse", lever="Lever", smartrecruiters="SmartRecruiters",
              eightfold="Eightfold", oraclehcm="Oracle HCM", linkedin="LinkedIn fallback", adzuna="Adzuna job board")
 
@@ -282,26 +307,16 @@ def reject_reason(j):
     return None if loc_ok(loc) else "location"
 def quick_ok(j): return reject_reason(j) is None
 
-def parse_years(text):
-    t = re.sub(r"\s+", " ", (text or "").lower())
-    near = lambda m: re.search(r"experience|\bexp\b", t[max(0, m.start() - 90): m.end() + 90])
-    ranges = []
-    for m in re.finditer(r"(\d{1,2})\s*\+?\s*(?:-|–|—|to)\s*(\d{1,2})\s*\+?\s*(?:years?|yrs?)", t):
-        lo, hi = int(m.group(1)), int(m.group(2))
-        if lo <= hi <= 25 and near(m): ranges.append((lo, hi))
-    singles = []
-    for m in re.finditer(r"(\d{1,2})\s*\+?\s*(?:years?|yrs?)\b", t):
-        if near(m) and not re.match(r"\s*(?:-|–|to)\s*\d", t[m.end():m.end() + 6]) and int(m.group(1)) <= 25:
-            singles.append(int(m.group(1)))
-    mx = X["max_min_years"]
-    if ranges:
-        good = [r for r in ranges if r[0] <= mx and r[1] >= X["my_years"]]
-        r = good[0] if good else ranges[0]
-        return ("ok" if good else "no"), f"{r[0]}–{r[1]} yrs"
-    if singles:
-        n = min(singles)
-        return ("ok" if n <= mx else "no"), f"{n}+ yrs"
-    return "unknown", "not stated"
+WORDS = dict(one=1, two=2, three=3, four=4, five=5, six=6, seven=7, eight=8, nine=9, ten=10)
+NUM = r"(\d{1,2}(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten)"
+YRS = r"(?:years?(?:\(s\))?|yrs?)(?![a-z])"
+RANGE_RE = re.compile(NUM + r"\s*\+?\s*(?:-|–|—|to)\s*" + NUM + r"\s*\+?\s*" + YRS, re.I)
+SINGLE_RE = re.compile(NUM + r"\s*(?:\+|plus)?\s*" + YRS, re.I)
+OPTIONAL = re.compile(r"preferred|good to have|nice to have|\bplus\b|bonus|desirable|desired|added advantage|\badvantage\b|optional", re.I)
+EDU = re.compile(r"educat|degree|academic|schooling|diploma", re.I)
+HEAD_RE = re.compile(r"^(?:minimum |basic |required |preferred |desired |key |mandatory |additional )?(?:qualifications?|requirements?|skills?|responsibilit\w+|what you|who you|nice to have|good to have|bonus|about|must have|eligibility|education|experience)", re.I)
+def _n(x): return float(WORDS.get(str(x).lower(), x))
+def clip(x): return re.split(r"[,;(]|\bincluding\b|\bwith at least\b|\bplus\b", x, maxsplit=1)[0].strip()   # object of "experience in ..." stops at the next clause
 
 SKILLS = [("Spring Boot", r"spring\s*boot"), ("Spring", r"\bspring\b(?!\s*boot)"), ("Microservices", r"micro-?services?"),
           ("REST APIs", r"\brest(?:ful)?\b"), ("Multithreading", r"multi-?thread|concurren"), ("Kafka", r"\bkafka\b"),
@@ -313,21 +328,125 @@ SKILLS = [("Spring Boot", r"spring\s*boot"), ("Spring", r"\bspring\b(?!\s*boot)"
           ("Design Patterns", r"design patterns?"), ("DSA", r"data structures|algorithms"),
           ("System Design", r"system design|distributed systems?"), ("GraphQL", r"graphql"), ("Python", r"\bpython\b"),
           ("Angular/React", r"\bangular\b|\breact\b"), ("Agile", r"\bagile\b|\bscrum\b")]
+TECH = [("Java", r"\bjava\b(?!\s*script)")] + SKILLS + [
+    ("C++", r"c\+\+"), (".NET", r"\.net\b|\bc#"), ("JavaScript", r"javascript|node\.?js"), ("Linux", r"\blinux\b"),
+    ("Oracle", r"\boracle\b"), ("Salesforce", r"salesforce"), ("Data/ML", r"machine learning|data science|\bml\b|deep learning|\bllm"),
+    ("Testing", r"selenium|automation testing|qa automation"), ("Mainframe", r"mainframe|cobol")]
+def tech_in(s):
+    for label, p in TECH:
+        if re.search(p, s or "", re.I): return label
+    return None
+GENERIC_OBJ = re.compile(r"^(?:the\s+)?(?:software|it\b|information|industry|a\s+similar|similar|related|relevant|backend|back-end|back end|application|programming|"
+                         r"development|engineering|technology|technical|professional|a\s+related|this\s+field|the\s+field|designing and developing software)", re.I)
+GENERIC_MID = re.compile(r"^(?:relevant|professional|work|working|industry|hands-on|hands on|total|overall|proven|practical|software|it|related|similar|"
+                         r"development|engineering|technology|technical|of|in|the|a|and|,|\s)*$", re.I)
+
+def split_sections(text):
+    """yield (section, line). 'Label : value' lines carry their label only for themselves; a bare heading carries until the next heading."""
+    section = ""
+    for raw in (text or "").split("\n"):
+        line = raw.strip(" \t•-*·")
+        if not line: continue
+        pre, sep, rest = line.partition(":")
+        if sep and len(pre) <= 45 and HEAD_RE.match(pre.strip()):
+            if rest.strip(): yield pre.strip(), line; continue
+            section = pre.strip(); continue
+        if len(line) <= 70 and HEAD_RE.match(line) and not re.search(r"\d", line):
+            section = line.rstrip(":"); continue
+        yield section, line
+
+def statements(text):
+    """every 'N years' / 'N-M years' that is about work experience, classified as overall or skill-specific, mandatory or preferred"""
+    out = []
+    for section, line in split_sections(text):
+        for sent in re.split(r"(?<=[.;!?])\s+", line):
+            taken = []
+            for rx, is_range in ((RANGE_RE, True), (SINGLE_RE, False)):
+                for m in rx.finditer(sent):
+                    if is_range:
+                        lo, hi = _n(m.group(1)), _n(m.group(2))
+                        if not lo <= hi < 30: continue
+                        taken.append(m.span())
+                    else:
+                        if any(a <= m.start() < b for a, b in taken): continue
+                        lo, hi = _n(m.group(1)), None
+                        if lo >= 20 or lo == 0: continue
+                        if re.search(r"(?:up to|less than|under|maximum|max\.?|upto)\s*$", sent[max(0, m.start() - 14):m.start()], re.I): continue
+                    around = sent[max(0, m.start() - 90): m.end() + 90]
+                    if not re.search(r"experience|\bexp\b|\bworked\b|\bhands[- ]on\b", around, re.I): continue
+                    before = re.split(r"\)|\band\b|;|,", sent[max(0, m.start() - 22): m.start()])[-1]       # an education word belonging to an earlier clause doesn't count
+                    if EDU.search(sent[m.end(): m.end() + 22]) or EDU.search(before): continue
+                    tail, head = sent[m.end(): m.end() + 90], sent[max(0, m.start() - 45): m.start()]
+                    scope, skill = "overall", None
+                    t1 = re.match(r"\s*(?:of\s+)?(?:(?:hands[- ]on|relevant|professional|work|working|practical|proven|strong|solid)\s+)*(?:experience|exp)\s*"
+                                  r"(?:in|with|using|on|of|working with|developing|building|designing)\s+(.{1,80})", tail, re.I)
+                    t2 = re.match(r"\s*(?:of\s+)?(.{1,40}?)\s+(?:experience|exp)\b", tail, re.I)
+                    if t1 and tech_in(clip(t1.group(1))) and not GENERIC_OBJ.match(clip(t1.group(1))): scope, skill = "skill", tech_in(clip(t1.group(1)))
+                    elif t2 and tech_in(t2.group(1)) and not GENERIC_MID.match(t2.group(1)): scope, skill = "skill", tech_in(t2.group(1))
+                    elif (t3 := re.match(r"\s*(?:in|with|using|on|of)\s+(.{1,60})", tail, re.I)) and not re.match(r"experience|exp\b", t3.group(1), re.I) \
+                            and tech_in(clip(t3.group(1))) and not GENERIC_OBJ.match(clip(t3.group(1))): scope, skill = "skill", tech_in(clip(t3.group(1)))
+                    elif re.search(r"([A-Za-z+#.\s/]{2,30})\s*[:\-–(]\s*$", head) and tech_in(head[-30:]) and not re.search(r"experience|total|overall", head, re.I):
+                        scope, skill = "skill", tech_in(head[-30:])
+                    mandatory = not (OPTIONAL.search(section) or OPTIONAL.search(sent[max(0, m.start() - 45): m.end() + 60]))
+                    out.append(dict(lo=lo, hi=hi, scope=scope, skill=skill, mandatory=mandatory, section=section or "description",
+                                    sentence=sent.strip(), text=m.group(0)))
+    return out
+
+def _consistent(a, b):
+    """two overall statements agree if same minimum and (same maximum or one has no maximum)"""
+    return a["lo"] == b["lo"] and (a["hi"] is None or b["hi"] is None or a["hi"] == b["hi"])
+
+def extract_experience(text, url=""):
+    """structured, auditable result. Overall and skill-specific experience are kept apart; ambiguity -> NEEDS_REVIEW, never a guess."""
+    ex = dict(overall_experience_min=None, overall_experience_max=None, overall_experience_original_text="", skill_specific_experience=[],
+              mandatory_or_preferred="", source_url=url, source_section="", experience_verified=False, verification_status="NEEDS_REVIEW", why="")
+    if len((text or "").strip()) < 150:
+        ex["why"] = "job description missing or incomplete"; return ex
+    sts = statements(text)
+    ex["skill_specific_experience"] = [dict(skill=s["skill"], min=s["lo"], max=s["hi"], mandatory=s["mandatory"], original_text=s["text"],
+                                           sentence=s["sentence"][:200], section=s["section"]) for s in sts if s["scope"] == "skill"]
+    ov = [s for s in sts if s["scope"] == "overall" and s["mandatory"]]
+    pref = [s for s in sts if s["scope"] == "overall" and not s["mandatory"]]
+    if not ov:
+        if re.search(r"\bfreshers?\b|entry[- ]level|new grad|recent graduate", text, re.I):
+            ex.update(overall_experience_min=0.0, overall_experience_original_text="fresher / entry-level", mandatory_or_preferred="mandatory",
+                      source_section="description", experience_verified=True, verification_status="VERIFIED"); return ex
+        ex["why"] = ("only preferred experience stated: " + pref[0]["text"]) if pref else "no overall experience statement in the description"
+        return ex
+    base = ov[0]
+    for s in ov[1:]:
+        if not _consistent(base, s):
+            ex["why"] = f"conflicting overall statements: \"{base['text']}\" vs \"{s['text']}\""; return ex
+        if s["hi"] is not None and base["hi"] is None: base = s                         # prefer the more specific range
+    ex.update(overall_experience_min=base["lo"], overall_experience_max=base["hi"], overall_experience_original_text=base["text"],
+              mandatory_or_preferred="mandatory", source_section=base["section"], experience_verified=True, verification_status="VERIFIED",
+              sentence=base["sentence"][:220])
+    return ex
+
+def evaluate_fit(ex):
+    """-> ('eligible'|'ineligible'|'needs_review', reason)  against my_years (2.2) and my per-skill years"""
+    if ex["verification_status"] != "VERIFIED": return "needs_review", ex["why"]
+    mine, lo, hi = X["my_years"], ex["overall_experience_min"], ex["overall_experience_max"]
+    if lo > mine + X.get("tolerance", 0): return "ineligible", f"overall experience {ex['overall_experience_original_text']} is above your {mine:g} yrs"
+    if hi is not None and hi < mine - X.get("range_slack", 0.5): return "ineligible", f"overall range {ex['overall_experience_original_text']} is below your {mine:g} yrs"
+    have = {k.lower(): v for k, v in (X.get("skill_years") or {}).items()}
+    for s in ex["skill_specific_experience"]:
+        mine_s = have.get(s["skill"].lower(), mine)          # nobody can have more years in a skill than in their whole career
+        if s["mandatory"] and s["min"] > mine_s + X.get("skill_tolerance", 1.0):
+            return "ineligible", f"mandatory {s['skill']} {s['original_text']} vs your {mine_s:g} yrs"
+    return "eligible", ""
+
 def analyze(j, text, locfull):
-    """-> (alert?, info dict)"""
-    if locfull and not loc_ok(locfull): return False, {"why": "location"}
+    """-> (verdict, info) with verdict eligible | ineligible | needs_review"""
+    if locfull and not loc_ok(locfull): return "ineligible", {"why": "location"}
     blob = (j["title"] + " " + (text or "")).lower()
-    if text:
-        if not re.search(r"\bjava\b", blob) and not j.get("trust_java"): return False, {"why": "no Java in description"}
-        hits = [k for k, p in SKILLS if re.search(p, blob)][:14]
-        if len(hits) < SK["min_other_hits"]: return False, {"why": "skills"}
-        verdict, label = parse_years(text)
-        if verdict == "no" or (verdict == "unknown" and not X["send_if_unknown"]): return False, {"why": "experience " + label}
-        return True, dict(exp=label, skills=["Java"] + hits, jd=True)
-    t = j["title"].lower()                       # job description unreadable
-    if "java" in t or "backend" in t or "back end" in t or "back-end" in t:
-        return True, dict(exp="JD not readable - check", skills=[], jd=False)
-    return False, {}
+    if (text or j.get("trust_java")) and not re.search(r"\bjava\b(?!\s*script)", blob) and not j.get("trust_java"): return "ineligible", {"why": "no Java in description"}
+    hits = [k for k, p in SKILLS if re.search(p, blob)][:14]
+    if text and len(hits) < SK["min_other_hits"]: return "ineligible", {"why": "skills"}
+    if j.get("incomplete"): return "needs_review", {"why": "only a short job-board snippet was available, not the full description", "ex": None, "skills": ["Java"] + hits}
+    ex = extract_experience(text, j.get("url", ""))
+    verdict, why = evaluate_fit(ex)
+    return verdict, dict(why=why, ex=ex, skills=["Java"] + hits, jd=bool(text))
 
 # ======================= telegram =======================
 def send(text):
@@ -343,27 +462,86 @@ def send(text):
         print("telegram error", r.status_code, r.text); return False
     return False
 def fmt(name, j, info):
+    ex = info["ex"]; mx = ex["overall_experience_max"]
     lines = [f"🆕 {name} - {j['title']}", f"📍 {j['loc'] or 'see posting'}",
-             f"🧪 Experience: {info['exp']}"]
+             f"🧪 Overall experience (verified): {ex['overall_experience_original_text']}",
+             f"   JD: \"{ex.get('sentence', '')[:170]}\"" + (f"  [{ex['source_section']}]" if ex["source_section"] not in ("", "description") else "")]
+    sk = [f"{s['skill']} {s['original_text']} ({'mandatory' if s['mandatory'] else 'preferred'})" for s in ex["skill_specific_experience"]][:6]
+    if sk: lines.append("🔧 Skill-specific (not overall): " + "; ".join(sk))
     if info["skills"]: lines.append("🛠 Skills asked: " + ", ".join(info["skills"]))
     lines.append(f"🆔 Job ID: {j.get('req') or j['id']}")
     if j.get("posted"): lines.append(f"🕒 Posted: {j['posted']}")
     lines.append(f"🔗 Apply: {j['url']}")
     return "\n".join(lines)
 
-# ======================= main =======================
+# ======================= persistent job database =======================
+DB_F = ROOT / "state" / "db.json"
+REPOST_ALERT = bool(CFG.get("repost_alert", False))      # default OFF: a re-listed job is recorded, never re-sent
+NO_REQ_SOURCES = ("adzuna", "linkedin")                   # job boards have no official requisition id
+
 def load(p, default): return json.load(open(p)) if p.exists() else default
 def save(p, obj):
     if DRY: return
     p.parent.mkdir(exist_ok=True); json.dump(obj, open(p, "w"), indent=0, sort_keys=True)
+
+def new_db(): return {"v": 2, "jobs": {}, "fp": {}, "legacy_seen": {}, "meta": {}}
+def load_db():
+    if DB_F.exists(): db = json.load(open(DB_F))
+    else:
+        db = new_db()
+        if SEEN_F.exists():                               # migrate the older seen.json so nothing already sent is sent again
+            old = json.load(open(SEEN_F)); db["legacy_seen"] = old.pop("seen", {}); db["meta"] = old
+    for k, v in new_db().items(): db.setdefault(k, v)
+    return db
+def save_db(db):                                          # atomic: a crash can never leave a half-written database
+    if DRY: return
+    DB_F.parent.mkdir(exist_ok=True)
+    tmp = DB_F.with_suffix(".tmp"); json.dump(db, open(tmp, "w"), sort_keys=True, separators=(",", ":")); os.replace(tmp, DB_F)
+
+def city(loc):
+    l = (loc or "").lower()
+    return "hyd" if "hyderabad" in l else "blr" if ("bangalore" in l or "bengaluru" in l) else "other"
+def fingerprint(n, j): return f"{norm(n)}|{norm(j['title'])}|{city(j['loc'])}"
+def identity(n, src, j):
+    """(key, has_official_id). Official requisition id is the primary identity; job boards fall back to their own id."""
+    jid = str(j.get("id") or norm(j.get("url", "") + j.get("title", "")))
+    if src in NO_REQ_SOURCES: return f"{n}|{src}:{jid}", False
+    req = str(j.get("req") or jid)
+    return f"{n}|{req}", True
+
+def cross_duplicate(db, key, has_req, src, fp):
+    """-> ('dup'|'ambiguous'|None, other_key).  Two DIFFERENT official ids are always two vacancies, even with identical titles."""
+    for k2 in db["fp"].get(fp, []):
+        r2 = db["jobs"].get(k2)
+        if not r2 or k2 == key: continue
+        if has_req and r2.get("has_req"): continue                      # distinct requisitions
+        if r2["source"] != src: return "dup", k2                        # same vacancy seen on another platform
+        return "ambiguous", k2                                          # same platform, no official ids: keep both, but flag
+    return None, None
+
+def legacy_reqs(db):
+    out = set()
+    for k in db["legacy_seen"]:
+        n, _, i = k.partition("|")
+        if i.startswith("/job/"): out.add(f"{n}|" + re.sub(r"-\d{1,2}$", "", i.rsplit("_", 1)[-1]))
+    return out
+
+def rec_message(rec):
+    j = dict(title=rec["title"], loc=rec["loc"], posted=rec["posted"], req=rec["req"], id=rec["req"], url=rec["url"])
+    text = fmt(rec["company"], j, rec["info"])
+    return ("🔁 Re-listed\n" + text) if rec.get("relist_alert") else text
 
 def conf_for(c, resolved):
     r = dict(resolved.get(c["name"]) or {"type": "linkedin"}); r.update(name=c["match"], match=c["match"]) if r["type"] == "linkedin" else None
     return r
 
 def main():
-    state = load(SEEN_F, {}); seen = state.setdefault("seen", {}); last = state.setdefault("last_run", {}); fails = state.setdefault("fails", {})
+    db = load_db(); jobs_db, meta = db["jobs"], db["meta"]
+    last = meta.setdefault("last_run", {}); fails = meta.setdefault("fails", {})
+    C = meta.setdefault("counters", {})                   # counts since the last report
+    def bump(k, n=1): C[k] = C.get(k, 0) + n
     resolved = load(RES_F, {}); now = time.time(); comps = CFG["companies"]
+    lreqs = legacy_reqs(db)
 
     def has_feed(n): return resolved.get(n, {}).get("type") not in (None, "linkedin")
     todo = [c for c in comps if not has_feed(c["name"]) and (SELFTEST or c["name"] not in resolved)]
@@ -414,7 +592,8 @@ def main():
                 tot = TOTALS.get(r.get("api")); mark = "⚠️" if (not jobs and not tot) else "✅"
                 ok.append(f"{mark} {c['name']} [{LABEL[r['type']]}]: {len(jobs)} jobs read" + (f" (site total {tot})" if tot is not None else "")
                           + f", {sum(quick_ok(j) for j in jobs)} pass title/location/age filter")
-        for title, rows in ((f"SELF-TEST: {len(ok)} companies on direct feeds", ok),
+        send(f"SELF-TEST: {len(comps)} companies in your list\n• direct career feeds: {len(ok)}\n• via Adzuna job board: {len(lik)}\n• failed to read: {len(bad)}\n• no automatic feed: {len(nofeed)}")
+        for title, rows in ((f"{len(ok)} companies on direct feeds", ok),
                             (f"{len(lik)} covered via Adzuna job board (company has no direct feed; checked every ~30 min)", lik),
                             (f"{len(bad)} failed to read", bad),
                             (f"{len(nofeed)} with NO automatic feed (check these by hand or send me their job-search URL)", nofeed)):
@@ -422,11 +601,12 @@ def main():
                 if rows: send(title + "\n\n" + "\n".join(rows[i:i + 25]))
         return
 
-    queue, summary, fresh_n = [], [], 0
+    # ---------- discovery -> database (every job is looked at once; known jobs are skipped without re-analysis) ----------
+    summary, fresh_n, run_seen, per_co = [], 0, set(), {}
     for c, r, jobs, err in results:
-        n = c["name"]
+        n, src = c["name"], r["type"]
         if err in ("skipped", "nofeed") or (err or "").startswith("LinkedIn blocked"): continue
-        if err and r["type"] == "adzuna":
+        if err and src == "adzuna":
             fails["__adzuna"] = fails.get("__adzuna", 0) + 1; print(f"[Adzuna] FAILED x{fails['__adzuna']}: {err}")
             if fails["__adzuna"] == 12: send("⚠️ Adzuna job-board lookup has failed 12 runs in a row. Check ADZUNA_APP_ID / ADZUNA_APP_KEY secrets.")
             continue
@@ -435,51 +615,115 @@ def main():
             if fails[n] == 12: send(f"⚠️ {n}: career feed failed 12 runs in a row. Run the self-test or fix its entry in companies.yaml.")
             continue
         fails[n] = 0; last[n] = now
-        if r["type"] == "adzuna": fails["__adzuna"] = 0
-        new = [j for j in jobs if f"{n}|{j['id']}" not in seen]
+        if src == "adzuna": fails["__adzuna"] = 0
         fresh_n += sum(1 for j in jobs if j.get("age") is None or j["age"] <= F["max_age_days"])
-        cand, why = [], {}
-        for j in new:
+        cap, analysed, line = (5 if src == "linkedin" else MAX_DETAIL), 0, dict(new=0, known=0, dup=0)
+        for j in jobs:
+            key, has_req = identity(n, src, j)
+            if key in run_seen: bump("known_skipped"); line["known"] += 1; continue          # pagination / multi-location repeats
+            run_seen.add(key)
+            rec = jobs_db.get(key)
+            if rec:                                                                       # ---- already known: no download, no analysis
+                rec["last_checked"] = now
+                if src == "workday" and j["id"] not in rec.setdefault("paths", []):
+                    rec["paths"].append(j["id"]); rec.setdefault("relisted", []).append({"ts": now, "path": j["id"]}); bump("relisted")
+                    if REPOST_ALERT and rec["publication"] == "published":
+                        rec["publication"] = "pending"; rec["relist_alert"] = True
+                bump("known_skipped"); line["known"] += 1; continue
+            if key in lreqs or f"{n}|{j['id']}" in db["legacy_seen"]: bump("known_skipped"); line["known"] += 1; continue   # sent/seen by the older version
+            fp = fingerprint(n, j)
             rr = reject_reason(j)
-            if rr is None: cand.append(j)
-            else: seen[f"{n}|{j['id']}"] = now; why[rr] = why.get(rr, 0) + 1   # irrelevant -> never look again
-        cap = 5 if r["type"] == "linkedin" else MAX_DETAIL
-        for j in cand[:cap]:
+            base = dict(company=n, title=j["title"], req=str(j.get("req") or j["id"]), url=j["url"], source=src, loc=j["loc"], posted=j.get("posted", ""),
+                        posted_est=(dt.date.today() - dt.timedelta(days=int(j["age"]))).isoformat() if j.get("age") is not None else "",
+                        first_seen=now, last_checked=now, has_req=has_req, paths=[j["id"]], publication="none", info={})
+            if rr:                                                                        # clearly not for us: remember it, never look again
+                jobs_db[key] = dict(base, eligibility="ineligible", reason=rr); bump("discovered"); bump("ineligible"); line["new"] += 1
+                db["fp"].setdefault(fp, []).append(key); continue
+            kind, other = cross_duplicate(db, key, has_req, src, fp)
+            if kind == "dup":                                                             # same vacancy already known from another platform
+                jobs_db[key] = dict(base, eligibility="duplicate", reason="same vacancy as " + other, dup_of=other)
+                bump("discovered"); bump("duplicate_across_sources"); line["dup"] += 1; continue
+            if analysed >= cap: continue                                                  # leave for the next run (no record -> retried)
             try:
-                text, locfull = (j["desc"], None) if j.get("desc") else (DETAIL[r["type"]](r, j) if r["type"] in DETAIL else ("", None))
+                text, locfull = (j["desc"], None) if (j.get("desc") and not j.get("snippet")) else (DETAIL[src](r, j) if src in DETAIL else ("", None))
             except Exception as e:
-                key = f"{n}|{j['id']}"; df = state.setdefault("detail_fail", {}); df[key] = df.get(key, 0) + 1
+                df = meta.setdefault("detail_fail", {}); df[key] = df.get(key, 0) + 1
                 print(f"[{n}] detail failed ({df[key]}): {e}")
-                if df[key] < 3: continue                      # try again next run, don't mark as seen
+                if df[key] < 3: continue
                 text, locfull = "", None
-            good, info = analyze(j, text, locfull)
-            if good: queue.append((n, j, info))
-            else: seen[f"{n}|{j['id']}"] = now; print(f"   rejected [{n}] {j['title'][:60]}: {info.get('why', '?')}")
-        summary.append(f"{n}: {len(jobs)} jobs, {len(new)} unseen, {len(cand)} candidates" + (f"  (skipped: {why})" if why else ""))
+            analysed += 1
+            if locfull and (not j["loc"] or re.search(r"\d+\s+locations?", j["loc"].lower())): j["loc"] = locfull.strip()[:80]
+            base.update(loc=j["loc"]); fp = fingerprint(n, j)
+            verdict, info = analyze(j, text, locfull)
+            bump("discovered"); line["new"] += 1; db["fp"].setdefault(fp, []).append(key)
+            if verdict in ("ineligible", "needs_review"):                                # kept in the database, NOT shown as a match
+                jobs_db[key] = dict(base, eligibility=verdict, reason=info.get("why", "?"), experience=info.get("ex"))
+                bump(verdict); print(f"   {verdict.replace('_', ' ')} [{n}] {j['title'][:60]}: {info.get('why', '?')}"); continue
+            jobs_db[key] = dict(base, eligibility="eligible", experience=info["ex"], info=info, publication="pending",
+                                ambiguous_with=other if kind == "ambiguous" else None)
+            bump("eligible")
+            if kind == "ambiguous": bump("ambiguous_flagged")
+        per_co[n] = per_co.get(n, 0) + line["new"]
+        summary.append(f"{n}: {len(jobs)} jobs | new {line['new']} | known skipped {line['known']} | cross-site dup {line['dup']}")
+    bc = meta.setdefault("by_company", {})
+    for n, k in per_co.items(): bc[n] = bc.get(n, 0) + k
+    save_db(db)
 
-    sent = 0
-    log = state.setdefault("sent_ts", [])
-    for n, j, info in queue[:MAX_ALERTS]:
-        if send(fmt(n, j, info)): seen[f"{n}|{j['id']}"] = now; sent += 1; log.append(now)
-    state["sent_ts"] = [t for t in log if now - t < 2 * 86400]
-    # "no jobs" report: if nothing was sent for N hours, say so (quiet at night)
-    R = CFG.get("report", {})
-    every = R.get("every_hours", 4) * 3600
+    # ---------- publish: a job counts as published ONLY after Telegram confirms delivery ----------
+    sent, fails_in_row = 0, 0
+    log = meta.setdefault("sent_ts", [])
+    pending = sorted((k for k, r in jobs_db.items() if r["publication"] == "pending"), key=lambda k: jobs_db[k]["first_seen"])
+    for k in pending:
+        rec = jobs_db[k]
+        if now - rec["first_seen"] > 3 * 86400 and not rec.get("relist_alert"): rec["publication"] = "expired"; continue
+        if sent >= MAX_ALERTS or fails_in_row >= 3: break
+        if send(rec_message(rec)):
+            rec["publication"], rec["first_published"] = "published", now; rec.pop("relist_alert", None)
+            sent += 1; fails_in_row = 0; bump("published"); log.append(now)
+            save_db(db)                                                                    # saved right after every confirmed delivery
+        else:
+            fails_in_row += 1; bump("failed_deliveries")
+    meta["sent_ts"] = [t for t in log if now - t < 2 * 86400]
+
+    # ---------- scheduled reports ----------
     ist = dt.datetime.fromtimestamp(now, dt.timezone.utc) + dt.timedelta(hours=5, minutes=30)
+    R = CFG.get("report", {}); tg = bool(os.getenv("TELEGRAM_BOT_TOKEN"))
+    live = sum(1 for _, _, jb, e in results if jb is not None)
+    due = [h for h in R.get("digest_hours_ist", [10, 16, 23]) if ist.hour >= h]            # the latest slot that has passed today
+    today, done = ist.strftime("%Y-%m-%d"), meta.setdefault("digests", {})
+    if tg and due and due[-1] not in done.get(today, []):
+        top = sorted(meta.get("by_company", {}).items(), key=lambda x: -x[1])[:5]
+        msg = (f"📊 Job bot report ({due[-1]}:00 IST)\nCompany feeds read this run: {live}\nSince the last report:\n"
+               f"• new jobs found: {C.get('discovered', 0)}\n• already-known jobs skipped: {C.get('known_skipped', 0)}\n"
+               f"• duplicates across sites: {C.get('duplicate_across_sources', 0)}\n• eligible: {C.get('eligible', 0)}  unverified: {C.get('unverified', 0)}  ineligible: {C.get('ineligible', 0)}\n"
+               f"• alerts sent: {C.get('published', 0)}  failed deliveries: {C.get('failed_deliveries', 0)}\n• re-listed known jobs (not re-sent): {C.get('relisted', 0)}"
+               + ("\nMost new jobs from: " + ", ".join(f"{a} {b}" for a, b in top) if top else ""))
+        rv = [(k, r) for k, r in jobs_db.items() if r["eligibility"] == "needs_review" and not r.get("review_reported")][:8]
+        if rv:
+            msg += "\n\n🔎 Needs your review (experience could not be verified - NOT matches):\n" + "\n".join(
+                f"• {r['company']}: {r['title'][:50]} - {r['reason'][:70]}\n  {r['url']}" for k, r in rv)
+        if send(msg):
+            for k, r in rv: r["review_reported"] = True
+            done[today] = done.get(today, []) + [due[-1]]; meta["counters"] = {}; meta["by_company"] = {}
+            for d in [d for d in done if d < (ist - dt.timedelta(days=3)).strftime("%Y-%m-%d")]: del done[d]
+    every = R.get("every_hours", 4) * 3600
     quiet = ist.hour >= R.get("quiet_start", 23) or ist.hour < R.get("quiet_end", 7)
-    lr = state.get("last_report")
-    if lr is None: state["last_report"] = now
-    elif now - lr >= every - 120 and not quiet and os.getenv("TELEGRAM_BOT_TOKEN"):
-        if not any(t > lr for t in state["sent_ts"]):
-            live = sum(1 for _, _, jobs, err in results if jobs is not None)
+    lr = meta.get("last_report")
+    if lr is None: meta["last_report"] = now
+    elif every and now - lr >= every - 120 and not quiet and tg:
+        if not any(t > lr for t in meta["sent_ts"]):
             hrs = max(1, round((now - lr) / 3600))
             if send(f"🕓 No new matching jobs in the last {hrs} hours. Bot is running; checked {live} company feeds "
-                    f"({fresh_n} postings from the last {F['max_age_days']} days were seen, none fit Java / 2 yrs / Hyderabad-Bangalore)."):
-                state["last_report"] = now
+                    f"({fresh_n} postings from the last {F['max_age_days']} days were seen, none new and fitting)."):
+                meta["last_report"] = now
         else:
-            state["last_report"] = now
-    for k in [k for k, t in seen.items() if now - t > 120 * 86400]: del seen[k]
-    save(SEEN_F, state)
+            meta["last_report"] = now
+    for k in [k for k, r in jobs_db.items() if now - r["last_checked"] > (365 if r["publication"] == "published" else 90) * 86400]:
+        del jobs_db[k]
+    for fp in list(db["fp"]): db["fp"][fp] = [k for k in db["fp"][fp] if k in jobs_db]; 
+    db["fp"] = {k: v for k, v in db["fp"].items() if v}
+    for k in [k for k, t in db["legacy_seen"].items() if now - t > 120 * 86400]: del db["legacy_seen"][k]
+    save_db(db)
     print("\n".join(summary)); print(f"alerts sent: {sent}")
 
 if __name__ == "__main__":
