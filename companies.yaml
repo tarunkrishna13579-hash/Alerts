@@ -2,6 +2,7 @@
 #  EDIT ONLY THIS FILE. Everything else just runs.
 # =====================================================================
 filters:
+  use_title_filter: false   # false = ignore job titles; the job qualifies if its description asks for Java (+ city, age, experience checks)
   # Job title must contain one of these (lowercase) ...
   include_title: [java, backend, back end, back-end, software engineer,
                   software development engineer, sde, software developer,
@@ -36,22 +37,22 @@ skills:
 
 # Verified automatically on first run (wrong guesses are harmless).
 hints:
-  Salesforce:          {type: workday, tenant: salesforce, sites: [External_Career_Site]}
+  Salesforce:          {type: workday, tenant: salesforce, dc: wd12, sites: [External_Career_Site]}
   Mastercard:          {type: workday, tenant: mastercard, sites: [CorporateCareers]}
   Thomson Reuters:     {type: workday, tenant: thomsonreuters, sites: [External_Career_Site]}
-  Target:              {type: workday, tenant: target, sites: [targetcareers]}
-  Walmart Global Tech: {type: workday, tenant: walmart, sites: [WalmartExternal]}
-  Dell Technologies:   {type: workday, tenant: dell, sites: [External]}
+  Target:              {type: workday, tenant: target, dc: wd5, sites: [targetcareers]}
+  Walmart Global Tech: {type: workday, tenant: walmart, dc: wd5, sites: [WalmartExternal]}
+  Dell Technologies:   {type: workday, tenant: dell, dc: wd1, sites: [External]}
   Wells Fargo:         {type: workday, tenant: wellsfargo, sites: [WellsFargoJobs]}
   Adobe:               {type: workday, tenant: adobe, sites: [external_experienced]}
   Nutanix:             {type: workday, tenant: nutanix, sites: [Nutanix_Careers, External, Careers]}
   Autodesk:            {type: workday, tenant: autodesk, sites: [Ext]}
-  NetApp:              {type: workday, tenant: netapp, sites: [NetAppCareers]}
+  NetApp:              {type: workday, tenant: netapp, dc: wd1, sites: [NetAppCareers]}
   Informatica:         {type: workday, tenant: informatica, sites: [External]}
   Teradata:            {type: workday, tenant: teradata, sites: [Teradata_Careers, External]}
   Qualcomm:            {type: workday, tenant: qualcomm, sites: [External]}
   NVIDIA:              {type: workday, tenant: nvidia, sites: [NVIDIAExternalCareerSite]}
-  AMD:                 {type: workday, tenant: amd, sites: [External]}
+  AMD:                 {type: workday, tenant: amd, dc: wd1, sites: [External]}
   FIS:                 {type: workday, tenant: fis, sites: [SearchJobs]}
   State Street:        {type: workday, tenant: statestreet, sites: [Global]}
   Capital One:         {type: workday, tenant: capitalone, sites: [Capital_One]}

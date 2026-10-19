@@ -36,6 +36,7 @@ def epoch_age(t):
 def iso_age(s):
     try: return (dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(s.replace("Z", "+00:00"))).total_seconds() / 86400
     except Exception: return None
+def norm(x): return re.sub(r"[^a-z0-9]", "", (x or "").lower())
 def dedupe(jobs):
     d = {}
     for j in jobs: d.setdefault(j["id"], j)
@@ -43,13 +44,14 @@ def dedupe(jobs):
 
 # ======================= adapters: LIST[type](conf) -> jobs ; DETAIL[type](conf, job) -> (text, location) =======================
 def wd_ping(api):
-    for attempt in (1, 2):
+    for attempt in (1, 2, 3):
         try:
             r = post(api + "/jobs", json={"appliedFacets": {}, "limit": 1, "offset": 0, "searchText": ""}, timeout=25)
+            if r.status_code == 429 and attempt < 3: time.sleep(6 * attempt); continue
             r.raise_for_status()
             return "jobPostings" in r.json()
         except requests.Timeout:
-            if attempt == 2: raise
+            if attempt == 3: raise
 TOTALS = {}
 def wd_req(api, body):
     for attempt in range(4):                       # Workday rate-limits shared servers: wait and retry
@@ -168,7 +170,6 @@ def li_list(r):
         loc = re.search(r'job-search-card__location[^>]*>\s*(.*?)\s*</span>', card, re.S)
         when = re.search(r'datetime="(\d{4}-\d{2}-\d{2})', card)
         if not (href and title and comp): continue
-        norm = lambda x: re.sub(r"[^a-z0-9]", "", x.lower())
         if not norm(clean(comp.group(1))).startswith(norm(r["match"])): continue
         link = html.unescape(href.group(1)).split("?")[0]
         jid = re.search(r"(\d{6,})$", link)
@@ -183,17 +184,37 @@ def li_detail(r, j):
     m = re.search(r'show-more-less-html__markup[^>]*>(.*?)</div>', resp.text, re.S)
     return clean(m.group(1)) if m else "", None
 
+
+ADZ_ON = bool(os.getenv("ADZUNA_APP_ID") and os.getenv("ADZUNA_APP_KEY"))
+def adzuna_jobs():
+    """free job-board API: recent Java jobs in our cities; used for companies with no direct career feed"""
+    out = []
+    for city in ("hyderabad", "bangalore"):
+        for page in (1, 2):
+            r = get(f"https://api.adzuna.com/v1/api/jobs/in/search/{page}",
+                    params=dict(app_id=os.getenv("ADZUNA_APP_ID"), app_key=os.getenv("ADZUNA_APP_KEY"), what="java", where=city,
+                                results_per_page=50, sort_by="date", max_days_old=max(1, int(F["max_age_days"]))))
+            r.raise_for_status()
+            for x in r.json().get("results", []):
+                out.append(dict(id=str(x["id"]), req=str(x["id"]), title=clean(x.get("title", "")),
+                                loc=(x.get("location") or {}).get("display_name", ""), url=x.get("redirect_url", ""),
+                                posted=(x.get("created") or "")[:10], age=iso_age(x.get("created") or ""),
+                                desc=clean(x.get("description", "")), company=((x.get("company") or {}).get("display_name") or ""),
+                                trust_java=True))
+    return dedupe(out)
+
 LIST = dict(workday=wd_list, greenhouse=gh_list, lever=lv_list, smartrecruiters=sr_list,
             eightfold=ef_list, oraclehcm=oh_list, linkedin=li_list)
 DETAIL = dict(workday=wd_detail, smartrecruiters=sr_detail, oraclehcm=oh_detail, linkedin=li_detail)
 LABEL = dict(workday="Workday", greenhouse="Greenhouse", lever="Lever", smartrecruiters="SmartRecruiters",
-             eightfold="Eightfold", oraclehcm="Oracle HCM", linkedin="LinkedIn fallback")
+             eightfold="Eightfold", oraclehcm="Oracle HCM", linkedin="LinkedIn fallback", adzuna="Adzuna job board")
 
 # ======================= auto-discovery of each company's job feed =======================
 WD_DCS = ["wd1", "wd5", "wd3", "wd12", "wd2", "wd4", "wd10", "wd103", "wd501"]
-def wd_confs(tenant, sites):
+def wd_confs(tenant, sites, dc0=None):
+    dcs = ([dc0] if dc0 else []) + [d for d in WD_DCS if d != dc0]
     for site in sites:
-        for dc in WD_DCS:
+        for dc in dcs:
             api = f"https://{tenant}.{dc}.myworkdayjobs.com/wday/cxs/{tenant}/{site}"
             yield dict(type="workday", api=api, web=f"https://{tenant}.{dc}.myworkdayjobs.com/en-US/{site}")
         for dc in ("wd1", "wd5", "wd3"):
@@ -217,7 +238,7 @@ def candidates(c):
     h = HINTS.get(c["name"])
     if h:
         for hh in (h if isinstance(h, list) else [h]):
-            if hh["type"] == "workday": yield from wd_confs(hh["tenant"], hh["sites"])
+            if hh["type"] == "workday": yield from wd_confs(hh["tenant"], hh["sites"], hh.get("dc"))
             else: yield dict(hh)
     try:
         resp = get(c["url"], allow_redirects=True)
@@ -239,6 +260,7 @@ def discover(c):
         seen_c.add(key)
         try:
             if cand["type"] == "workday":
+                time.sleep(0.4)
                 if not wd_ping(cand["api"]): continue
             else:
                 LIST[cand["type"]](cand)
@@ -251,13 +273,14 @@ def discover(c):
 
 # ======================= fit logic =======================
 def loc_ok(s): return any(k in (s or "").lower() for k in F["locations"])
-def quick_ok(j):
+def reject_reason(j):
     t = j["title"].lower()
-    if not any(k in t for k in F["include_title"]) or any(k in t for k in F["exclude_title"]): return False
-    if j.get("age") is not None and j["age"] > F["max_age_days"]: return False
+    if F.get("use_title_filter", True) and (not any(k in t for k in F["include_title"]) or any(k in t for k in F["exclude_title"])): return "title"
+    if j.get("age") is not None and j["age"] > F["max_age_days"]: return "older than %sd" % F["max_age_days"]
     loc = (j["loc"] or "").lower()
-    if not loc or re.search(r"\d+\s+locations?", loc): return True
-    return loc_ok(loc)
+    if not loc or re.search(r"\d+\s+locations?", loc): return None
+    return None if loc_ok(loc) else "location"
+def quick_ok(j): return reject_reason(j) is None
 
 def parse_years(text):
     t = re.sub(r"\s+", " ", (text or "").lower())
@@ -292,14 +315,14 @@ SKILLS = [("Spring Boot", r"spring\s*boot"), ("Spring", r"\bspring\b(?!\s*boot)"
           ("Angular/React", r"\bangular\b|\breact\b"), ("Agile", r"\bagile\b|\bscrum\b")]
 def analyze(j, text, locfull):
     """-> (alert?, info dict)"""
-    if locfull and not loc_ok(locfull): return False, {}
+    if locfull and not loc_ok(locfull): return False, {"why": "location"}
     blob = (j["title"] + " " + (text or "")).lower()
     if text:
-        if not re.search(r"\bjava\b", blob): return False, {}
+        if not re.search(r"\bjava\b", blob) and not j.get("trust_java"): return False, {"why": "no Java in description"}
         hits = [k for k, p in SKILLS if re.search(p, blob)][:14]
-        if len(hits) < SK["min_other_hits"]: return False, {}
+        if len(hits) < SK["min_other_hits"]: return False, {"why": "skills"}
         verdict, label = parse_years(text)
-        if verdict == "no" or (verdict == "unknown" and not X["send_if_unknown"]): return False, {}
+        if verdict == "no" or (verdict == "unknown" and not X["send_if_unknown"]): return False, {"why": "experience " + label}
         return True, dict(exp=label, skills=["Java"] + hits, jd=True)
     t = j["title"].lower()                       # job description unreadable
     if "java" in t or "backend" in t or "back end" in t or "back-end" in t:
@@ -342,9 +365,10 @@ def main():
     state = load(SEEN_F, {}); seen = state.setdefault("seen", {}); last = state.setdefault("last_run", {}); fails = state.setdefault("fails", {})
     resolved = load(RES_F, {}); now = time.time(); comps = CFG["companies"]
 
-    todo = [c for c in comps if SELFTEST or c["name"] not in resolved]
+    def has_feed(n): return resolved.get(n, {}).get("type") not in (None, "linkedin")
+    todo = [c for c in comps if not has_feed(c["name"]) and (SELFTEST or c["name"] not in resolved)]
     if todo:
-        with ThreadPoolExecutor(8) as ex:
+        with ThreadPoolExecutor(3) as ex:
             for c, conf in zip(todo, ex.map(discover, todo)): resolved[c["name"]] = conf
         save(RES_F, resolved)
 
@@ -355,9 +379,21 @@ def main():
     direct = [c for c in comps if conf_for(c, resolved)["type"] != "linkedin"]
     li = sorted([c for c in comps if conf_for(c, resolved)["type"] == "linkedin"], key=lambda c: last.get(c["name"], 0))
     with ThreadPoolExecutor(6) as ex: results = list(ex.map(fetch, direct))
-    if not USE_LINKEDIN:
+    empty = [x for x in results if x[3] is None and not x[2] and (x[1]["type"] == "eightfold" or not TOTALS.get(x[1].get("api")))]
+    if empty:                                # feed answers but is empty/wrong (e.g. wrong site name) -> use the job-board route instead
+        results = [x for x in results if x not in empty]; li += [x[0] for x in empty]
+    if ADZ_ON and li:
+        if SELFTEST or now - last.get("__adzuna", 0) >= 25 * 60:
+            try: ajobs, aerr = adzuna_jobs(), None; last["__adzuna"] = now
+            except Exception as e: ajobs, aerr = [], (reason(e) if isinstance(e, requests.RequestException) else str(e)[:80])
+            for c in li:
+                mine = [j for j in ajobs if norm(j["company"]).startswith(norm(c["match"]))]
+                results.append((c, {"type": "adzuna"}, None if aerr else mine, aerr))
+        else:
+            results += [(c, {"type": "adzuna"}, None, "skipped") for c in li]
+    elif not USE_LINKEDIN:
         results += [(c, conf_for(c, resolved), None, "nofeed") for c in li]
-    else:                                   # one at a time, 3s apart, stop at the first block (avoids a ban)
+    else:                                   # LinkedIn: one at a time, 3s apart, stop at the first block
         blocked = False
         for i, c in enumerate(li):
             r = conf_for(c, resolved)
@@ -370,7 +406,8 @@ def main():
     if SELFTEST:
         ok, nofeed, bad, lik = [], [], [], []
         for c, r, jobs, err in results:
-            if not err and r["type"] == "linkedin": lik.append(f"🟡 {c['name']}: {len(jobs)} recent jobs seen, {sum(quick_ok(j) for j in jobs)} pass filter"); continue
+            if not err and r["type"] in ("linkedin", "adzuna"):
+                lik.append(f"🟣 {c['name']}: {len(jobs)} recent Java jobs in your cities, {sum(quick_ok(j) for j in jobs)} pass filter"); continue
             if err == "nofeed": nofeed.append(f"⚪ {c['name']} - {resolved.get(c['name'], {}).get('why', '')}\n   {c['url']}")
             elif err: bad.append(f"❌ {c['name']} ({LABEL[r['type']]}): {err}")
             else:
@@ -378,27 +415,34 @@ def main():
                 ok.append(f"{mark} {c['name']} [{LABEL[r['type']]}]: {len(jobs)} jobs read" + (f" (site total {tot})" if tot is not None else "")
                           + f", {sum(quick_ok(j) for j in jobs)} pass title/location/age filter")
         for title, rows in ((f"SELF-TEST: {len(ok)} companies on direct feeds", ok),
-                            (f"{len(lik)} via LinkedIn fallback (checked in rotation, ~30 min delay)", lik),
+                            (f"{len(lik)} covered via Adzuna job board (company has no direct feed; checked every ~30 min)", lik),
                             (f"{len(bad)} failed to read", bad),
                             (f"{len(nofeed)} with NO automatic feed (check these by hand or send me their job-search URL)", nofeed)):
             for i in range(0, len(rows), 25):
                 if rows: send(title + "\n\n" + "\n".join(rows[i:i + 25]))
         return
 
-    queue, summary = [], []
+    queue, summary, fresh_n = [], [], 0
     for c, r, jobs, err in results:
         n = c["name"]
         if err in ("skipped", "nofeed") or (err or "").startswith("LinkedIn blocked"): continue
+        if err and r["type"] == "adzuna":
+            fails["__adzuna"] = fails.get("__adzuna", 0) + 1; print(f"[Adzuna] FAILED x{fails['__adzuna']}: {err}")
+            if fails["__adzuna"] == 12: send("⚠️ Adzuna job-board lookup has failed 12 runs in a row. Check ADZUNA_APP_ID / ADZUNA_APP_KEY secrets.")
+            continue
         if err:
             fails[n] = fails.get(n, 0) + 1; print(f"[{n}] FAILED x{fails[n]}: {err}")
             if fails[n] == 12: send(f"⚠️ {n}: career feed failed 12 runs in a row. Run the self-test or fix its entry in companies.yaml.")
             continue
         fails[n] = 0; last[n] = now
+        if r["type"] == "adzuna": fails["__adzuna"] = 0
         new = [j for j in jobs if f"{n}|{j['id']}" not in seen]
-        cand = []
+        fresh_n += sum(1 for j in jobs if j.get("age") is None or j["age"] <= F["max_age_days"])
+        cand, why = [], {}
         for j in new:
-            if quick_ok(j): cand.append(j)
-            else: seen[f"{n}|{j['id']}"] = now                       # irrelevant -> never look again
+            rr = reject_reason(j)
+            if rr is None: cand.append(j)
+            else: seen[f"{n}|{j['id']}"] = now; why[rr] = why.get(rr, 0) + 1   # irrelevant -> never look again
         cap = 5 if r["type"] == "linkedin" else MAX_DETAIL
         for j in cand[:cap]:
             try:
@@ -410,8 +454,8 @@ def main():
                 text, locfull = "", None
             good, info = analyze(j, text, locfull)
             if good: queue.append((n, j, info))
-            else: seen[f"{n}|{j['id']}"] = now
-        summary.append(f"{n}: {len(jobs)} jobs, {len(new)} unseen, {len(cand)} candidates")
+            else: seen[f"{n}|{j['id']}"] = now; print(f"   rejected [{n}] {j['title'][:60]}: {info.get('why', '?')}")
+        summary.append(f"{n}: {len(jobs)} jobs, {len(new)} unseen, {len(cand)} candidates" + (f"  (skipped: {why})" if why else ""))
 
     sent = 0
     log = state.setdefault("sent_ts", [])
@@ -421,7 +465,7 @@ def main():
     # "no jobs" report: if nothing was sent for N hours, say so (quiet at night)
     R = CFG.get("report", {})
     every = R.get("every_hours", 4) * 3600
-    ist = dt.datetime.utcfromtimestamp(now) + dt.timedelta(hours=5, minutes=30)
+    ist = dt.datetime.fromtimestamp(now, dt.timezone.utc) + dt.timedelta(hours=5, minutes=30)
     quiet = ist.hour >= R.get("quiet_start", 23) or ist.hour < R.get("quiet_end", 7)
     lr = state.get("last_report")
     if lr is None: state["last_report"] = now
@@ -429,7 +473,8 @@ def main():
         if not any(t > lr for t in state["sent_ts"]):
             live = sum(1 for _, _, jobs, err in results if jobs is not None)
             hrs = max(1, round((now - lr) / 3600))
-            if send(f"🕓 No new matching jobs in the last {hrs} hours. Bot is running and checked {live} company feeds."):
+            if send(f"🕓 No new matching jobs in the last {hrs} hours. Bot is running; checked {live} company feeds "
+                    f"({fresh_n} postings from the last {F['max_age_days']} days were seen, none fit Java / 2 yrs / Hyderabad-Bangalore)."):
                 state["last_report"] = now
         else:
             state["last_report"] = now

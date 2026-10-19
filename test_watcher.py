@@ -26,6 +26,7 @@ print("fit logic OK")
 # ---- full run with fake career sites: no repeats ----
 tmp = pathlib.Path(tempfile.mkdtemp())
 w.SEEN_F, w.RES_F = tmp / "seen.json", tmp / "res.json"
+w.F["use_title_filter"] = True
 w.CFG["companies"] = [dict(name="Acme", url="x", match="acme", tier="T1")]
 w.RES_F.write_text(json.dumps({"Acme": {"type": "workday", "api": "A", "web": "W"}}))
 JOBS = [dict(id=f"/job/{i}", req=f"R{i}", title=t, loc="Bengaluru", url=f"W/job/{i}", posted="Today", age=0)

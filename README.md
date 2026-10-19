@@ -41,3 +41,17 @@ GitHub's schedule often skips runs (you saw 2 runs in 6 hours). Fix: a free outs
    - Headers: `Authorization: Bearer <YOUR TOKEN>` , `Accept: application/vnd.github+json` , `Content-Type: application/json`
    - Request body: `{"ref":"main","inputs":{"mode":"normal"}}`
 3. Save, press "Test run" (expect HTTP 204). Check the Actions tab: runs appear every ~10 minutes.
+
+## Companies with no direct career feed (ServiceNow, Goldman, Siemens ...) -> free Adzuna key
+LinkedIn blocks GitHub's servers, so those companies use Adzuna, a free job-board API that lists
+recent Java jobs in Hyderabad/Bangalore. The bot keeps only jobs from YOUR companies.
+1. Sign up free at https://developer.adzuna.com/ and copy your **Application ID** and **Application Key**.
+2. Repo -> Settings -> Secrets and variables -> Actions -> add two secrets:
+   `ADZUNA_APP_ID` and `ADZUNA_APP_KEY`.
+3. Run **selftest**. Lines with 🟣 show companies now covered through Adzuna.
+Limits: Adzuna's text is a short snippet, so "experience" may show "not stated"; jobs can appear
+10-60 minutes after the company posts them; Adzuna may not list every company's jobs.
+
+## Title filter
+companies.yaml -> filters.use_title_filter: false  means job TITLES are ignored: any job in Hyderabad/Bangalore,
+posted in the last 2 days, whose description asks for Java (and whose required experience fits 2 years) is sent.
