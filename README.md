@@ -12,9 +12,9 @@ Each job is sent ONCE (the job ID is remembered in state/seen.json). You never a
    everything in this folder, keeping the .github/workflows/watch.yml path.
 3. Repo -> Settings -> Secrets and variables -> Actions -> New repository secret:
    TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.
-4. Actions tab -> "job-watch" -> Run workflow -> mode **selftest**. In ~3-5 minutes Telegram shows which
-   companies work on fast direct feeds, which use the slower LinkedIn fallback, and which failed.
-   If that report is bad, you've lost 10 minutes, not days.
+4. Actions tab -> "job-watch" -> Run workflow -> mode **selftest**. The report distinguishes validated direct feeds,
+   authorized Adzuna fallback, failed source reads, and companies that currently have no validated automatic feed.
+   LinkedIn is disabled by default because automated access is frequently rate-limited; it is not a reliable fallback.
 5. Run workflow again with mode **normal** (it then repeats automatically every ~10 min).
    The first run sends currently open matching jobs (only jobs posted in the last 2 days),
    then only new ones.
@@ -25,8 +25,11 @@ Each job is sent ONCE (the job ID is remembered in state/seen.json). You never a
 - hints: if a company shows ❌, put its Workday/Greenhouse/Lever details there.
 
 ## Honest limits
-- Experience and skills are read from the job description text. If it's missing, you get the alert marked "not stated" / "JD not readable".
-- Companies with no open job feed (many bank/big-tech sites) use LinkedIn's public search: slower (30+ min) and can be blocked.
+- Experience and skills are read from the job description text. If the full description is missing, the job remains unverified / NEEDS_REVIEW.
+- LinkedIn fallback is disabled by default. A company without a validated feed is listed with its official careers URL rather than being silently treated as checked.
+- When Adzuna credentials are configured, it is used as a secondary feed for companies without a validated direct feed and for temporary direct-feed failures. Adzuna coverage is not guaranteed to be complete.
+- A direct feed is only confirmed after the self-test reads and parses jobs; a configured hint alone is not proof of coverage.
+- Workday HTTP 429 responses honor Retry-After where possible, use bounded backoff, and stop candidate discovery rather than probing many guessed tenant/site combinations.
 - GitHub's scheduler can delay runs by a few minutes.
 
 ## Make it run every 10 minutes for real (GitHub's own timer is unreliable)
@@ -42,15 +45,15 @@ GitHub's schedule often skips runs (you saw 2 runs in 6 hours). Fix: a free outs
    - Request body: `{"ref":"main","inputs":{"mode":"normal"}}`
 3. Save, press "Test run" (expect HTTP 204). Check the Actions tab: runs appear every ~10 minutes.
 
-## Companies with no direct career feed (ServiceNow, Goldman, Siemens ...) -> free Adzuna key
-LinkedIn blocks GitHub's servers, so those companies use Adzuna, a free job-board API that lists
-recent Java jobs in Hyderabad/Bangalore. The bot keeps only jobs from YOUR companies.
+## Companies with no validated direct career feed -> optional Adzuna key
+For companies without a validated direct source, the bot uses Adzuna only if configured. LinkedIn is not the default fallback.
+Adzuna is a supplementary job-board API that can list recent Java jobs in Hyderabad/Bangalore. The bot keeps only listings whose company name matches your configured companies.
 1. Sign up free at https://developer.adzuna.com/ and copy your **Application ID** and **Application Key**.
 2. Repo -> Settings -> Secrets and variables -> Actions -> add two secrets:
    `ADZUNA_APP_ID` and `ADZUNA_APP_KEY`.
 3. Run **selftest**. Lines with 🟣 show companies now covered through Adzuna.
-Limits: Adzuna's text is a short snippet, so "experience" may show "not stated"; jobs can appear
-10-60 minutes after the company posts them; Adzuna may not list every company's jobs.
+Limits: Adzuna's text may be a short snippet, so the bot tries the job page and otherwise marks experience NEEDS_REVIEW; jobs can appear
+10-60 minutes after the company posts them; Adzuna may not list every company's jobs. Companies without an automatic feed remain visible in self-test with their official careers URL.
 
 ## Title filter
 companies.yaml -> filters.use_title_filter: false  means job TITLES are ignored: any job in Hyderabad/Bangalore,

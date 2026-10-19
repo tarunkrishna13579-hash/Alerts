@@ -4,7 +4,7 @@
  --selftest : check every company, send a working / not-working report to Telegram
  --dry      : print instead of sending, don't save state
 """
-import json, os, re, sys, time, html, pathlib, datetime as dt
+import json, os, re, sys, time, html, pathlib, datetime as dt, random, email.utils
 from concurrent.futures import ThreadPoolExecutor
 import requests, yaml
 
@@ -15,7 +15,7 @@ F, X, SK, HINTS = CFG["filters"], CFG["experience"], CFG["skills"], CFG.get("hin
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
       "Accept-Language": "en-US,en;q=0.9"}
 DRY, SELFTEST = "--dry" in sys.argv, "--selftest" in sys.argv
-USE_LINKEDIN = os.getenv("USE_LINKEDIN", "1") != "0"   # LinkedIn fallback for companies with no direct feed
+USE_LINKEDIN = os.getenv("USE_LINKEDIN", "0") == "1"   # opt-in only; LinkedIn is not a default fallback
 MAX_ALERTS, MAX_DETAIL, LI_EVERY, LI_PER_RUN = 20, 12, 30 * 60, 10
 
 def get(url, **kw):  return requests.get(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
@@ -46,22 +46,49 @@ def dedupe(jobs):
     return list(d.values())
 
 # ======================= adapters: LIST[type](conf) -> jobs ; DETAIL[type](conf, job) -> (text, location) =======================
+def retry_delay(resp, attempt, cap=30):
+    """Bounded Retry-After-aware delay. Never spin on a rate-limited ATS."""
+    raw = (resp.headers or {}).get("Retry-After", "")
+    delay = None
+    try:
+        delay = max(0.0, float(raw))
+    except (TypeError, ValueError):
+        try:
+            when = email.utils.parsedate_to_datetime(raw)
+            if when.tzinfo is None: when = when.replace(tzinfo=dt.timezone.utc)
+            delay = max(0.0, (when - dt.datetime.now(dt.timezone.utc)).total_seconds())
+        except Exception:
+            pass
+    if delay is None: delay = min(cap, 2 ** attempt)
+    return min(cap, delay) + random.uniform(0, 0.35)
+
+
 def wd_ping(api):
-    for attempt in (1, 2, 3):
+    last = None
+    for attempt in range(3):
         try:
             r = post(api + "/jobs", json={"appliedFacets": {}, "limit": 1, "offset": 0, "searchText": ""}, timeout=25)
-            if r.status_code == 429 and attempt < 3: time.sleep(6 * attempt); continue
+            if r.status_code == 429:
+                last = requests.HTTPError("HTTP 429: Workday rate limit", response=r)
+                if attempt < 2: time.sleep(retry_delay(r, attempt)); continue
+                raise last
             r.raise_for_status()
             return "jobPostings" in r.json()
         except requests.Timeout:
-            if attempt == 3: raise
+            if attempt == 2: raise
+    if last: raise last
+    return False
 TOTALS = {}
 def wd_req(api, body):
-    for attempt in range(4):                       # Workday rate-limits shared servers: wait and retry
+    for attempt in range(3):
         resp = post(api + "/jobs", json=body, timeout=40)
-        if resp.status_code == 429: time.sleep(5 * (attempt + 1)); continue
-        resp.raise_for_status(); return resp.json()
-    resp.raise_for_status()
+        if resp.status_code == 429:
+            if attempt < 2:
+                time.sleep(retry_delay(resp, attempt)); continue
+            resp.raise_for_status()
+        resp.raise_for_status()
+        return resp.json()
+    raise RuntimeError("Workday request exhausted retries")
 def wd_location_facets(facets):
     """find the ids of the Hyderabad / Bangalore filters inside Workday's own facet list"""
     found = {}
@@ -232,7 +259,8 @@ LIST = dict(workday=wd_list, greenhouse=gh_list, lever=lv_list, smartrecruiters=
             eightfold=ef_list, oraclehcm=oh_list, linkedin=li_list)
 DETAIL = dict(workday=wd_detail, smartrecruiters=sr_detail, oraclehcm=oh_detail, linkedin=li_detail, adzuna=adz_detail)
 LABEL = dict(workday="Workday", greenhouse="Greenhouse", lever="Lever", smartrecruiters="SmartRecruiters",
-             eightfold="Eightfold", oraclehcm="Oracle HCM", linkedin="LinkedIn fallback", adzuna="Adzuna job board")
+             eightfold="Eightfold", oraclehcm="Oracle HCM", linkedin="LinkedIn (opt-in)", adzuna="Adzuna job board",
+             nofeed="No validated automatic feed")
 
 # ======================= auto-discovery of each company's job feed =======================
 WD_DCS = ["wd1", "wd5", "wd3", "wd12", "wd2", "wd4", "wd10", "wd103", "wd501"]
@@ -278,6 +306,7 @@ def reason(e):
     return type(e).__name__
 
 def discover(c):
+    """Discover and validate an ATS feed. Never fall back to LinkedIn implicitly."""
     seen_c, why = set(), {}
     for cand in candidates(c):
         key = json.dumps(cand, sort_keys=True)
@@ -285,16 +314,18 @@ def discover(c):
         seen_c.add(key)
         try:
             if cand["type"] == "workday":
-                time.sleep(0.4)
                 if not wd_ping(cand["api"]): continue
             else:
                 LIST[cand["type"]](cand)
             return cand
         except Exception as e:
             k = reason(e); why[k] = why.get(k, 0) + 1
-            continue
+            # A rate limit is host-level evidence: stop probing guessed tenants/sites.
+            if k == "HTTP 429":
+                break
     real = {k: v for k, v in why.items() if k != "no such host"}
-    return dict(type="linkedin", why=", ".join(f"{k} x{v}" for k, v in sorted(real.items(), key=lambda x: -x[1])[:3]) or "no job feed found on its career page")
+    detail = ", ".join(f"{k} x{v}" for k, v in sorted(real.items(), key=lambda x: -x[1])[:3]) or "no supported feed found on the official careers page"
+    return dict(type="nofeed", why=detail, careers_url=c.get("url", ""))
 
 # ======================= fit logic =======================
 def loc_ok(s): return any(k in (s or "").lower() for k in F["locations"])
@@ -532,18 +563,21 @@ def rec_message(rec):
     return ("🔁 Re-listed\n" + text) if rec.get("relist_alert") else text
 
 def conf_for(c, resolved):
-    r = dict(resolved.get(c["name"]) or {"type": "linkedin"}); r.update(name=c["match"], match=c["match"]) if r["type"] == "linkedin" else None
+    r = dict(resolved.get(c["name"]) or {"type": "nofeed", "why": "not yet validated", "careers_url": c.get("url", "")})
+    if r["type"] in ("linkedin", "adzuna", "nofeed"):
+        r.update(name=c["match"], match=c["match"])
     return r
 
 def main():
     db = load_db(); jobs_db, meta = db["jobs"], db["meta"]
     last = meta.setdefault("last_run", {}); fails = meta.setdefault("fails", {})
+    source_cooldowns = meta.setdefault("source_cooldowns", {})
     C = meta.setdefault("counters", {})                   # counts since the last report
     def bump(k, n=1): C[k] = C.get(k, 0) + n
     resolved = load(RES_F, {}); now = time.time(); comps = CFG["companies"]
     lreqs = legacy_reqs(db)
 
-    def has_feed(n): return resolved.get(n, {}).get("type") not in (None, "linkedin")
+    def has_feed(n): return resolved.get(n, {}).get("type") in LIST
     todo = [c for c in comps if not has_feed(c["name"]) and (SELFTEST or c["name"] not in resolved)]
     if todo:
         with ThreadPoolExecutor(3) as ex:
@@ -552,47 +586,77 @@ def main():
 
     def fetch(c):
         r = conf_for(c, resolved)
+        if r["type"] == "nofeed": return c, r, None, "nofeed"
+        if r["type"] == "linkedin" and not USE_LINKEDIN: return c, r, None, "linkedin disabled"
+        until = source_cooldowns.get(c["name"], 0)
+        if until > now:
+            stamp = dt.datetime.fromtimestamp(until, dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+            return c, r, None, f"cooldown until {stamp}"
         try: return c, r, LIST[r["type"]](r), None
         except Exception as e: return c, r, None, (reason(e) if isinstance(e, requests.RequestException) else str(e)[:100])
-    direct = [c for c in comps if conf_for(c, resolved)["type"] != "linkedin"]
-    li = sorted([c for c in comps if conf_for(c, resolved)["type"] == "linkedin"], key=lambda c: last.get(c["name"], 0))
+
+    direct = [c for c in comps if conf_for(c, resolved)["type"] in LIST and conf_for(c, resolved)["type"] != "linkedin"]
+    fallback = [c for c in comps if conf_for(c, resolved)["type"] in ("linkedin", "nofeed")]
     with ThreadPoolExecutor(6) as ex: results = list(ex.map(fetch, direct))
-    empty = [x for x in results if x[3] is None and not x[2] and (x[1]["type"] == "eightfold" or not TOTALS.get(x[1].get("api")))]
-    if empty:                                # feed answers but is empty/wrong (e.g. wrong site name) -> use the job-board route instead
-        results = [x for x in results if x not in empty]; li += [x[0] for x in empty]
-    if ADZ_ON and li:
+
+    # A validated feed that is temporarily failing can use Adzuna as a secondary source.
+    # Keep its failure visible in logs; do not probe LinkedIn as an automatic fallback.
+    failed_direct = [x for x in results if x[3] and x[3] not in ("skipped", "nofeed")]
+    empty = [x for x in results if x[3] is None and not x[2] and
+             (x[1]["type"] == "eightfold" or (x[1].get("api") and not TOTALS.get(x[1].get("api"))))]
+    if empty:
+        results = [x for x in results if x not in empty]
+    fallback += [x[0] for x in failed_direct + empty]
+
+    # Only fetch Adzuna once per check batch; only use it when credentials are configured.
+    if ADZ_ON and fallback:
         if SELFTEST or now - last.get("__adzuna", 0) >= 25 * 60:
             try: ajobs, aerr = adzuna_jobs(), None; last["__adzuna"] = now
             except Exception as e: ajobs, aerr = [], (reason(e) if isinstance(e, requests.RequestException) else str(e)[:80])
-            for c in li:
+            for c in fallback:
                 mine = [j for j in ajobs if norm(j["company"]).startswith(norm(c["match"]))]
-                results.append((c, {"type": "adzuna"}, None if aerr else mine, aerr))
+                results.append((c, {"type": "adzuna", "fallback_for": conf_for(c, resolved)["type"]}, None if aerr else mine, aerr))
         else:
-            results += [(c, {"type": "adzuna"}, None, "skipped") for c in li]
-    elif not USE_LINKEDIN:
-        results += [(c, conf_for(c, resolved), None, "nofeed") for c in li]
-    else:                                   # LinkedIn: one at a time, 3s apart, stop at the first block
-        blocked = False
-        for i, c in enumerate(li):
-            r = conf_for(c, resolved)
-            if not SELFTEST and i >= LI_PER_RUN: results.append((c, r, None, "skipped")); continue
-            if blocked: results.append((c, r, None, "LinkedIn blocked this server (rate limit)")); continue
-            res = fetch(c); results.append(res)
-            if res[3] in ("HTTP 429", "HTTP 999", "HTTP 403"): blocked = True
-            time.sleep(3)
-
+            results += [(c, {"type": "adzuna"}, None, "skipped") for c in fallback]
+    else:
+        # Optional legacy LinkedIn fallback must be explicitly enabled; default is disabled.
+        if USE_LINKEDIN:
+            blocked = False
+            for i, c in enumerate(fallback):
+                r = dict(conf_for(c, resolved)); r.update(name=c["match"], match=c["match"])
+                if not SELFTEST and i >= LI_PER_RUN: results.append((c, r, None, "skipped")); continue
+                if blocked: results.append((c, r, None, "LinkedIn blocked this server (rate limit)")); continue
+                res = (c, r, None, "nofeed") if r["type"] == "nofeed" else fetch(c)
+                if res[3] in ("HTTP 429", "HTTP 999", "HTTP 403"): blocked = True
+                results.append(res)
+                time.sleep(3)
+        else:
+            results += [(c, conf_for(c, resolved), None, "nofeed") for c in fallback]
+    # Keep direct-source failures visible in self-test if a fallback also ran.
     if SELFTEST:
+        for c, r, jobs, err in failed_direct:
+            print(f"[source fallback] {c['name']} primary {r['type']} failed: {err}; attempted authorized fallback")
+
+    # Persist cooldowns so a rate-limited/access-restricted source is not hammered every 10 minutes.
+    for c, r, jobs, err in results:
+        if err == "HTTP 429": source_cooldowns[c["name"]] = max(source_cooldowns.get(c["name"], 0), now + 30 * 60)
+        elif err in ("HTTP 403", "HTTP 999"): source_cooldowns[c["name"]] = max(source_cooldowns.get(c["name"], 0), now + 6 * 60 * 60)
+    if SELFTEST:
+        save_db(db)
         ok, nofeed, bad, lik = [], [], [], []
         for c, r, jobs, err in results:
             if not err and r["type"] in ("linkedin", "adzuna"):
-                lik.append(f"🟣 {c['name']}: {len(jobs)} recent Java jobs in your cities, {sum(quick_ok(j) for j in jobs)} pass filter"); continue
-            if err == "nofeed": nofeed.append(f"⚪ {c['name']} - {resolved.get(c['name'], {}).get('why', '')}\n   {c['url']}")
-            elif err: bad.append(f"❌ {c['name']} ({LABEL[r['type']]}): {err}")
+                origin = f" (fallback for {r['fallback_for']})" if r.get("fallback_for") else ""
+                lik.append(f"🟣 {c['name']} [{LABEL[r['type']]}{origin}]: {len(jobs)} jobs read, {sum(quick_ok(j) for j in jobs)} pass title/location/age filter"); continue
+            if err in ("nofeed", "linkedin disabled"):
+                why = resolved.get(c['name'], {}).get('why', 'No validated automatic feed; LinkedIn fallback disabled by default')
+                nofeed.append(f"⚪ {c['name']} - {why}\n   Official careers page: {c['url']}")
+            elif err: bad.append(f"❌ {c['name']} ({LABEL.get(r['type'], r['type'])}): {err}")
             else:
                 tot = TOTALS.get(r.get("api")); mark = "⚠️" if (not jobs and not tot) else "✅"
                 ok.append(f"{mark} {c['name']} [{LABEL[r['type']]}]: {len(jobs)} jobs read" + (f" (site total {tot})" if tot is not None else "")
                           + f", {sum(quick_ok(j) for j in jobs)} pass title/location/age filter")
-        send(f"SELF-TEST: {len(comps)} companies in your list\n• direct career feeds: {len(ok)}\n• via Adzuna job board: {len(lik)}\n• failed to read: {len(bad)}\n• no automatic feed: {len(nofeed)}")
+        send(f"SELF-TEST: {len(comps)} companies in your list\n• validated direct feeds read: {len(ok)}\n• fallback feeds read (Adzuna/optional LinkedIn): {len(lik)}\n• failed source reads: {len(bad)}\n• no automatic feed / manual careers link: {len(nofeed)}\n• LinkedIn fallback: {'ENABLED' if USE_LINKEDIN else 'DISABLED (default)'}")
         for title, rows in ((f"{len(ok)} companies on direct feeds", ok),
                             (f"{len(lik)} covered via Adzuna job board (company has no direct feed; checked every ~30 min)", lik),
                             (f"{len(bad)} failed to read", bad),
@@ -605,7 +669,7 @@ def main():
     summary, fresh_n, run_seen, per_co = [], 0, set(), {}
     for c, r, jobs, err in results:
         n, src = c["name"], r["type"]
-        if err in ("skipped", "nofeed") or (err or "").startswith("LinkedIn blocked"): continue
+        if err in ("skipped", "nofeed", "linkedin disabled") or (err or "").startswith("LinkedIn blocked"): continue
         if err and src == "adzuna":
             fails["__adzuna"] = fails.get("__adzuna", 0) + 1; print(f"[Adzuna] FAILED x{fails['__adzuna']}: {err}")
             if fails["__adzuna"] == 12: send("⚠️ Adzuna job-board lookup has failed 12 runs in a row. Check ADZUNA_APP_ID / ADZUNA_APP_KEY secrets.")

@@ -168,4 +168,31 @@ n.jobs["ACC"] = [job("A1"), job("A2", title="Backend Engineer")]; quiet_run(1)
 assert alerts(n) and all("Overall experience (verified): 2-4 years" in m and "Skill-specific (not overall)" in m for m in alerts(n))
 assert not any(m.split("Overall experience (verified): ")[1].startswith(("3+", "2+ years of")) for m in alerts(n))
 print("E every alert shows the verified overall requirement; skill numbers appear only on their own line: OK")
-print("ALL TESTS PASSED")
+
+# ============ F. source fallback safety (offline) ============
+assert w.USE_LINKEDIN is False, "LinkedIn must be opt-in, never the default fallback"
+assert w.conf_for({"name": "NoFeedCo", "url": "https://careers.example/jobs", "match": "nofeedco"}, {})["type"] == "nofeed"
+
+# A Workday rate-limit during discovery must stop probing candidate tenants/sites and must not choose LinkedIn.
+old_candidates, old_ping = w.candidates, w.wd_ping
+calls = []
+w.candidates = lambda c: iter([{"type": "workday", "api": "https://one/jobs", "web": "https://one"},
+                                {"type": "workday", "api": "https://two/jobs", "web": "https://two"}])
+def limited(api):
+    calls.append(api)
+    import requests
+    response = types.SimpleNamespace(status_code=429)
+    raise requests.HTTPError("HTTP 429", response=response)
+w.wd_ping = limited
+result = w.discover({"name": "Rate Limited Co", "url": "https://careers.example/jobs"})
+assert result["type"] == "nofeed" and "HTTP 429" in result["why"] and len(calls) == 1, (result, calls)
+w.candidates, w.wd_ping = old_candidates, old_ping
+
+# Retry-After is honored but capped to avoid unbounded sleeping on malformed/hostile headers.
+resp = types.SimpleNamespace(headers={"Retry-After": "7"})
+assert 7 <= w.retry_delay(resp, 1) < 7.36
+resp = types.SimpleNamespace(headers={"Retry-After": "9999"})
+assert w.retry_delay(resp, 1) < 31
+print("F LinkedIn is opt-in; no-feed state is explicit; Workday 429 stops discovery; Retry-After is bounded: OK")
+
+print("ALL TESTS PASSED (including source fallback safety)")
