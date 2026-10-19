@@ -15,7 +15,8 @@ F, X, SK, HINTS = CFG["filters"], CFG["experience"], CFG["skills"], CFG.get("hin
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
       "Accept-Language": "en-US,en;q=0.9"}
 DRY, SELFTEST = "--dry" in sys.argv, "--selftest" in sys.argv
-MAX_ALERTS, MAX_DETAIL, LI_EVERY = 20, 12, 30 * 60
+USE_LINKEDIN = os.getenv("USE_LINKEDIN", "1") != "0"   # LinkedIn fallback for companies with no direct feed
+MAX_ALERTS, MAX_DETAIL, LI_EVERY, LI_PER_RUN = 20, 12, 30 * 60, 10
 
 def get(url, **kw):  return requests.get(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
 def post(url, **kw): return requests.post(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
@@ -42,21 +43,55 @@ def dedupe(jobs):
 
 # ======================= adapters: LIST[type](conf) -> jobs ; DETAIL[type](conf, job) -> (text, location) =======================
 def wd_ping(api):
-    r = post(api + "/jobs", json={"appliedFacets": {}, "limit": 1, "offset": 0, "searchText": "java"}, timeout=8)
-    return r.status_code == 200 and "jobPostings" in r.json()
+    for attempt in (1, 2):
+        try:
+            r = post(api + "/jobs", json={"appliedFacets": {}, "limit": 1, "offset": 0, "searchText": ""}, timeout=25)
+            r.raise_for_status()
+            return "jobPostings" in r.json()
+        except requests.Timeout:
+            if attempt == 2: raise
+TOTALS = {}
+def wd_req(api, body):
+    for attempt in range(4):                       # Workday rate-limits shared servers: wait and retry
+        resp = post(api + "/jobs", json=body, timeout=40)
+        if resp.status_code == 429: time.sleep(5 * (attempt + 1)); continue
+        resp.raise_for_status(); return resp.json()
+    resp.raise_for_status()
+def wd_location_facets(facets):
+    """find the ids of the Hyderabad / Bangalore filters inside Workday's own facet list"""
+    found = {}
+    def walk(items, param):
+        for it in items or []:
+            p = it.get("facetParameter") or param
+            if it.get("values"): walk(it["values"], p)
+            elif it.get("id") and p and any(k in (it.get("descriptor") or "").lower() for k in F["locations"]):
+                found.setdefault(p, []).append(it["id"])
+    walk(facets, None)
+    return found
 def wd_list(r):
-    out = []
-    for q in F["search_terms"]:
-        for off in (0, 20):
-            resp = post(r["api"] + "/jobs", json={"appliedFacets": {}, "limit": 20, "offset": off, "searchText": q})
-            resp.raise_for_status()
-            posts = resp.json().get("jobPostings", [])
-            for j in posts:
-                p, bf = j["externalPath"], (j.get("bulletFields") or [])
-                out.append(dict(id=p, req=(bf[0] if bf else p.rsplit("_", 1)[-1]), title=j["title"],
-                                loc=j.get("locationsText", ""), url=r["web"] + p,
-                                posted=j.get("postedOn", ""), age=age_days(j.get("postedOn", ""))))
-            if len(posts) < 20: break
+    """newest-first with the city filter applied by Workday itself; falls back to scanning newest jobs worldwide"""
+    first = wd_req(r["api"], {"appliedFacets": {}, "limit": 20, "offset": 0, "searchText": ""})
+    TOTALS[r["api"]] = first.get("total")
+    try: facets = wd_location_facets(first.get("facets"))
+    except Exception: facets = {}
+    out, page = [], 0
+    while page < 15:
+        body = {"appliedFacets": facets, "limit": 20, "offset": page * 20, "searchText": ""}
+        try: data = first if (page == 0 and not facets) else wd_req(r["api"], body)
+        except requests.HTTPError:
+            if facets: facets = {}; page = 0; out = []; continue     # facet filter rejected -> plain newest-first scan
+            raise
+        posts = data.get("jobPostings", [])
+        ages = []
+        for j in posts:
+            p = j.get("externalPath")
+            if not p: continue
+            bf = j.get("bulletFields") or []
+            ag = age_days(j.get("postedOn", "")); ages.append(ag)
+            out.append(dict(id=p, req=(bf[0] if bf else p.rsplit("_", 1)[-1]), title=j.get("title", ""),
+                            loc=j.get("locationsText", ""), url=r["web"] + p, posted=j.get("postedOn", ""), age=ag))
+        if len(posts) < 20 or (ages and all(a is not None and a > F["max_age_days"] for a in ages)): break
+        page += 1
     return dedupe(out)
 def wd_detail(r, j):
     d = get(r["api"] + j["id"]).json()["jobPostingInfo"]
@@ -120,9 +155,10 @@ def oh_detail(r, j):
     return clean(it.get("ExternalDescriptionStr", "") + " " + it.get("ExternalQualificationsStr", "")), None
 
 def li_list(r):
-    kw = f"{r['name']} java spring boot developer"
-    resp = get("https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobs/search",
-               params={"keywords": kw, "location": "India", "f_TPR": "r1209600", "start": 0})
+    # NOTE: the real guest endpoint is seeMoreJobPostings (my first version used a wrong name -> 404)
+    resp = get("https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search",
+               params={"keywords": f"{r['name']} java developer", "location": "India",
+                       "f_TPR": "r172800", "sortBy": "DD", "start": 0})
     resp.raise_for_status()
     out = []
     for card in resp.text.split("<li>")[1:]:
@@ -130,15 +166,20 @@ def li_list(r):
         title = re.search(r'base-search-card__title[^>]*>\s*(.*?)\s*</h3>', card, re.S)
         comp = re.search(r'base-search-card__subtitle[^>]*>(.*?)</h4>', card, re.S)
         loc = re.search(r'job-search-card__location[^>]*>\s*(.*?)\s*</span>', card, re.S)
+        when = re.search(r'datetime="(\d{4}-\d{2}-\d{2})', card)
         if not (href and title and comp): continue
-        if r["match"] not in clean(comp.group(1)).lower(): continue
+        norm = lambda x: re.sub(r"[^a-z0-9]", "", x.lower())
+        if not norm(clean(comp.group(1))).startswith(norm(r["match"])): continue
         link = html.unescape(href.group(1)).split("?")[0]
         jid = re.search(r"(\d{6,})$", link)
         out.append(dict(id=jid.group(1) if jid else link, req=jid.group(1) if jid else "", title=clean(title.group(1)),
-                        loc=clean(loc.group(1)) if loc else "", url=link, posted="", age=None))
+                        loc=clean(loc.group(1)) if loc else "", url=link, posted=when.group(1) if when else "",
+                        age=iso_age(when.group(1) + "T00:00:00+00:00") if when else None))
     return dedupe(out)
 def li_detail(r, j):
+    time.sleep(1.5)
     resp = get(f"https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{j['id']}")
+    resp.raise_for_status()
     m = re.search(r'show-more-less-html__markup[^>]*>(.*?)</div>', resp.text, re.S)
     return clean(m.group(1)) if m else "", None
 
@@ -184,8 +225,14 @@ def candidates(c):
     except Exception:
         pass
 
+def reason(e):
+    if isinstance(e, requests.HTTPError): return f"HTTP {e.response.status_code}"
+    if isinstance(e, requests.Timeout): return "timeout"
+    if isinstance(e, requests.ConnectionError): return "no such host"
+    return type(e).__name__
+
 def discover(c):
-    seen_c = set()
+    seen_c, why = set(), {}
     for cand in candidates(c):
         key = json.dumps(cand, sort_keys=True)
         if key in seen_c: continue
@@ -196,9 +243,11 @@ def discover(c):
             else:
                 LIST[cand["type"]](cand)
             return cand
-        except Exception:
+        except Exception as e:
+            k = reason(e); why[k] = why.get(k, 0) + 1
             continue
-    return dict(type="linkedin")
+    real = {k: v for k, v in why.items() if k != "no such host"}
+    return dict(type="linkedin", why=", ".join(f"{k} x{v}" for k, v in sorted(real.items(), key=lambda x: -x[1])[:3]) or "no job feed found on its career page")
 
 # ======================= fit logic =======================
 def loc_ok(s): return any(k in (s or "").lower() for k in F["locations"])
@@ -231,15 +280,23 @@ def parse_years(text):
         return ("ok" if n <= mx else "no"), f"{n}+ yrs"
     return "unknown", "not stated"
 
-SKILLS = {"Spring Boot": r"spring\s*boot|\bspring\b", "Microservices": r"micro-?services?", "REST APIs": r"\brest(?:ful)?\b",
-          "Multithreading": r"multi-?thread|concurren", "Kafka": r"\bkafka\b", "Hibernate/JPA": r"hibernate|\bjpa\b"}
+SKILLS = [("Spring Boot", r"spring\s*boot"), ("Spring", r"\bspring\b(?!\s*boot)"), ("Microservices", r"micro-?services?"),
+          ("REST APIs", r"\brest(?:ful)?\b"), ("Multithreading", r"multi-?thread|concurren"), ("Kafka", r"\bkafka\b"),
+          ("Hibernate/JPA", r"hibernate|\bjpa\b"), ("SQL/DB", r"\bsql\b|mysql|postgres|pl/?sql|oracle database|oracle db"),
+          ("NoSQL", r"mongodb|cassandra|dynamodb|\bnosql\b"), ("Redis", r"\bredis\b"), ("RabbitMQ/MQ", r"rabbitmq|activemq|ibm mq"),
+          ("Docker", r"\bdocker\b"), ("Kubernetes", r"kubernetes|\bk8s\b"), ("AWS", r"\baws\b|amazon web services"),
+          ("Azure", r"\bazure\b"), ("GCP", r"\bgcp\b|google cloud"), ("CI/CD", r"ci/cd|jenkins|gitlab ci|github actions"),
+          ("Git", r"\bgit\b"), ("Maven/Gradle", r"\bmaven\b|\bgradle\b"), ("JUnit/Mockito", r"junit|mockito"),
+          ("Design Patterns", r"design patterns?"), ("DSA", r"data structures|algorithms"),
+          ("System Design", r"system design|distributed systems?"), ("GraphQL", r"graphql"), ("Python", r"\bpython\b"),
+          ("Angular/React", r"\bangular\b|\breact\b"), ("Agile", r"\bagile\b|\bscrum\b")]
 def analyze(j, text, locfull):
     """-> (alert?, info dict)"""
     if locfull and not loc_ok(locfull): return False, {}
     blob = (j["title"] + " " + (text or "")).lower()
     if text:
         if not re.search(r"\bjava\b", blob): return False, {}
-        hits = [k for k, p in SKILLS.items() if re.search(p, blob)]
+        hits = [k for k, p in SKILLS if re.search(p, blob)][:14]
         if len(hits) < SK["min_other_hits"]: return False, {}
         verdict, label = parse_years(text)
         if verdict == "no" or (verdict == "unknown" and not X["send_if_unknown"]): return False, {}
@@ -265,7 +322,7 @@ def send(text):
 def fmt(name, j, info):
     lines = [f"🆕 {name} - {j['title']}", f"📍 {j['loc'] or 'see posting'}",
              f"🧪 Experience: {info['exp']}"]
-    if info["skills"]: lines.append("🛠 " + ", ".join(info["skills"]))
+    if info["skills"]: lines.append("🛠 Skills asked: " + ", ".join(info["skills"]))
     lines.append(f"🆔 Job ID: {j.get('req') or j['id']}")
     if j.get("posted"): lines.append(f"🕒 Posted: {j['posted']}")
     lines.append(f"🔗 Apply: {j['url']}")
@@ -293,26 +350,45 @@ def main():
 
     def fetch(c):
         r = conf_for(c, resolved)
-        if r["type"] == "linkedin" and not SELFTEST and now - last.get(c["name"], 0) < LI_EVERY - 60: return c, r, None, "skipped"
         try: return c, r, LIST[r["type"]](r), None
-        except Exception as e: return c, r, None, str(e)[:120]
-    with ThreadPoolExecutor(8) as ex: results = list(ex.map(fetch, comps))
+        except Exception as e: return c, r, None, (reason(e) if isinstance(e, requests.RequestException) else str(e)[:100])
+    direct = [c for c in comps if conf_for(c, resolved)["type"] != "linkedin"]
+    li = sorted([c for c in comps if conf_for(c, resolved)["type"] == "linkedin"], key=lambda c: last.get(c["name"], 0))
+    with ThreadPoolExecutor(6) as ex: results = list(ex.map(fetch, direct))
+    if not USE_LINKEDIN:
+        results += [(c, conf_for(c, resolved), None, "nofeed") for c in li]
+    else:                                   # one at a time, 3s apart, stop at the first block (avoids a ban)
+        blocked = False
+        for i, c in enumerate(li):
+            r = conf_for(c, resolved)
+            if not SELFTEST and i >= LI_PER_RUN: results.append((c, r, None, "skipped")); continue
+            if blocked: results.append((c, r, None, "LinkedIn blocked this server (rate limit)")); continue
+            res = fetch(c); results.append(res)
+            if res[3] in ("HTTP 429", "HTTP 999", "HTTP 403"): blocked = True
+            time.sleep(3)
 
     if SELFTEST:
-        ok, fb, bad = [], [], []
+        ok, nofeed, bad, lik = [], [], [], []
         for c, r, jobs, err in results:
-            if err: bad.append(f"❌ {c['name']} ({LABEL[r['type']]}): {err}")
-            elif r["type"] == "linkedin": fb.append(f"🟡 {c['name']}: {len(jobs)} jobs seen")
-            else: ok.append(f"✅ {c['name']} [{LABEL[r['type']]}]: {len(jobs)} jobs, {sum(quick_ok(j) for j in jobs)} pass title/location filter")
-        for title, rows in ((f"SELF-TEST: {len(ok)} companies on fast direct feeds", ok),
-                            (f"{len(fb)} on slower LinkedIn fallback (30+ min delay)", fb), (f"{len(bad)} failed", bad)):
-            if rows: send(title + "\n\n" + "\n".join(rows))
+            if not err and r["type"] == "linkedin": lik.append(f"🟡 {c['name']}: {len(jobs)} recent jobs seen, {sum(quick_ok(j) for j in jobs)} pass filter"); continue
+            if err == "nofeed": nofeed.append(f"⚪ {c['name']} - {resolved.get(c['name'], {}).get('why', '')}\n   {c['url']}")
+            elif err: bad.append(f"❌ {c['name']} ({LABEL[r['type']]}): {err}")
+            else:
+                tot = TOTALS.get(r.get("api")); mark = "⚠️" if (not jobs and not tot) else "✅"
+                ok.append(f"{mark} {c['name']} [{LABEL[r['type']]}]: {len(jobs)} jobs read" + (f" (site total {tot})" if tot is not None else "")
+                          + f", {sum(quick_ok(j) for j in jobs)} pass title/location/age filter")
+        for title, rows in ((f"SELF-TEST: {len(ok)} companies on direct feeds", ok),
+                            (f"{len(lik)} via LinkedIn fallback (checked in rotation, ~30 min delay)", lik),
+                            (f"{len(bad)} failed to read", bad),
+                            (f"{len(nofeed)} with NO automatic feed (check these by hand or send me their job-search URL)", nofeed)):
+            for i in range(0, len(rows), 25):
+                if rows: send(title + "\n\n" + "\n".join(rows[i:i + 25]))
         return
 
     queue, summary = [], []
     for c, r, jobs, err in results:
         n = c["name"]
-        if err == "skipped": continue
+        if err in ("skipped", "nofeed") or (err or "").startswith("LinkedIn blocked"): continue
         if err:
             fails[n] = fails.get(n, 0) + 1; print(f"[{n}] FAILED x{fails[n]}: {err}")
             if fails[n] == 12: send(f"⚠️ {n}: career feed failed 12 runs in a row. Run the self-test or fix its entry in companies.yaml.")
@@ -328,16 +404,35 @@ def main():
             try:
                 text, locfull = (j["desc"], None) if j.get("desc") else (DETAIL[r["type"]](r, j) if r["type"] in DETAIL else ("", None))
             except Exception as e:
-                text, locfull = "", None; print(f"[{n}] detail failed: {e}")
+                key = f"{n}|{j['id']}"; df = state.setdefault("detail_fail", {}); df[key] = df.get(key, 0) + 1
+                print(f"[{n}] detail failed ({df[key]}): {e}")
+                if df[key] < 3: continue                      # try again next run, don't mark as seen
+                text, locfull = "", None
             good, info = analyze(j, text, locfull)
             if good: queue.append((n, j, info))
             else: seen[f"{n}|{j['id']}"] = now
         summary.append(f"{n}: {len(jobs)} jobs, {len(new)} unseen, {len(cand)} candidates")
 
     sent = 0
+    log = state.setdefault("sent_ts", [])
     for n, j, info in queue[:MAX_ALERTS]:
-        if send(fmt(n, j, info)): seen[f"{n}|{j['id']}"] = now; sent += 1
-    if len(queue) > MAX_ALERTS: print(f"{len(queue) - MAX_ALERTS} more alerts wait for the next run")
+        if send(fmt(n, j, info)): seen[f"{n}|{j['id']}"] = now; sent += 1; log.append(now)
+    state["sent_ts"] = [t for t in log if now - t < 2 * 86400]
+    # "no jobs" report: if nothing was sent for N hours, say so (quiet at night)
+    R = CFG.get("report", {})
+    every = R.get("every_hours", 4) * 3600
+    ist = dt.datetime.utcfromtimestamp(now) + dt.timedelta(hours=5, minutes=30)
+    quiet = ist.hour >= R.get("quiet_start", 23) or ist.hour < R.get("quiet_end", 7)
+    lr = state.get("last_report")
+    if lr is None: state["last_report"] = now
+    elif now - lr >= every - 120 and not quiet and os.getenv("TELEGRAM_BOT_TOKEN"):
+        if not any(t > lr for t in state["sent_ts"]):
+            live = sum(1 for _, _, jobs, err in results if jobs is not None)
+            hrs = max(1, round((now - lr) / 3600))
+            if send(f"🕓 No new matching jobs in the last {hrs} hours. Bot is running and checked {live} company feeds."):
+                state["last_report"] = now
+        else:
+            state["last_report"] = now
     for k in [k for k, t in seen.items() if now - t > 120 * 86400]: del seen[k]
     save(SEEN_F, state)
     print("\n".join(summary)); print(f"alerts sent: {sent}")

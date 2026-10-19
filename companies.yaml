@@ -6,7 +6,7 @@ filters:
   include_title: [java, backend, back end, back-end, software engineer,
                   software development engineer, sde, software developer,
                   member of technical staff, mts, application developer,
-                  developer, engineer]
+                  developer, engineer, programmer, consultant]
   # ... and none of these:
   exclude_title: [senior, sr., "sr ", lead, principal, staff, architect, manager,
                   director, head of, intern, "vp ", vice president, distinguished,
@@ -16,8 +16,13 @@ filters:
                   mainframe, sap abap, salesforce, .net, python developer,
                   data engineer, machine learning, hardware, firmware, asic, rtl]
   locations: [bangalore, bengaluru, hyderabad]
-  max_age_days: 14          # ignore postings older than this (also limits the first-run backlog)
-  search_terms: [java, software engineer, backend]
+  max_age_days: 2           # only jobs posted today / yesterday / 2 days ago (older ones are ignored)
+  search_terms: [java, java hyderabad, java bengaluru, software engineer hyderabad, software engineer bengaluru, backend]
+
+report:
+  every_hours: 4        # if no job alert was sent for this long, you get a "no new jobs" message
+  quiet_start: 23       # no such messages between 11pm and 7am IST
+  quiet_end: 7
 
 experience:
   my_years: 2               # your experience
@@ -27,7 +32,7 @@ experience:
 
 skills:
   must_have: Java
-  min_other_hits: 1         # plus at least this many of: Spring Boot, Microservices, REST, Multithreading, Kafka, Hibernate/JPA
+  min_other_hits: 0         # 0 = any job that asks for Java is OK (set 1 to also require Spring/REST/etc.)
 
 # Verified automatically on first run (wrong guesses are harmless).
 hints:
@@ -53,6 +58,7 @@ hints:
   Honeywell:           {type: workday, tenant: honeywell, sites: [Honeywell]}
   Broadridge:          {type: workday, tenant: broadridge, sites: [Careers, External]}
   Synchrony:           {type: workday, tenant: synchronyfinancial, sites: [careers]}
+  Oracle — other engineering teams: {type: oraclehcm, host: eeho.fa.us2.oraclecloud.com, site: CX_45001}
   JPMorgan Chase:      {type: oraclehcm, host: jpmc.fa.oraclecloud.com, site: CX_1001}
   PayPal:              {type: eightfold, sub: paypal, domain: paypal.com}
   Thoughtworks:        {type: greenhouse, board: thoughtworks}
@@ -98,7 +104,7 @@ companies:
   - {name: "State Street", url: "https://www.statestreet.com/careers", match: "state street", tier: "Tier 2"}
   - {name: "Capital One", url: "https://www.capitalonecareers.com/", match: "capital one", tier: "Tier 2"}
   - {name: "American Express", url: "https://www.americanexpress.com/en-in/careers/", match: "american express", tier: "Tier 2"}
-  - {name: "Infosys Finacle", url: "https://www.infosys.com/careers/", match: "infosys finacle", tier: "Tier 2"}
+  - {name: "Infosys Finacle", url: "https://www.infosys.com/careers/", match: "infosys", tier: "Tier 2"}
   - {name: "Honeywell", url: "https://careers.honeywell.com/", match: "honeywell", tier: "Tier 2"}
   - {name: "Synchrony", url: "https://www.synchronycareers.com/", match: "synchrony", tier: "Tier 2"}
   - {name: "HighRadius", url: "https://www.highradius.com/about/career/", match: "highradius", tier: "Tier 2"}

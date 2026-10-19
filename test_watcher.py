@@ -16,7 +16,7 @@ print("experience parsing OK")
 j = dict(id="1", title="Software Engineer II", loc="Hyderabad", req="R1", url="u", posted="Today", age=0)
 assert w.analyze(j, "2-4 years experience Java Spring Boot microservices REST", None)[0]
 assert not w.analyze(j, "2-4 years experience Python Django", None)[0]                      # no Java
-assert not w.analyze(j, "2-4 years Java only role", None)[0]                                # no 2nd skill
+assert w.analyze(j, "2-4 years Java only role", None)[0]                                    # Java alone is enough now
 assert not w.analyze(j, "5-8 years experience Java Spring Boot", None)[0]                   # too senior
 assert not w.analyze(j, "2-4 years experience Java Spring Boot", "Pune, India")[0]          # wrong city
 assert not w.analyze(j, "JavaScript React Node experience 2-4 years", None)[0]              # javascript != java
