@@ -46,34 +46,37 @@ skills:
   must_have: Java
   min_other_hits: 0         # 0 = any job that asks for Java is OK (set 1 to also require Spring/REST/etc.)
 
-# Verified automatically on first run (wrong guesses are harmless).
+# Feed overrides are used only when a company does not expose its ATS link on the
+# careers page. Prefer exact public endpoints; do not guess Workday tenants/sites.
 hints:
-  Salesforce:          {type: workday, tenant: salesforce, dc: wd12, sites: [External_Career_Site]}
-  Mastercard:          {type: workday, tenant: mastercard, sites: [CorporateCareers]}
-  Thomson Reuters:     {type: workday, tenant: thomsonreuters, sites: [External_Career_Site]}
-  Target:              {type: workday, tenant: target, dc: wd5, sites: [targetcareers]}
-  Walmart Global Tech: {type: workday, tenant: walmart, dc: wd5, sites: [WalmartExternal]}
-  Dell Technologies:   {type: workday, tenant: dell, dc: wd1, sites: [External]}
-  Wells Fargo:         {type: workday, tenant: wellsfargo, sites: [WellsFargoJobs]}
-  Adobe:               {type: workday, tenant: adobe, sites: [external_experienced]}
-  Nutanix:             {type: workday, tenant: nutanix, sites: [Nutanix_Careers, External, Careers]}
-  Autodesk:            {type: workday, tenant: autodesk, sites: [Ext]}
-  NetApp:              {type: workday, tenant: netapp, dc: wd1, sites: [NetAppCareers]}
-  Informatica:         {type: workday, tenant: informatica, sites: [External]}
-  Teradata:            {type: workday, tenant: teradata, sites: [Teradata_Careers, External]}
-  Qualcomm:            {type: workday, tenant: qualcomm, sites: [External]}
-  NVIDIA:              {type: workday, tenant: nvidia, sites: [NVIDIAExternalCareerSite]}
-  AMD:                 {type: workday, tenant: amd, dc: wd1, sites: [External]}
-  FIS:                 {type: workday, tenant: fis, sites: [SearchJobs]}
-  State Street:        {type: workday, tenant: statestreet, sites: [Global]}
-  Capital One:         {type: workday, tenant: capitalone, sites: [Capital_One]}
-  Honeywell:           {type: workday, tenant: honeywell, sites: [Honeywell]}
-  Broadridge:          {type: workday, tenant: broadridge, sites: [Careers, External]}
-  Synchrony:           {type: workday, tenant: synchronyfinancial, sites: [careers]}
+  Dell Technologies:   {type: oraclehcm, host: enterpriseplatform.dell.com, site: CX_1001}
+  Honeywell:           {type: oraclehcm, host: ibqbjb.fa.ocs.oraclecloud.com, site: CX_1}
   Oracle — other engineering teams: {type: oraclehcm, host: eeho.fa.us2.oraclecloud.com, site: CX_45001}
   JPMorgan Chase:      {type: oraclehcm, host: jpmc.fa.oraclecloud.com, site: CX_1001}
   PayPal:              {type: eightfold, sub: paypal, domain: paypal.com}
   Thoughtworks:        {type: greenhouse, board: thoughtworks}
+  NetApp:              {type: eightfold, sub: netapp, domain: netapp.com}
+  Nutanix:             {type: careerhtml, url: "https://careers.nutanix.com/en/locations/india/"}
+  SAP:                 {type: careerhtml, url: "https://careers.sap.com/go/India/8807201/"}
+  Experian:            {type: careerhtml, url: "https://jobs.experian.com/jobs"}
+  EY GDS:              {type: careerhtml, url: "https://careers.ey.com/ey/search/?createNewAlert=false&q=&locationsearch=India&optionsFacetsDD_country=&optionsFacetsDD_customfield1=&locale=en_US"}
+  Deloitte USI:        {type: careerhtml, url: "https://usijobs.deloitte.com/en_US/careersUSI/SearchJobs/feed/?jobRecordsPerPage=50&"}
+  Infosys Finacle:     {type: careerhtml, url: "https://career.infosys.com/joblist?countrycode=IN&companyhiringtype=IL"}
+  Pegasystems:         {type: careerhtml, url: "https://www.pega.com/about/careers/job-listings"}
+  Intuit:              {type: careerhtml, url: "https://jobs.intuit.com/"}
+  # The official careers page embeds this Greenhouse board; its public API returned 52 listings in validation.
+  Commvault:           {type: greenhouse, board: commvault}
+  Flipkart:            {type: careerhtml, url: "https://flipkart.turbohire.co/careerpage/4d757ba0-3d57-448a-b82c-238ed87ac90f"}
+  Publicis Sapient:    {type: careerhtml, url: "https://careers.publicissapient.com/job-search"}
+  Synchrony:           {type: careerhtml, url: "https://www.synchronycareers.com/search-jobs"}
+  HighRadius:          {type: careerhtml, url: "https://www.highradius.com/about/career/"}
+  Goldman Sachs:       {type: careerhtml, url: "https://higher.gs.com/results"}
+  NVIDIA:              {type: careerhtml, url: "https://jobs.nvidia.com/careers"}
+  Autodesk:            {type: careerhtml, url: "https://jobs.autodesk.com/careers"}
+  Siemens:             {type: careerhtml, url: "https://www.siemens.com/en-us/company/jobs/"}
+  FIS:                 {type: careerhtml, url: "https://careers.fisglobal.com/us/en"}
+  Mahindra Comviva:    {type: careerhtml, url: "https://www.comviva.com/careers/explore-opportunity/"}
+  Ascendion:           {type: careerhtml, url: "https://careers.ascendion.com/jobposting/region/apac"}
 
 # Your 53 companies (from your Career Hub). Add more lines the same way.
 companies:

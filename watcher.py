@@ -6,7 +6,11 @@
 """
 import json, os, re, sys, time, html, pathlib, datetime as dt, random, email.utils
 from concurrent.futures import ThreadPoolExecutor
+from urllib.parse import urlparse, urljoin, parse_qs
 import requests, yaml
+
+try: sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception: pass
 
 ROOT = pathlib.Path(__file__).parent
 SEEN_F, RES_F = ROOT/"state"/"seen.json", ROOT/"state"/"resolved.json"
@@ -15,8 +19,7 @@ F, X, SK, HINTS = CFG["filters"], CFG["experience"], CFG["skills"], CFG.get("hin
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
       "Accept-Language": "en-US,en;q=0.9"}
 DRY, SELFTEST = "--dry" in sys.argv, "--selftest" in sys.argv
-USE_LINKEDIN = os.getenv("USE_LINKEDIN", "0") == "1"   # opt-in only; LinkedIn is not a default fallback
-MAX_ALERTS, MAX_DETAIL, LI_EVERY, LI_PER_RUN = 20, 12, 30 * 60, 10
+MAX_ALERTS, MAX_DETAIL = 20, 12
 
 def get(url, **kw):  return requests.get(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
 def post(url, **kw): return requests.post(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
@@ -190,35 +193,6 @@ def oh_detail(r, j):
     it = (d.get("items") or [{}])[0]
     return clean(it.get("ExternalDescriptionStr", "") + " " + it.get("ExternalQualificationsStr", "")), None
 
-def li_list(r):
-    # NOTE: the real guest endpoint is seeMoreJobPostings (my first version used a wrong name -> 404)
-    resp = get("https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search",
-               params={"keywords": f"{r['name']} java developer", "location": "India",
-                       "f_TPR": "r172800", "sortBy": "DD", "start": 0})
-    resp.raise_for_status()
-    out = []
-    for card in resp.text.split("<li>")[1:]:
-        href = re.search(r'base-card__full-link[^>]*href="([^"]+)"', card)
-        title = re.search(r'base-search-card__title[^>]*>\s*(.*?)\s*</h3>', card, re.S)
-        comp = re.search(r'base-search-card__subtitle[^>]*>(.*?)</h4>', card, re.S)
-        loc = re.search(r'job-search-card__location[^>]*>\s*(.*?)\s*</span>', card, re.S)
-        when = re.search(r'datetime="(\d{4}-\d{2}-\d{2})', card)
-        if not (href and title and comp): continue
-        if not norm(clean(comp.group(1))).startswith(norm(r["match"])): continue
-        link = html.unescape(href.group(1)).split("?")[0]
-        jid = re.search(r"(\d{6,})$", link)
-        out.append(dict(id=jid.group(1) if jid else link, req=jid.group(1) if jid else "", title=clean(title.group(1)),
-                        loc=clean(loc.group(1)) if loc else "", url=link, posted=when.group(1) if when else "",
-                        age=iso_age(when.group(1) + "T00:00:00+00:00") if when else None))
-    return dedupe(out)
-def li_detail(r, j):
-    time.sleep(1.5)
-    resp = get(f"https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{j['id']}")
-    resp.raise_for_status()
-    m = re.search(r'show-more-less-html__markup[^>]*>(.*?)</div>', resp.text, re.S)
-    return clean(m.group(1)) if m else "", None
-
-
 def page_text(url):
     """full job text from an employer page: schema.org JobPosting JSON-LD if present, else the visible page text"""
     r = get(url, timeout=25, allow_redirects=True); r.raise_for_status()
@@ -228,6 +202,90 @@ def page_text(url):
         for d in (data if isinstance(data, list) else [data]):
             if isinstance(d, dict) and d.get("@type") == "JobPosting" and d.get("description"): return clean(d["description"])
     return clean(re.sub(r"(?is)<(script|style|noscript).*?</\1>", " ", r.text))[:30000]
+
+def ld_job_posts(blob):
+    """Read schema.org JobPosting records embedded in an employer's own page."""
+    found = []
+    for m in re.finditer(r'<script[^>]+application/ld\+json[^>]*>(.*?)</script>', blob, re.S | re.I):
+        try: data = json.loads(html.unescape(m.group(1)))
+        except Exception: continue
+        stack = data if isinstance(data, list) else [data]
+        while stack:
+            item = stack.pop()
+            if isinstance(item, list): stack.extend(item); continue
+            if not isinstance(item, dict): continue
+            if isinstance(item.get("@graph"), list): stack.extend(item["@graph"])
+            kinds = item.get("@type", [])
+            if isinstance(kinds, str): kinds = [kinds]
+            if "JobPosting" in kinds: found.append(item)
+    return found
+
+def ld_location(j):
+    vals = j.get("jobLocation") or j.get("jobLocationType") or []
+    if isinstance(vals, dict): vals = [vals]
+    out = []
+    for x in vals if isinstance(vals, list) else []:
+        addr = x.get("address", {}) if isinstance(x, dict) else {}
+        if isinstance(addr, dict):
+            out += [str(addr.get(k, "")) for k in ("addressLocality", "addressRegion", "addressCountry")]
+    return " ".join(v for v in out if v)
+
+def careerhtml_list(r):
+    """Extract job cards or JobPosting JSON-LD from a public employer career listing."""
+    resp = get(r["url"], timeout=35, allow_redirects=True); resp.raise_for_status()
+    body, base, out = resp.text, resp.url, []
+    for j in ld_job_posts(body):
+        url = urljoin(base, j.get("url") or j.get("sameAs") or "")
+        if not url: continue
+        ident = j.get("identifier") or {}
+        req = ident.get("value", "") if isinstance(ident, dict) else str(ident)
+        date = str(j.get("datePosted") or "")
+        out.append(dict(id=str(req or url), req=str(req or ""), title=clean(j.get("title", "")),
+                        loc=ld_location(j), url=url, posted=date[:10], age=iso_age(date) if date else None,
+                        desc=clean(j.get("description", ""))))
+    if not out:
+        for m in re.finditer(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', body, re.S | re.I):
+            href, title = html.unescape(m.group(1)), clean(m.group(2))
+            path = urlparse(href).path.lower()
+            if path.startswith("/jobposting/region/"): continue
+            # Job boards commonly put city, requisition, and slug in separate
+            # path segments (for example /job/hyderabad/title/board/id).
+            route = re.search(r"/(?:job|jobs|jobposting|jobdetail)/[^/?#]+(?:/[^/?#]+){0,5}/?$", path, re.I)
+            # Some employers use /about/careers/<numeric requisition>/<slug>.
+            # This is a real posting route, unlike the careers landing/search pages.
+            if not route:
+                route = re.search(r"/careers/(\d{4,})/([^/?#]+)/?$", path, re.I)
+            query = parse_qs(urlparse(href).query)
+            has_id = bool(re.search(r"\d{4,}|(?:jid|job|req)[-_]?\d+", href, re.I) or query.get("jobid") or query.get("reqid"))
+            if not route and not (query.get("jobid") or query.get("reqid")): continue
+            if len(title) < 4 or len(title) > 180: continue
+            if norm(title) in {"jobs", "savedjobs", "login", "returninguserlogin", "here", "search", "0"}: continue
+            if not has_id and not any(x in title.lower() for x in ("engineer", "developer", "analyst", "architect", "consultant", "manager", "specialist", "scientist", "designer", "programmer")): continue
+            url = urljoin(base, href.split("#")[0])
+            tail = urlparse(url).path.rstrip("/").rsplit("/", 1)[-1]
+            req = next((query[k][0] for k in ("jobid", "reqid") if query.get(k)), "")
+            req = req or tail
+            start = max(0, m.start() - 1800); end = min(len(body), m.end() + 2400)
+            card = clean(body[start:end])
+            loc = next((x for x in ("Bengaluru", "Bangalore", "Hyderabad") if x.lower() in card.lower()), "")
+            dm = re.search(r"(?i)(today|yesterday|\d+\+?\s*days?(?:\s+ago)?|\d{4}-\d{2}-\d{2})", card)
+            posted = dm.group(1) if dm else ""
+            age = age_days(posted)
+            if age is None and re.fullmatch(r"\d{4}-\d{2}-\d{2}", posted): age = iso_age(posted + "T00:00:00+00:00")
+            out.append(dict(id=req, req=req, title=title, loc=loc, url=url, posted=posted, age=age))
+    out = dedupe(out)
+    if not out: raise ValueError("no public job cards found on the employer's career listing")
+    return out
+
+def careerhtml_detail(r, j):
+    resp = get(j["url"], timeout=35, allow_redirects=True); resp.raise_for_status()
+    posts = ld_job_posts(resp.text)
+    if posts:
+        item = posts[0]
+        return clean(item.get("description", "")), ld_location(item)
+    text = clean(re.sub(r"(?is)<(script|style|noscript).*?</\1>", " ", resp.text))[:30000]
+    loc = next((x for x in ("Bengaluru", "Bangalore", "Hyderabad") if x.lower() in text.lower()), None)
+    return text, loc
 def adz_detail(r, j):
     try:
         t = page_text(j["url"])
@@ -256,23 +314,21 @@ def adzuna_jobs():
     return dedupe(out)
 
 LIST = dict(workday=wd_list, greenhouse=gh_list, lever=lv_list, smartrecruiters=sr_list,
-            eightfold=ef_list, oraclehcm=oh_list, linkedin=li_list)
-DETAIL = dict(workday=wd_detail, smartrecruiters=sr_detail, oraclehcm=oh_detail, linkedin=li_detail, adzuna=adz_detail)
+            eightfold=ef_list, oraclehcm=oh_list, careerhtml=careerhtml_list)
+DETAIL = dict(workday=wd_detail, smartrecruiters=sr_detail, oraclehcm=oh_detail,
+              careerhtml=careerhtml_detail, adzuna=adz_detail)
 LABEL = dict(workday="Workday", greenhouse="Greenhouse", lever="Lever", smartrecruiters="SmartRecruiters",
-             eightfold="Eightfold", oraclehcm="Oracle HCM", linkedin="LinkedIn (opt-in)", adzuna="Adzuna job board",
+             eightfold="Eightfold", oraclehcm="Oracle HCM", careerhtml="Official career page", adzuna="Adzuna job board",
              nofeed="No validated automatic feed")
 
 # ======================= auto-discovery of each company's job feed =======================
-WD_DCS = ["wd1", "wd5", "wd3", "wd12", "wd2", "wd4", "wd10", "wd103", "wd501"]
 def wd_confs(tenant, sites, dc0=None):
-    dcs = ([dc0] if dc0 else []) + [d for d in WD_DCS if d != dc0]
+    """Build only an explicitly supplied Workday host; never guess data centers or sites."""
+    if not dc0:
+        return
     for site in sites:
-        for dc in dcs:
-            api = f"https://{tenant}.{dc}.myworkdayjobs.com/wday/cxs/{tenant}/{site}"
-            yield dict(type="workday", api=api, web=f"https://{tenant}.{dc}.myworkdayjobs.com/en-US/{site}")
-        for dc in ("wd1", "wd5", "wd3"):
-            yield dict(type="workday", api=f"https://{dc}.myworkdaysite.com/wday/cxs/{tenant}/{site}",
-                       web=f"https://{dc}.myworkdaysite.com/recruiting/{tenant}/{site}")
+        api = f"https://{tenant}.{dc0}.myworkdayjobs.com/wday/cxs/{tenant}/{site}"
+        yield dict(type="workday", api=api, web=f"https://{tenant}.{dc0}.myworkdayjobs.com/en-US/{site}")
 def scan_page(blob):
     for m in re.finditer(r"https?://([a-z0-9\-]+)\.(wd\d+)\.myworkdayjobs\.com/(?:[a-z]{2}-[A-Za-z]{2}/)?([A-Za-z0-9_\-]+)", blob):
         t, dc, s = m.groups()
@@ -281,9 +337,13 @@ def scan_page(blob):
     for m in re.finditer(r"https?://(wd\d+)\.myworkdaysite\.com/(?:[a-z]{2}-[A-Za-z]{2}/)?recruiting/([a-z0-9\-]+)/([A-Za-z0-9_\-]+)", blob):
         dc, t, s = m.groups()
         yield dict(type="workday", api=f"https://{dc}.myworkdaysite.com/wday/cxs/{t}/{s}", web=f"https://{dc}.myworkdaysite.com/recruiting/{t}/{s}")
-    for m in re.finditer(r"(?:boards|job-boards)\.greenhouse\.io/(?!embed)([a-z0-9_\-]+)", blob): yield dict(type="greenhouse", board=m.group(1))
+    for m in re.finditer(r"(?:boards|job-boards)\.greenhouse\.io/(?!embed(?:/|\b))([a-z0-9_\-]+)", blob): yield dict(type="greenhouse", board=m.group(1))
+    for m in re.finditer(r"boards\.greenhouse\.io/embed/job_board(?:/js)?\?for=([a-z0-9_\-]+)", blob, re.I):
+        yield dict(type="greenhouse", board=m.group(1))
     for m in re.finditer(r"jobs\.lever\.co/([A-Za-z0-9_\-]+)", blob): yield dict(type="lever", slug=m.group(1))
     for m in re.finditer(r"(?:careers|jobs)\.smartrecruiters\.com/([A-Za-z0-9_\-]+)", blob): yield dict(type="smartrecruiters", company_id=m.group(1))
+    for m in re.finditer(r"https?://([a-z0-9\-]+)\.eightfold\.ai(?:/|\b)", blob, re.I):
+        yield dict(type="eightfold", sub=m.group(1).lower())
     for m in re.finditer(r"https?://([a-z0-9\-]+\.fa\.[a-z0-9\-]+\.oraclecloud\.com)/hcmUI/CandidateExperience/[A-Za-z\-]+/sites/([A-Za-z0-9_\-]+)", blob):
         yield dict(type="oraclehcm", host=m.group(1), site=m.group(2))
 
@@ -295,7 +355,13 @@ def candidates(c):
             else: yield dict(hh)
     try:
         resp = get(c["url"], allow_redirects=True)
-        yield from scan_page(resp.url + " " + resp.text[:600000])
+        for cand in scan_page(resp.url + " " + resp.text[:600000]):
+            if cand["type"] == "eightfold" and not cand.get("domain"):
+                host = re.sub(r"^www\.", "", (urlparse(resp.url).hostname or "").lower())
+                if host.startswith("careers."): host = host[len("careers."):]
+                special = {"capitalonecareers.com": "capitalone.com"}
+                cand["domain"] = special.get(host, host)
+            yield cand
     except Exception:
         pass
 
@@ -306,7 +372,7 @@ def reason(e):
     return type(e).__name__
 
 def discover(c):
-    """Discover and validate an ATS feed. Never fall back to LinkedIn implicitly."""
+    """Discover and validate a feed linked from the employer's official careers page."""
     seen_c, why = set(), {}
     for cand in candidates(c):
         key = json.dumps(cand, sort_keys=True)
@@ -508,7 +574,7 @@ def fmt(name, j, info):
 # ======================= persistent job database =======================
 DB_F = ROOT / "state" / "db.json"
 REPOST_ALERT = bool(CFG.get("repost_alert", False))      # default OFF: a re-listed job is recorded, never re-sent
-NO_REQ_SOURCES = ("adzuna", "linkedin")                   # job boards have no official requisition id
+NO_REQ_SOURCES = ("adzuna",)                              # secondary job-board listings have no official requisition id
 
 def load(p, default): return json.load(open(p)) if p.exists() else default
 def save(p, obj):
@@ -564,7 +630,7 @@ def rec_message(rec):
 
 def conf_for(c, resolved):
     r = dict(resolved.get(c["name"]) or {"type": "nofeed", "why": "not yet validated", "careers_url": c.get("url", "")})
-    if r["type"] in ("linkedin", "adzuna", "nofeed"):
+    if r["type"] in ("adzuna", "nofeed"):
         r.update(name=c["match"], match=c["match"])
     return r
 
@@ -578,16 +644,18 @@ def main():
     lreqs = legacy_reqs(db)
 
     def has_feed(n): return resolved.get(n, {}).get("type") in LIST
-    todo = [c for c in comps if not has_feed(c["name"]) and (SELFTEST or c["name"] not in resolved)]
+    # Recheck every unresolved official careers page on every scheduled pass.
+    # If a company exposes a usable feed later, discover it and poll it in this same run.
+    todo = [c for c in comps if not has_feed(c["name"])]
     if todo:
         with ThreadPoolExecutor(3) as ex:
-            for c, conf in zip(todo, ex.map(discover, todo)): resolved[c["name"]] = conf
+            for c, conf in zip(todo, ex.map(discover, todo)):
+                resolved[c["name"]] = conf
         save(RES_F, resolved)
 
     def fetch(c):
         r = conf_for(c, resolved)
         if r["type"] == "nofeed": return c, r, None, "nofeed"
-        if r["type"] == "linkedin" and not USE_LINKEDIN: return c, r, None, "linkedin disabled"
         until = source_cooldowns.get(c["name"], 0)
         if until > now:
             stamp = dt.datetime.fromtimestamp(until, dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -595,12 +663,12 @@ def main():
         try: return c, r, LIST[r["type"]](r), None
         except Exception as e: return c, r, None, (reason(e) if isinstance(e, requests.RequestException) else str(e)[:100])
 
-    direct = [c for c in comps if conf_for(c, resolved)["type"] in LIST and conf_for(c, resolved)["type"] != "linkedin"]
-    fallback = [c for c in comps if conf_for(c, resolved)["type"] in ("linkedin", "nofeed")]
+    direct = [c for c in comps if conf_for(c, resolved)["type"] in LIST]
+    fallback = [c for c in comps if conf_for(c, resolved)["type"] == "nofeed"]
     with ThreadPoolExecutor(6) as ex: results = list(ex.map(fetch, direct))
 
     # A validated feed that is temporarily failing can use Adzuna as a secondary source.
-    # Keep its failure visible in logs; do not probe LinkedIn as an automatic fallback.
+    # Keep each official-source failure visible even when a secondary source is tried.
     failed_direct = [x for x in results if x[3] and x[3] not in ("skipped", "nofeed")]
     empty = [x for x in results if x[3] is None and not x[2] and
              (x[1]["type"] == "eightfold" or (x[1].get("api") and not TOTALS.get(x[1].get("api"))))]
@@ -610,28 +678,13 @@ def main():
 
     # Only fetch Adzuna once per check batch; only use it when credentials are configured.
     if ADZ_ON and fallback:
-        if SELFTEST or now - last.get("__adzuna", 0) >= 25 * 60:
-            try: ajobs, aerr = adzuna_jobs(), None; last["__adzuna"] = now
-            except Exception as e: ajobs, aerr = [], (reason(e) if isinstance(e, requests.RequestException) else str(e)[:80])
-            for c in fallback:
-                mine = [j for j in ajobs if norm(j["company"]).startswith(norm(c["match"]))]
-                results.append((c, {"type": "adzuna", "fallback_for": conf_for(c, resolved)["type"]}, None if aerr else mine, aerr))
-        else:
-            results += [(c, {"type": "adzuna"}, None, "skipped") for c in fallback]
+        try: ajobs, aerr = adzuna_jobs(), None; last["__adzuna"] = now
+        except Exception as e: ajobs, aerr = [], (reason(e) if isinstance(e, requests.RequestException) else str(e)[:80])
+        for c in fallback:
+            mine = [j for j in ajobs if norm(j["company"]).startswith(norm(c["match"]))]
+            results.append((c, {"type": "adzuna", "fallback_for": conf_for(c, resolved)["type"]}, None if aerr else mine, aerr))
     else:
-        # Optional legacy LinkedIn fallback must be explicitly enabled; default is disabled.
-        if USE_LINKEDIN:
-            blocked = False
-            for i, c in enumerate(fallback):
-                r = dict(conf_for(c, resolved)); r.update(name=c["match"], match=c["match"])
-                if not SELFTEST and i >= LI_PER_RUN: results.append((c, r, None, "skipped")); continue
-                if blocked: results.append((c, r, None, "LinkedIn blocked this server (rate limit)")); continue
-                res = (c, r, None, "nofeed") if r["type"] == "nofeed" else fetch(c)
-                if res[3] in ("HTTP 429", "HTTP 999", "HTTP 403"): blocked = True
-                results.append(res)
-                time.sleep(3)
-        else:
-            results += [(c, conf_for(c, resolved), None, "nofeed") for c in fallback]
+        results += [(c, conf_for(c, resolved), None, "nofeed") for c in fallback]
     # Keep direct-source failures visible in self-test if a fallback also ran.
     if SELFTEST:
         for c, r, jobs, err in failed_direct:
@@ -641,23 +694,63 @@ def main():
     for c, r, jobs, err in results:
         if err == "HTTP 429": source_cooldowns[c["name"]] = max(source_cooldowns.get(c["name"], 0), now + 30 * 60)
         elif err in ("HTTP 403", "HTTP 999"): source_cooldowns[c["name"]] = max(source_cooldowns.get(c["name"], 0), now + 6 * 60 * 60)
+    # Track the source state for every company. A failed feed is visible immediately
+    # on status change instead of becoming silent until the 12-failure warning.
+    previous_health = meta.setdefault("source_health", {})
+    current_health = {}
+    for c, r, jobs, err in results:
+        name, source = c["name"], r["type"]
+        if source == "adzuna":
+            primary = "no_feed" if r.get("fallback_for") == "nofeed" else "failed"
+            detail = resolved.get(name, {}).get("why", "No validated official feed") if primary == "no_feed" else f"Primary {r.get('fallback_for', 'career')} feed failed"
+            current_health.setdefault(name, {"primary": primary, "primary_detail": detail, "secondary": "not_configured"})
+            current_health[name]["secondary"] = "ok" if not err else ("failed" if err != "skipped" else "skipped")
+            current_health[name]["secondary_detail"] = f"{len(jobs or [])} listings" if not err else str(err)
+            continue
+        row = current_health.setdefault(name, {"secondary": "not_configured"})
+        if err == "nofeed": row.update(primary="no_feed", primary_detail=resolved.get(name, {}).get("why", "No validated official feed"))
+        elif err and str(err).startswith("cooldown until"): row.update(primary="cooldown", primary_detail=str(err))
+        elif err: row.update(primary="failed", primary_detail=str(err))
+        else: row.update(primary="ok", primary_detail=f"{LABEL.get(source, source)}: {len(jobs or [])} listings")
+    health_events = []
+    for c in comps:
+        name = c["name"]
+        row = current_health.setdefault(name, {"primary": "no_feed", "primary_detail": "No source was run", "secondary": "not_configured"})
+        pstat = row.get("primary", "no_feed")
+        sstat = row.get("secondary", "not_configured")
+        overall = "ok" if pstat == "ok" else "secondary_only" if sstat == "ok" else pstat
+        row["status"] = overall
+        row["checked_at"] = int(now)
+        old = previous_health.get(name, {})
+        old_status = old.get("status")
+        if old_status != overall and (overall in ("no_feed", "failed", "cooldown", "secondary_only") or
+                                      old_status in ("no_feed", "failed", "cooldown", "secondary_only")):
+            detail = row.get("primary_detail", "")
+            if overall == "secondary_only": detail += f"; Adzuna: {row.get('secondary_detail', 'read')}"
+            health_events.append((name, old_status or "unverified", overall, detail))
+        previous_health[name] = row
+    if health_events and not SELFTEST and os.getenv("TELEGRAM_BOT_TOKEN") and os.getenv("TELEGRAM_CHAT_ID"):
+        for start in range(0, len(health_events), 18):
+            lines = [f"• {n}: {before} → {after}" + (f" ({detail[:130]})" if detail else "")
+                     for n, before, after, detail in health_events[start:start + 18]]
+            send("🚨 Career-feed coverage changed\n" + "\n".join(lines))
     if SELFTEST:
         save_db(db)
         ok, nofeed, bad, lik = [], [], [], []
         for c, r, jobs, err in results:
-            if not err and r["type"] in ("linkedin", "adzuna"):
+            if not err and r["type"] == "adzuna":
                 origin = f" (fallback for {r['fallback_for']})" if r.get("fallback_for") else ""
                 lik.append(f"🟣 {c['name']} [{LABEL[r['type']]}{origin}]: {len(jobs)} jobs read, {sum(quick_ok(j) for j in jobs)} pass title/location/age filter"); continue
-            if err in ("nofeed", "linkedin disabled"):
-                why = resolved.get(c['name'], {}).get('why', 'No validated automatic feed; LinkedIn fallback disabled by default')
+            if err == "nofeed":
+                why = resolved.get(c['name'], {}).get('why', 'No validated automatic feed on the official career site')
                 nofeed.append(f"⚪ {c['name']} - {why}\n   Official careers page: {c['url']}")
             elif err: bad.append(f"❌ {c['name']} ({LABEL.get(r['type'], r['type'])}): {err}")
             else:
                 tot = TOTALS.get(r.get("api")); mark = "⚠️" if (not jobs and not tot) else "✅"
                 ok.append(f"{mark} {c['name']} [{LABEL[r['type']]}]: {len(jobs)} jobs read" + (f" (site total {tot})" if tot is not None else "")
                           + f", {sum(quick_ok(j) for j in jobs)} pass title/location/age filter")
-        send(f"SELF-TEST: {len(comps)} companies in your list\n• validated direct feeds read: {len(ok)}\n• fallback feeds read (Adzuna/optional LinkedIn): {len(lik)}\n• failed source reads: {len(bad)}\n• no automatic feed / manual careers link: {len(nofeed)}\n• LinkedIn fallback: {'ENABLED' if USE_LINKEDIN else 'DISABLED (default)'}")
-        for title, rows in ((f"{len(ok)} companies on direct feeds", ok),
+        send(f"SELF-TEST: {len(comps)} companies in your list\n• validated official career feeds read: {len(ok)}\n• secondary feeds read (Adzuna): {len(lik)}\n• failed source reads: {len(bad)}\n• no automatic feed / manual careers link: {len(nofeed)}")
+        for title, rows in ((f"{len(ok)} companies on official career feeds", ok),
                             (f"{len(lik)} covered via Adzuna job board (company has no direct feed; checked every ~30 min)", lik),
                             (f"{len(bad)} failed to read", bad),
                             (f"{len(nofeed)} with NO automatic feed (check these by hand or send me their job-search URL)", nofeed)):
@@ -669,7 +762,7 @@ def main():
     summary, fresh_n, run_seen, per_co = [], 0, set(), {}
     for c, r, jobs, err in results:
         n, src = c["name"], r["type"]
-        if err in ("skipped", "nofeed", "linkedin disabled") or (err or "").startswith("LinkedIn blocked"): continue
+        if err in ("skipped", "nofeed"): continue
         if err and src == "adzuna":
             fails["__adzuna"] = fails.get("__adzuna", 0) + 1; print(f"[Adzuna] FAILED x{fails['__adzuna']}: {err}")
             if fails["__adzuna"] == 12: send("⚠️ Adzuna job-board lookup has failed 12 runs in a row. Check ADZUNA_APP_ID / ADZUNA_APP_KEY secrets.")
@@ -681,7 +774,7 @@ def main():
         fails[n] = 0; last[n] = now
         if src == "adzuna": fails["__adzuna"] = 0
         fresh_n += sum(1 for j in jobs if j.get("age") is None or j["age"] <= F["max_age_days"])
-        cap, analysed, line = (5 if src == "linkedin" else MAX_DETAIL), 0, dict(new=0, known=0, dup=0)
+        cap, analysed, line = MAX_DETAIL, 0, dict(new=0, known=0, dup=0)
         for j in jobs:
             key, has_req = identity(n, src, j)
             if key in run_seen: bump("known_skipped"); line["known"] += 1; continue          # pagination / multi-location repeats
@@ -757,7 +850,18 @@ def main():
     today, done = ist.strftime("%Y-%m-%d"), meta.setdefault("digests", {})
     if tg and due and due[-1] not in done.get(today, []):
         top = sorted(meta.get("by_company", {}).items(), key=lambda x: -x[1])[:5]
-        msg = (f"📊 Job bot report ({due[-1]}:00 IST)\nCompany feeds read this run: {live}\nSince the last report:\n"
+        health_rows = [(n, h) for n, h in previous_health.items() if n in {c["name"] for c in comps}]
+        health_counts = {k: sum(1 for _, h in health_rows if h.get("status") == k)
+                         for k in ("ok", "secondary_only", "no_feed", "failed", "cooldown")}
+        health_note = (f"\nFeed coverage: {health_counts['ok']} official OK, {health_counts['secondary_only']} secondary only, "
+                       f"{health_counts['no_feed']} no feed, {health_counts['failed'] + health_counts['cooldown']} failing/cooldown")
+        problem_rows = [(n, h) for n, h in health_rows if h.get("status") != "ok"]
+        if problem_rows:
+            health_note += "\nFeed attention:\n" + "\n".join(
+                f"• {n}: {h.get('status')} — {h.get('primary_detail', h.get('secondary_detail', ''))[:110]}" for n, h in problem_rows[:12])
+            if len(problem_rows) > 12: health_note += f"\n• …and {len(problem_rows) - 12} more (see self-test for all 53)"
+        msg = (f"📊 Job bot report ({due[-1]}:00 IST)\nCompany source reads this run: {live}"
+               + health_note + "\nSince the last report:\n"
                f"• new jobs found: {C.get('discovered', 0)}\n• already-known jobs skipped: {C.get('known_skipped', 0)}\n"
                f"• duplicates across sites: {C.get('duplicate_across_sources', 0)}\n• eligible: {C.get('eligible', 0)}  unverified: {C.get('unverified', 0)}  ineligible: {C.get('ineligible', 0)}\n"
                f"• alerts sent: {C.get('published', 0)}  failed deliveries: {C.get('failed_deliveries', 0)}\n• re-listed known jobs (not re-sent): {C.get('relisted', 0)}"

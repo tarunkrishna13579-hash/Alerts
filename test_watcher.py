@@ -111,7 +111,7 @@ for first in ("board", "official"):
                  desc=jd("2-4 years of professional experience. Java Spring"), company="Accenture")
     official = [job("ATCI-77", title="Java Developer", loc="Bengaluru")]
     for src in (["board", "official"] if first == "board" else ["official", "board"]):
-        if src == "board": w.RES_F.write_text(json.dumps({"Accenture": {"type": "linkedin"}})); w.adzuna_jobs = lambda: [board]
+        if src == "board": w.RES_F.write_text(json.dumps({"Accenture": {"type": "nofeed"}})); w.adzuna_jobs = lambda: [board]
         else: w.RES_F.write_text(json.dumps({"Accenture": WD()})); n.jobs["ACC"] = official
         if w.DB_F.exists():
             d = json.load(open(w.DB_F)); d["meta"]["last_run"].pop("__adzuna", None); json.dump(d, open(w.DB_F, "w"))
@@ -120,7 +120,7 @@ for first in ("board", "official"):
 w.ADZ_ON = False
 print("B4 same vacancy on a job board and the official site = one alert, either order: OK")
 
-fresh([co("Zeta")], {"Zeta": {"type": "linkedin"}}); n = Net(); n.install(); w.ADZ_ON = True
+fresh([co("Zeta")], {"Zeta": {"type": "nofeed"}}); n = Net(); n.install(); w.ADZ_ON = True
 mk = lambda i: dict(job("x"), id=str(i), req=str(i), url=f"https://adz/{i}", desc=jd("2-4 years of experience. Java"), company="Zeta")
 w.adzuna_jobs = lambda: [mk(1), mk(2)]; quiet_run(1)
 assert len(alerts(n)) == 2 and n.counters().get("ambiguous_flagged") == 1; w.ADZ_ON = False
@@ -148,7 +148,7 @@ print("C unknown/conflicting experience is kept as NEEDS_REVIEW, never alerted a
 
 # ============ D. job-board snippets: full page is fetched; snippets alone are never trusted ============
 for outcome in ("full page", "no page"):
-    fresh([co("Zeta")], {"Zeta": {"type": "linkedin"}}); n = Net(); n.install(); w.ADZ_ON = True
+fresh([co("Zeta")], {"Zeta": {"type": "nofeed"}}); n = Net(); n.install(); w.ADZ_ON = True
     snippet = dict(job("x"), id="55", req="55", url="https://adz/55", desc="Java developer 2-4 years of experience ...", snippet=True, company="Zeta")
     w.adzuna_jobs = lambda: [dict(snippet)]
     if outcome == "full page": w.page_text = lambda url: jd("Java Spring Boot. Requirements: 2-4 years of professional experience. " * 10)
@@ -170,10 +170,9 @@ assert not any(m.split("Overall experience (verified): ")[1].startswith(("3+", "
 print("E every alert shows the verified overall requirement; skill numbers appear only on their own line: OK")
 
 # ============ F. source fallback safety (offline) ============
-assert w.USE_LINKEDIN is False, "LinkedIn must be opt-in, never the default fallback"
 assert w.conf_for({"name": "NoFeedCo", "url": "https://careers.example/jobs", "match": "nofeedco"}, {})["type"] == "nofeed"
 
-# A Workday rate-limit during discovery must stop probing candidate tenants/sites and must not choose LinkedIn.
+# A Workday rate-limit during discovery must stop probing candidate tenants/sites.
 old_candidates, old_ping = w.candidates, w.wd_ping
 calls = []
 w.candidates = lambda c: iter([{"type": "workday", "api": "https://one/jobs", "web": "https://one"},
@@ -193,6 +192,6 @@ resp = types.SimpleNamespace(headers={"Retry-After": "7"})
 assert 7 <= w.retry_delay(resp, 1) < 7.36
 resp = types.SimpleNamespace(headers={"Retry-After": "9999"})
 assert w.retry_delay(resp, 1) < 31
-print("F LinkedIn is opt-in; no-feed state is explicit; Workday 429 stops discovery; Retry-After is bounded: OK")
+print("F no-feed state is explicit; Workday 429 stops discovery; Retry-After is bounded: OK")
 
 print("ALL TESTS PASSED (including source fallback safety)")
