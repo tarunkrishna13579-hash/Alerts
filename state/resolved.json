@@ -19,8 +19,28 @@
 "type": "workday",
 "web": "https://adobe.wd5.myworkdayjobs.com/en-US/external_experienced"
 },
+"Agoda": {
+"careers_url": "https://careersatagoda.com/vacancies/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Airbnb": {
+"careers_url": "https://careers.airbnb.com/positions",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Airbus": {
+"careers_url": "https://www.airbus.com/en/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
 "American Express": {
 "careers_url": "https://www.americanexpress.com/en-in/careers/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Aqualite": {
+"careers_url": "https://www.aqualiteindia.com/careers/",
 "type": "nofeed",
 "why": "no supported feed found on the official careers page"
 },
@@ -28,6 +48,11 @@
 "careers_url": "https://ascendion.com/careers/",
 "type": "nofeed",
 "why": "ValueError x1"
+},
+"Atlassian": {
+"careers_url": "https://www.atlassian.com/company/careers/all-jobs",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "Autodesk": {
 "api": "https://autodesk.wd1.myworkdayjobs.com/wday/cxs/autodesk/Ext",
@@ -38,6 +63,16 @@
 "api": "https://ghr.wd1.myworkdayjobs.com/wday/cxs/ghr/lateral-us",
 "type": "workday",
 "web": "https://ghr.wd1.myworkdayjobs.com/en-US/lateral-us"
+},
+"Barclays": {
+"api": "https://barclays.wd3.myworkdayjobs.com/wday/cxs/barclays/External_Career_Site_Barclays",
+"type": "workday",
+"web": "https://barclays.wd3.myworkdayjobs.com/en-US/External_Career_Site_Barclays"
+},
+"Booking.com": {
+"careers_url": "https://jobs.booking.com/booking/jobs",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "Broadridge": {
 "api": "https://broadridge.wd5.myworkdayjobs.com/wday/cxs/broadridge/Careers",
@@ -58,15 +93,45 @@
 "board": "commvault",
 "type": "greenhouse"
 },
+"CrowdStrike": {
+"api": "https://crowdstrike.wd5.myworkdayjobs.com/wday/cxs/crowdstrike/crowdstrikecareers",
+"type": "workday",
+"web": "https://crowdstrike.wd5.myworkdayjobs.com/en-US/crowdstrikecareers"
+},
+"DE Shaw": {
+"careers_url": "https://www.deshawindia.com/careers/work-with-us",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Databricks": {
+"careers_url": "https://www.databricks.com/company/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
 "Dell Technologies": {
 "host": "enterpriseplatform.dell.com",
 "site": "CX_1001",
 "type": "oraclehcm"
 },
+"Deloitte (Global)": {
+"careers_url": "https://apply.deloitte.com/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
 "Deloitte USI": {
 "careers_url": "https://usijobs.deloitte.com/",
 "type": "nofeed",
 "why": "ValueError x1"
+},
+"Drawing Box (DrawBox India - provisional)": {
+"careers_url": "https://drawbox.in",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Dropbox": {
+"careers_url": "https://jobs.dropbox.com/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "EPAM Systems": {
 "careers_url": "https://www.epam.com/careers",
@@ -76,6 +141,11 @@
 "EY GDS": {
 "type": "careerhtml",
 "url": "https://careers.ey.com/ey/search/?createNewAlert=false&q=&locationsearch=India&optionsFacetsDD_country=&optionsFacetsDD_customfield1=&locale=en_US"
+},
+"Expedia Group": {
+"api": "https://expedia.wd108.myworkdayjobs.com/wday/cxs/expedia/search",
+"type": "workday",
+"web": "https://expedia.wd108.myworkdayjobs.com/en-US/search"
 },
 "Experian": {
 "type": "careerhtml",
@@ -105,6 +175,31 @@
 "type": "nofeed",
 "why": "ValueError x1"
 },
+"Google": {
+"careers_url": "https://www.google.com/about/careers/applications/locations/india/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Groww": {
+"careers_url": "https://groww.sensehq.com/careers/jobs?page=0",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"HCLTech": {
+"careers_url": "https://www.hcltech.com/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"HP": {
+"careers_url": "https://jobs.hp.com/",
+"type": "nofeed",
+"why": "JSONDecodeError x1"
+},
+"HSBC": {
+"careers_url": "https://www.hsbc.com/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
 "HighRadius": {
 "board": "highradius",
 "type": "greenhouse"
@@ -113,6 +208,11 @@
 "host": "ibqbjb.fa.ocs.oraclecloud.com",
 "site": "CX_1",
 "type": "oraclehcm"
+},
+"InMobi": {
+"careers_url": "https://www.inmobi.com/company/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "Informatica": {
 "careers_url": "https://www.informatica.com/careers.html",
@@ -124,6 +224,11 @@
 "type": "nofeed",
 "why": "ValueError x1"
 },
+"Intel": {
+"careers_url": "https://jobs.intel.com/en",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
 "Intuit": {
 "careers_url": "https://www.intuit.com/in/careers/software-engineering/",
 "type": "nofeed",
@@ -134,15 +239,55 @@
 "site": "CX_1001",
 "type": "oraclehcm"
 },
+"Juspay": {
+"careers_url": "https://juspay.io/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Lovis (LOVIS EOS - provisional)": {
+"careers_url": "https://lovis.com",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
 "Mahindra Comviva": {
 "careers_url": "https://www.comviva.com/careers/",
 "type": "nofeed",
 "why": "ValueError x1"
 },
+"MakeMyTrip": {
+"careers_url": "https://careers.makemytrip.com/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
 "Mastercard": {
 "api": "https://mastercard.wd1.myworkdayjobs.com/wday/cxs/mastercard/CorporateCareers",
 "type": "workday",
 "web": "https://mastercard.wd1.myworkdayjobs.com/en-US/CorporateCareers"
+},
+"Media.net": {
+"careers_url": "https://www.media.net/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Meesho": {
+"careers_url": "https://www.meesho.io/jobs",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Microsoft": {
+"careers_url": "https://careers.microsoft.com/v2/global/en/locations/india.html",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Morgan Stanley": {
+"domain": "morganstanley.com",
+"sub": "morganstanley",
+"type": "eightfold"
+},
+"Myntra": {
+"careers_url": "https://careers.myntra.com/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "NVIDIA": {
 "api": "https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite",
@@ -154,9 +299,29 @@
 "sub": "netapp",
 "type": "eightfold"
 },
+"Nokia": {
+"careers_url": "https://jobs.nokia.com/en/sites/CX_1/jobs",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
 "Nutanix": {
 "type": "careerhtml",
 "url": "https://careers.nutanix.com/en/locations/india/"
+},
+"Okta": {
+"careers_url": "https://www.okta.com/company/careers/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Ola Cabs": {
+"careers_url": "https://www.olacabs.com/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Optum": {
+"careers_url": "https://careers.unitedhealthgroup.com/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "Oracle \u2014 other engineering teams": {
 "host": "eeho.fa.us2.oraclecloud.com",
@@ -168,6 +333,10 @@
 "sub": "paypal",
 "type": "eightfold"
 },
+"Paytm": {
+"slug": "paytm",
+"type": "lever"
+},
 "Pegasystems": {
 "type": "careerhtml",
 "url": "https://www.pega.com/about/careers/job-listings"
@@ -177,10 +346,33 @@
 "type": "nofeed",
 "why": "ValueError x1"
 },
+"PwC": {
+"careers_url": "https://jobs.pwc.com/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
 "Qualcomm": {
 "api": "https://qualcomm.wd12.myworkdayjobs.com/wday/cxs/qualcomm/External",
 "type": "workday",
 "web": "https://qualcomm.wd12.myworkdayjobs.com/en-US/External"
+},
+"Razorpay": {
+"board": "razorpaysoftwareprivatelimited",
+"type": "greenhouse"
+},
+"Reddit": {
+"board": "reddit",
+"type": "greenhouse"
+},
+"Rippling": {
+"careers_url": "https://www.rippling.com/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Rubrik": {
+"careers_url": "https://www.rubrik.com/company/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "SAP": {
 "type": "careerhtml",
@@ -201,15 +393,35 @@
 "type": "nofeed",
 "why": "no supported feed found on the official careers page"
 },
+"Shopify": {
+"careers_url": "https://www.shopify.com/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
 "Siemens": {
 "careers_url": "https://www.siemens.com/careers",
 "type": "nofeed",
 "why": "ValueError x1"
 },
+"Snowflake": {
+"careers_url": "https://careers.snowflake.com/us/en",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Sprinklr": {
+"api": "https://sprinklr.wd1.myworkdayjobs.com/wday/cxs/sprinklr/careers",
+"type": "workday",
+"web": "https://sprinklr.wd1.myworkdayjobs.com/en-US/careers"
+},
 "State Street": {
 "api": "https://statestreet.wd1.myworkdayjobs.com/wday/cxs/statestreet/Global",
 "type": "workday",
 "web": "https://statestreet.wd1.myworkdayjobs.com/en-US/Global"
+},
+"Stripe": {
+"careers_url": "https://stripe.com/jobs",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "Synchrony": {
 "api": "https://synchronyfinancial.wd5.myworkdayjobs.com/wday/cxs/synchronyfinancial/careers",
@@ -240,10 +452,29 @@
 "board": "thoughtworks",
 "type": "greenhouse"
 },
+"Urban Company": {
+"careers_url": "https://www.urbancompany.com/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"VMware (Broadcom)": {
+"careers_url": "https://careers.broadcom.com/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Virtusa": {
+"careers_url": "https://www.virtusa.com/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
 "Visa": {
 "api": "https://visa.wd5.myworkdayjobs.com/wday/cxs/visa/Visa",
 "type": "workday",
 "web": "https://visa.wd5.myworkdayjobs.com/en-US/Visa"
+},
+"Vision Technology (Vision Technology Services - provisional)": {
+"company_id": "VisionTechnologyServices1",
+"type": "smartrecruiters"
 },
 "Walmart Global Tech": {
 "careers_url": "https://careers.walmart.com/",
@@ -252,6 +483,26 @@
 },
 "Wells Fargo": {
 "careers_url": "https://www.wellsfargojobs.com/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Zeta": {
+"careers_url": "https://www.zeta.tech/in/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Zoho": {
+"careers_url": "https://www.zoho.com/careers/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"Zomato": {
+"careers_url": "https://www.zomato.com/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
+},
+"eBay": {
+"careers_url": "https://jobs.ebayinc.com/us/en/home",
 "type": "nofeed",
 "why": "no supported feed found on the official careers page"
 }
