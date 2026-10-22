@@ -1,108 +1,108 @@
 company,official_careers_url,ats_platform,adapter,status,latest_attempt_utc,latest_successful_check_utc,successful_result_count,failure_reason,theirstack_status,theirstack_last_success_utc,theirstack_result_count,theirstack_failure_reason
-Morgan Stanley,https://www.morganstanley.com/careers/career-opportunities-search/,Eightfold,eightfold,no_feed,2026-10-22T20:58:22+00:00,,,No validated official feed,not_configured,,,
-PayPal,https://www.paypal.com/us/webapps/mpp/jobs,Eightfold,eightfold,no_feed,2026-10-22T20:58:22+00:00,,,No validated official feed,not_configured,,,
-Qualcomm,https://careers.qualcomm.com/,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,0,,not_configured,,,
-Lovis (LOVIS EOS - provisional),https://lovis.com,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-DrawBox (DrawBox India - provisional),https://drawbox.in,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-PwC,https://jobs.pwc.com/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-HSBC,https://www.hsbc.com/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Virtusa,https://www.virtusa.com/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Optum,https://careers.unitedhealthgroup.com/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Groww,https://groww.sensehq.com/careers/jobs?page=0,Sense,none,no_feed,2026-10-22T20:58:22+00:00,,,detected platform(s) Sense; no validated adapter available,not_configured,,,
-VMware (Broadcom),https://careers.broadcom.com/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Stripe,https://stripe.com/jobs,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-HCLTech,https://www.hcltech.com/careers,SAP SuccessFactors,none,no_feed,2026-10-22T20:58:22+00:00,,,detected platform(s) SAP SuccessFactors; no validated adapter available,not_configured,,,
-MakeMyTrip,https://careers.makemytrip.com/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Accolite / Bounteous,https://www.bounteous.com/careers/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Myntra,https://careers.myntra.com/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Juspay,https://juspay.io/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Ola Cabs,https://www.olacabs.com/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Rippling,https://www.rippling.com/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Zomato,https://www.zomato.com/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Media.net,https://www.media.net/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Rubrik,https://www.rubrik.com/company/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Meesho,https://www.meesho.io/jobs,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Agoda,https://careersatagoda.com/vacancies/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Deloitte (Global),https://apply.deloitte.com/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-eBay,https://jobs.ebayinc.com/us/en/home,Phenom,none,no_feed,2026-10-22T20:58:22+00:00,,,detected platform(s) Phenom; no validated adapter available,not_configured,,,
-Microsoft,https://careers.microsoft.com/v2/global/en/locations/india.html,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Google,https://www.google.com/about/careers/applications/locations/india/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Zoho,https://www.zoho.com/careers/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-DE Shaw,https://www.deshawindia.com/careers/work-with-us,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Zeta,https://www.zeta.tech/in/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Atlassian,https://www.atlassian.com/company/careers/all-jobs,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Mahindra Group,https://jobs.mahindracareers.com/viewalljobs/,SAP SuccessFactors,none,no_feed,2026-10-22T20:58:22+00:00,,,detected platform(s) SAP SuccessFactors; no validated adapter available,not_configured,,,
-Infosys,https://www.infosys.com/careers/apply/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-American Express,https://www.americanexpress.com/en-in/careers/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Flipkart,https://www.flipkartcareers.com/,TurboHire,none,no_feed,2026-10-22T20:58:22+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,not_configured,,,
-Goldman Sachs,https://higher.gs.com/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,not_configured,,,
-Siemens,https://www.siemens.com/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,not_configured,,,
-ADP,https://jobs.adp.com/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-AMD,https://careers.amd.com/,iCIMS,none,no_feed,2026-10-22T20:58:22+00:00,,,detected platform(s) iCIMS; no validated adapter available,not_configured,,,
-Informatica,https://www.informatica.com/careers.html,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Wells Fargo,https://www.wellsfargojobs.com/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Walmart Global Tech,https://careers.walmart.com/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Intuit,https://www.intuit.com/in/careers/software-engineering/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,not_configured,,,
-ServiceNow,https://careers.servicenow.com/locations/apj/india/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Salesforce,https://careers.salesforce.com/en/jobs/?country=India,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,40,,not_configured,,,
-Cisco,https://careers.cisco.com/global/en/india/,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,60,,not_configured,,,
-Visa,https://corporate.visa.com/en/jobs,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,40,,not_configured,,,
-Mastercard,https://careers.mastercard.com/,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,9,,not_configured,,,
-SAP,https://careers.sap.com/go/India/8807201/,Official career page,careerhtml,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,25,,not_configured,,,
-Pegasystems,https://www.pega.com/about/careers,Official career page,careerhtml,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,23,,not_configured,,,
-Thomson Reuters,https://www.thomsonreuters.com/en/careers.html,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,40,,not_configured,,,
-Target,https://corporate.target.com/careers,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,40,,not_configured,,,
-Experian,https://jobs.experian.com/,Official career page,careerhtml,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,12,,not_configured,,,
-Dell Technologies,https://jobs.dell.com/,Oracle HCM,oraclehcm,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,66,,not_configured,,,
-JPMorgan Chase,https://careers.jpmorgan.com/,Oracle HCM,oraclehcm,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,116,,not_configured,,,
-Adobe,https://careers.adobe.com/,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,20,,not_configured,,,
-Nutanix,https://careers.nutanix.com/en/locations/india/,Official career page,careerhtml,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,5,,not_configured,,,
-Autodesk,https://www.autodesk.com/careers,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,21,,not_configured,,,
-NetApp,https://www.netapp.com/company/careers/,Eightfold,eightfold,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,21,,not_configured,,,
-Commvault,https://www.commvault.com/careers,Greenhouse,greenhouse,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,52,,not_configured,,,
-Teradata,https://careers.teradata.com/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-NVIDIA,https://www.nvidia.com/en-us/about-nvidia/careers/,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,40,,not_configured,,,
-Oracle — other engineering teams,https://careers.oracle.com/,Oracle HCM,oraclehcm,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,119,,not_configured,,,
-Temenos,https://www.temenos.com/careers/,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,18,,not_configured,,,
-Finastra,https://www.finastra.com/careers,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,20,,not_configured,,,
-FIS,https://www.fisglobal.com/careers,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,80,,not_configured,,,
-Broadridge,https://www.broadridge.com/careers,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,19,,not_configured,,,
-Bank of America,https://careers.bankofamerica.com/,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,300,,not_configured,,,
-State Street,https://www.statestreet.com/careers,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,40,,not_configured,,,
-Capital One,https://www.capitalonecareers.com/,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,14,,not_configured,,,
-Infosys Finacle,https://www.infosys.com/careers/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,not_configured,,,
-Honeywell,https://careers.honeywell.com/,Oracle HCM,oraclehcm,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,79,,not_configured,,,
-Synchrony,https://www.synchronycareers.com/,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,9,,not_configured,,,
-HighRadius,https://www.highradius.com/about/career/,Greenhouse,greenhouse,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,70,,not_configured,,,
-Freshworks,https://www.freshworks.com/company/careers/,SmartRecruiters,smartrecruiters,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,0,,not_configured,,,
-Thoughtworks,https://www.thoughtworks.com/careers,Greenhouse,greenhouse,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,43,,not_configured,,,
-EPAM Systems,https://www.epam.com/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Publicis Sapient,https://www.publicissapient.com/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,not_configured,,,
-Deloitte USI,https://usijobs.deloitte.com/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,not_configured,,,
-EY GDS,https://careers.ey.com/,Official career page,careerhtml,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,25,,not_configured,,,
-Accenture,https://www.accenture.com/in-en/careers,Workday,workday,no_feed,2026-10-22T20:58:22+00:00,2026-10-22T20:50:48+00:00,20,No validated official feed,not_configured,,,
-Samsung R&D (SRI-Bangalore),https://research.samsung.com/careers,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,20,,not_configured,,,
-Mahindra Comviva,https://www.comviva.com/careers/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,not_configured,,,
-Ascendion,https://ascendion.com/careers/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,not_configured,,,
-Barclays,https://search.jobs.barclays/search-jobs/data/,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,22,,not_configured,,,
-Razorpay,https://razorpay.com/careers/,Greenhouse,greenhouse,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,25,,not_configured,,,
-Snowflake,https://careers.snowflake.com/us/en,Phenom,none,no_feed,2026-10-22T20:58:22+00:00,,,detected platform(s) Phenom; no validated adapter available,not_configured,,,
-Expedia Group,https://careers.expediagroup.com/jobs/country/India/,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,6,,not_configured,,,
-Airbnb,https://careers.airbnb.com/positions,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Sprinklr,https://www.sprinklr.com/careers/,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,14,,not_configured,,,
-Databricks,https://www.databricks.com/company/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Paytm,https://paytm.com/careers/,Lever,lever,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,196,,not_configured,,,
-Dropbox,https://jobs.dropbox.com/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Intel,https://jobs.intel.com/en,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Aqualite,https://www.aqualiteindia.com/careers/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Okta,https://www.okta.com/company/careers/,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Booking.com,https://jobs.booking.com/booking/jobs,iCIMS,none,no_feed,2026-10-22T20:58:22+00:00,,,detected platform(s) iCIMS; no validated adapter available,not_configured,,,
-HP,https://jobs.hp.com/,Eightfold,none,no_feed,2026-10-22T20:58:22+00:00,,,HTTP 404 x1,not_configured,,,
-InMobi,https://www.inmobi.com/company/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-CrowdStrike,https://www.crowdstrike.com/en-us/careers/,Workday,workday,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,11,,not_configured,,,
-Nokia,https://jobs.nokia.com/en/sites/CX_1/jobs,Oracle HCM,none,no_feed,2026-10-22T20:58:22+00:00,,,detected platform(s) Oracle HCM; no validated adapter available,not_configured,,,
-Urban Company,https://www.urbancompany.com/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Reddit,https://www.redditinc.com/careers,Greenhouse,greenhouse,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,156,,not_configured,,,
-Shopify,https://www.shopify.com/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Airbus,https://www.airbus.com/en/careers,Unconfirmed,none,no_feed,2026-10-22T20:58:22+00:00,,,no supported feed found on the official careers page,not_configured,,,
-Vision Technology (Vision Technology Services - provisional),https://careers.smartrecruiters.com/VisionTechnologyServices1,SmartRecruiters,smartrecruiters,ok,2026-10-22T20:58:22+00:00,2026-10-22T20:58:22+00:00,0,,not_configured,,,
+Morgan Stanley,https://www.morganstanley.com/careers/career-opportunities-search/,Eightfold,eightfold,no_feed,2026-10-22T21:01:19+00:00,,,No validated official feed,failed,,,HTTP 403
+PayPal,https://www.paypal.com/us/webapps/mpp/jobs,Eightfold,eightfold,no_feed,2026-10-22T21:01:19+00:00,,,No validated official feed,failed,,,HTTP 403
+Qualcomm,https://careers.qualcomm.com/,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,0,,failed,,,HTTP 403
+Lovis (LOVIS EOS - provisional),https://lovis.com,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+DrawBox (DrawBox India - provisional),https://drawbox.in,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+PwC,https://jobs.pwc.com/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+HSBC,https://www.hsbc.com/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Virtusa,https://www.virtusa.com/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Optum,https://careers.unitedhealthgroup.com/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Groww,https://groww.sensehq.com/careers/jobs?page=0,Sense,none,no_feed,2026-10-22T21:01:19+00:00,,,detected platform(s) Sense; no validated adapter available,failed,,,HTTP 403
+VMware (Broadcom),https://careers.broadcom.com/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Stripe,https://stripe.com/jobs,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+HCLTech,https://www.hcltech.com/careers,SAP SuccessFactors,none,no_feed,2026-10-22T21:01:19+00:00,,,detected platform(s) SAP SuccessFactors; no validated adapter available,failed,,,HTTP 403
+MakeMyTrip,https://careers.makemytrip.com/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Accolite / Bounteous,https://www.bounteous.com/careers/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Myntra,https://careers.myntra.com/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Juspay,https://juspay.io/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Ola Cabs,https://www.olacabs.com/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Rippling,https://www.rippling.com/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Zomato,https://www.zomato.com/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Media.net,https://www.media.net/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Rubrik,https://www.rubrik.com/company/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Meesho,https://www.meesho.io/jobs,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Agoda,https://careersatagoda.com/vacancies/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Deloitte (Global),https://apply.deloitte.com/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+eBay,https://jobs.ebayinc.com/us/en/home,Phenom,none,no_feed,2026-10-22T21:01:19+00:00,,,detected platform(s) Phenom; no validated adapter available,failed,,,HTTP 403
+Microsoft,https://careers.microsoft.com/v2/global/en/locations/india.html,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Google,https://www.google.com/about/careers/applications/locations/india/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Zoho,https://www.zoho.com/careers/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+DE Shaw,https://www.deshawindia.com/careers/work-with-us,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Zeta,https://www.zeta.tech/in/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Atlassian,https://www.atlassian.com/company/careers/all-jobs,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Mahindra Group,https://jobs.mahindracareers.com/viewalljobs/,SAP SuccessFactors,none,no_feed,2026-10-22T21:01:19+00:00,,,detected platform(s) SAP SuccessFactors; no validated adapter available,failed,,,HTTP 403
+Infosys,https://www.infosys.com/careers/apply/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+American Express,https://www.americanexpress.com/en-in/careers/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Flipkart,https://www.flipkartcareers.com/,TurboHire,none,no_feed,2026-10-22T21:01:19+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,failed,,,HTTP 403
+Goldman Sachs,https://higher.gs.com/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,failed,,,HTTP 403
+Siemens,https://www.siemens.com/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,failed,,,HTTP 403
+ADP,https://jobs.adp.com/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+AMD,https://careers.amd.com/,iCIMS,none,no_feed,2026-10-22T21:01:19+00:00,,,detected platform(s) iCIMS; no validated adapter available,failed,,,HTTP 403
+Informatica,https://www.informatica.com/careers.html,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Wells Fargo,https://www.wellsfargojobs.com/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Walmart Global Tech,https://careers.walmart.com/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Intuit,https://www.intuit.com/in/careers/software-engineering/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,failed,,,HTTP 403
+ServiceNow,https://careers.servicenow.com/locations/apj/india/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Salesforce,https://careers.salesforce.com/en/jobs/?country=India,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,40,,failed,,,HTTP 403
+Cisco,https://careers.cisco.com/global/en/india/,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,60,,failed,,,HTTP 403
+Visa,https://corporate.visa.com/en/jobs,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,40,,failed,,,HTTP 403
+Mastercard,https://careers.mastercard.com/,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,9,,failed,,,HTTP 403
+SAP,https://careers.sap.com/go/India/8807201/,Official career page,careerhtml,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,25,,failed,,,HTTP 403
+Pegasystems,https://www.pega.com/about/careers,Official career page,careerhtml,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,23,,failed,,,HTTP 403
+Thomson Reuters,https://www.thomsonreuters.com/en/careers.html,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,40,,failed,,,HTTP 403
+Target,https://corporate.target.com/careers,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,40,,failed,,,HTTP 403
+Experian,https://jobs.experian.com/,Official career page,careerhtml,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,12,,failed,,,HTTP 403
+Dell Technologies,https://jobs.dell.com/,Oracle HCM,oraclehcm,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,66,,failed,,,HTTP 403
+JPMorgan Chase,https://careers.jpmorgan.com/,Oracle HCM,oraclehcm,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,116,,failed,,,HTTP 403
+Adobe,https://careers.adobe.com/,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,20,,failed,,,HTTP 403
+Nutanix,https://careers.nutanix.com/en/locations/india/,Official career page,careerhtml,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,5,,failed,,,HTTP 403
+Autodesk,https://www.autodesk.com/careers,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,21,,failed,,,HTTP 403
+NetApp,https://www.netapp.com/company/careers/,Eightfold,eightfold,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,21,,failed,,,HTTP 403
+Commvault,https://www.commvault.com/careers,Greenhouse,greenhouse,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,52,,failed,,,HTTP 403
+Teradata,https://careers.teradata.com/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+NVIDIA,https://www.nvidia.com/en-us/about-nvidia/careers/,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,40,,failed,,,HTTP 403
+Oracle — other engineering teams,https://careers.oracle.com/,Oracle HCM,oraclehcm,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,119,,failed,,,HTTP 403
+Temenos,https://www.temenos.com/careers/,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,18,,failed,,,HTTP 403
+Finastra,https://www.finastra.com/careers,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,20,,failed,,,HTTP 403
+FIS,https://www.fisglobal.com/careers,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,80,,failed,,,HTTP 403
+Broadridge,https://www.broadridge.com/careers,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,19,,failed,,,HTTP 403
+Bank of America,https://careers.bankofamerica.com/,Workday,workday,no_feed,2026-10-22T21:01:19+00:00,2026-10-22T20:58:22+00:00,300,No validated official feed,failed,,,HTTP 403
+State Street,https://www.statestreet.com/careers,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,40,,failed,,,HTTP 403
+Capital One,https://www.capitalonecareers.com/,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,14,,failed,,,HTTP 403
+Infosys Finacle,https://www.infosys.com/careers/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,failed,,,HTTP 403
+Honeywell,https://careers.honeywell.com/,Oracle HCM,oraclehcm,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,79,,failed,,,HTTP 403
+Synchrony,https://www.synchronycareers.com/,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,9,,failed,,,HTTP 403
+HighRadius,https://www.highradius.com/about/career/,Greenhouse,greenhouse,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,70,,failed,,,HTTP 403
+Freshworks,https://www.freshworks.com/company/careers/,SmartRecruiters,smartrecruiters,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,0,,failed,,,HTTP 403
+Thoughtworks,https://www.thoughtworks.com/careers,Greenhouse,greenhouse,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,43,,failed,,,HTTP 403
+EPAM Systems,https://www.epam.com/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Publicis Sapient,https://www.publicissapient.com/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,failed,,,HTTP 403
+Deloitte USI,https://usijobs.deloitte.com/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,failed,,,HTTP 403
+EY GDS,https://careers.ey.com/,Official career page,careerhtml,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,25,,failed,,,HTTP 403
+Accenture,https://www.accenture.com/in-en/careers,Workday,workday,no_feed,2026-10-22T21:01:19+00:00,2026-10-22T20:50:48+00:00,20,No validated official feed,failed,,,HTTP 403
+Samsung R&D (SRI-Bangalore),https://research.samsung.com/careers,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,20,,failed,,,HTTP 403
+Mahindra Comviva,https://www.comviva.com/careers/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,failed,,,HTTP 403
+Ascendion,https://ascendion.com/careers/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1,failed,,,HTTP 403
+Barclays,https://search.jobs.barclays/search-jobs/data/,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,22,,failed,,,HTTP 403
+Razorpay,https://razorpay.com/careers/,Greenhouse,greenhouse,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,25,,failed,,,HTTP 403
+Snowflake,https://careers.snowflake.com/us/en,Phenom,none,no_feed,2026-10-22T21:01:19+00:00,,,detected platform(s) Phenom; no validated adapter available,failed,,,HTTP 403
+Expedia Group,https://careers.expediagroup.com/jobs/country/India/,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,6,,failed,,,HTTP 403
+Airbnb,https://careers.airbnb.com/positions,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Sprinklr,https://www.sprinklr.com/careers/,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,14,,failed,,,HTTP 403
+Databricks,https://www.databricks.com/company/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Paytm,https://paytm.com/careers/,Lever,lever,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,196,,failed,,,HTTP 403
+Dropbox,https://jobs.dropbox.com/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Intel,https://jobs.intel.com/en,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Aqualite,https://www.aqualiteindia.com/careers/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Okta,https://www.okta.com/company/careers/,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Booking.com,https://jobs.booking.com/booking/jobs,iCIMS,none,no_feed,2026-10-22T21:01:19+00:00,,,detected platform(s) iCIMS; no validated adapter available,failed,,,HTTP 403
+HP,https://jobs.hp.com/,Eightfold,none,no_feed,2026-10-22T21:01:19+00:00,,,HTTP 404 x1,failed,,,HTTP 403
+InMobi,https://www.inmobi.com/company/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+CrowdStrike,https://www.crowdstrike.com/en-us/careers/,Workday,workday,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,11,,failed,,,HTTP 403
+Nokia,https://jobs.nokia.com/en/sites/CX_1/jobs,Oracle HCM,none,no_feed,2026-10-22T21:01:19+00:00,,,detected platform(s) Oracle HCM; no validated adapter available,failed,,,HTTP 403
+Urban Company,https://www.urbancompany.com/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Reddit,https://www.redditinc.com/careers,Greenhouse,greenhouse,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,156,,failed,,,HTTP 403
+Shopify,https://www.shopify.com/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Airbus,https://www.airbus.com/en/careers,Unconfirmed,none,no_feed,2026-10-22T21:01:19+00:00,,,no supported feed found on the official careers page,failed,,,HTTP 403
+Vision Technology (Vision Technology Services - provisional),https://careers.smartrecruiters.com/VisionTechnologyServices1,SmartRecruiters,smartrecruiters,ok,2026-10-22T21:01:19+00:00,2026-10-22T21:01:19+00:00,0,,failed,,,HTTP 403
