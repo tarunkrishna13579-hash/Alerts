@@ -1,11 +1,13 @@
 {
 "ADP": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"careers_url": "https://jobs.adp.com/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "AMD": {
-"type": "linkedin",
-"why": "HTTP 422 x10"
+"careers_url": "https://careers.amd.com/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "Accenture": {
 "api": "https://accenture.wd103.myworkdayjobs.com/wday/cxs/accenture/AccentureCareers",
@@ -18,12 +20,14 @@
 "web": "https://adobe.wd5.myworkdayjobs.com/en-US/external_experienced"
 },
 "American Express": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"careers_url": "https://www.americanexpress.com/en-in/careers/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "Ascendion": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"careers_url": "https://ascendion.com/careers/",
+"type": "nofeed",
+"why": "ValueError x1"
 },
 "Autodesk": {
 "api": "https://autodesk.wd1.myworkdayjobs.com/wday/cxs/autodesk/Ext",
@@ -51,28 +55,31 @@
 "web": "https://cisco.wd5.myworkdayjobs.com/en-US/Cisco_Careers"
 },
 "Commvault": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"board": "commvault",
+"type": "greenhouse"
 },
 "Dell Technologies": {
-"type": "linkedin",
-"why": "HTTP 422 x10"
+"host": "enterpriseplatform.dell.com",
+"site": "CX_1001",
+"type": "oraclehcm"
 },
 "Deloitte USI": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"careers_url": "https://usijobs.deloitte.com/",
+"type": "nofeed",
+"why": "ValueError x1"
 },
 "EPAM Systems": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"careers_url": "https://www.epam.com/careers",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "EY GDS": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"type": "careerhtml",
+"url": "https://careers.ey.com/ey/search/?createNewAlert=false&q=&locationsearch=India&optionsFacetsDD_country=&optionsFacetsDD_customfield1=&locale=en_US"
 },
 "Experian": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"type": "careerhtml",
+"url": "https://jobs.experian.com/jobs"
 },
 "FIS": {
 "api": "https://fis.wd5.myworkdayjobs.com/wday/cxs/fis/SearchJobs",
@@ -85,36 +92,42 @@
 "web": "https://finastra.wd3.myworkdayjobs.com/en-US/FINC"
 },
 "Flipkart": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"careers_url": "https://www.flipkartcareers.com/",
+"type": "nofeed",
+"why": "ValueError x1"
 },
 "Freshworks": {
 "company_id": "Freshworks",
 "type": "smartrecruiters"
 },
 "Goldman Sachs": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"careers_url": "https://higher.gs.com/",
+"type": "nofeed",
+"why": "ValueError x1"
 },
 "HighRadius": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"board": "highradius",
+"type": "greenhouse"
 },
 "Honeywell": {
-"type": "linkedin",
-"why": "HTTP 422 x10"
+"host": "ibqbjb.fa.ocs.oraclecloud.com",
+"site": "CX_1",
+"type": "oraclehcm"
 },
 "Informatica": {
-"type": "linkedin",
-"why": "HTTP 422 x8, HTTP 401 x2"
+"careers_url": "https://www.informatica.com/careers.html",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "Infosys Finacle": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"careers_url": "https://www.infosys.com/careers/",
+"type": "nofeed",
+"why": "ValueError x1"
 },
 "Intuit": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"careers_url": "https://www.intuit.com/in/careers/software-engineering/",
+"type": "nofeed",
+"why": "ValueError x1"
 },
 "JPMorgan Chase": {
 "host": "jpmc.fa.oraclecloud.com",
@@ -122,8 +135,9 @@
 "type": "oraclehcm"
 },
 "Mahindra Comviva": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"careers_url": "https://www.comviva.com/careers/",
+"type": "nofeed",
+"why": "ValueError x1"
 },
 "Mastercard": {
 "api": "https://mastercard.wd1.myworkdayjobs.com/wday/cxs/mastercard/CorporateCareers",
@@ -136,12 +150,13 @@
 "web": "https://nvidia.wd5.myworkdayjobs.com/en-US/NVIDIAExternalCareerSite"
 },
 "NetApp": {
-"type": "linkedin",
-"why": "HTTP 422 x10"
+"domain": "netapp.com",
+"sub": "netapp",
+"type": "eightfold"
 },
 "Nutanix": {
-"type": "linkedin",
-"why": "HTTP 422 x24, HTTP 401 x6"
+"type": "careerhtml",
+"url": "https://careers.nutanix.com/en/locations/india/"
 },
 "Oracle \u2014 other engineering teams": {
 "host": "eeho.fa.us2.oraclecloud.com",
@@ -154,12 +169,13 @@
 "type": "eightfold"
 },
 "Pegasystems": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"type": "careerhtml",
+"url": "https://www.pega.com/about/careers/job-listings"
 },
 "Publicis Sapient": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"careers_url": "https://www.publicissapient.com/careers",
+"type": "nofeed",
+"why": "ValueError x1"
 },
 "Qualcomm": {
 "api": "https://qualcomm.wd12.myworkdayjobs.com/wday/cxs/qualcomm/External",
@@ -167,8 +183,8 @@
 "web": "https://qualcomm.wd12.myworkdayjobs.com/en-US/External"
 },
 "SAP": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"type": "careerhtml",
+"url": "https://careers.sap.com/go/India/8807201/"
 },
 "Salesforce": {
 "api": "https://salesforce.wd12.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site",
@@ -181,12 +197,14 @@
 "web": "https://sec.wd3.myworkdayjobs.com/en-US/Samsung_Careers"
 },
 "ServiceNow": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"careers_url": "https://careers.servicenow.com/locations/apj/india/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "Siemens": {
-"type": "linkedin",
-"why": "no job feed found on its career page"
+"careers_url": "https://www.siemens.com/careers",
+"type": "nofeed",
+"why": "ValueError x1"
 },
 "State Street": {
 "api": "https://statestreet.wd1.myworkdayjobs.com/wday/cxs/statestreet/Global",
@@ -209,8 +227,9 @@
 "web": "https://temenos.wd103.myworkdayjobs.com/en-US/Temenoscareers"
 },
 "Teradata": {
-"type": "linkedin",
-"why": "HTTP 422 x16, HTTP 401 x4"
+"careers_url": "https://careers.teradata.com/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "Thomson Reuters": {
 "api": "https://thomsonreuters.wd5.myworkdayjobs.com/wday/cxs/thomsonreuters/External_Career_Site",
@@ -227,11 +246,13 @@
 "web": "https://visa.wd5.myworkdayjobs.com/en-US/Visa"
 },
 "Walmart Global Tech": {
-"type": "linkedin",
-"why": "HTTP 422 x10"
+"careers_url": "https://careers.walmart.com/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 },
 "Wells Fargo": {
-"type": "linkedin",
-"why": "HTTP 422 x10"
+"careers_url": "https://www.wellsfargojobs.com/",
+"type": "nofeed",
+"why": "no supported feed found on the official careers page"
 }
 }
