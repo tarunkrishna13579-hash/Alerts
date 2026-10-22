@@ -1,4 +1,4 @@
-# Java job alerts for 53 companies
+# Java job alerts for 104 companies
 
 This repository checks the configured employers' public career sites and sends matching roles to Telegram. The company list is in `companies.yaml`; the full numbered list is in `COMPANIES.md`.
 
@@ -6,7 +6,7 @@ This repository checks the configured employers' public career sites and sends m
 
 - Runs on a 10-minute GitHub Actions schedule.
 - Uses public career-site/ATS listings first: Workday, Greenhouse, Lever, SmartRecruiters, Eightfold, Oracle HCM, and readable official career pages.
-- Checks all 53 employers each run: it polls a validated job feed where available and rechecks the official careers page for unresolved employers every pass, so a newly exposed feed is picked up immediately.
+- Checks all 104 employers each run: it polls a validated job feed where available and rechecks the official careers page for unresolved employers every pass, so a newly exposed feed is picked up immediately.
 - Tracks each employer's last source status. It sends a Telegram alert when a source starts failing, has no public feed, is available only through the optional secondary feed, or recovers. Scheduled reports also show coverage counts and the companies needing attention.
 - Remembers requisition IDs in `state/db.json` so the same opening is not sent repeatedly.
 - Keeps the existing Java, Bengaluru/Hyderabad, recency, and experience filters.
@@ -16,9 +16,9 @@ Adzuna is an optional secondary source for companies whose official page cannot 
 
 ## Coverage limits
 
-All 53 companies are configured, but a company being listed here does not prove that its live feed is readable. Some career pages block automated requests or do not expose a public listing feed. The watcher reports those companies as failed or no-feed; it does not count them as checked successfully. Run the self-test after deployment and resolve every `❌`/`⚪` row before relying on full coverage. A site can also change its feed without notice.
+All 104 companies are configured, but a company being listed here does not prove that its live feed is readable. Some career pages block automated requests or do not expose a public listing feed. The watcher reports those companies as failed or no-feed; it does not count them as checked successfully. Run the self-test after deployment and resolve every `❌`/`⚪` row before relying on full coverage. A site can also change its feed without notice.
 
-The audit performed for this package validated 25 feeds in a full 53-company run. Three more sources were individually rechecked and fixed afterward (Pegasystems, Commvault, and Synchrony), bringing direct-source coverage to 28/53. All 53 are included in each scheduled pass, but the remaining 25 currently get an official careers-page discovery check rather than a validated job-list poll; they need a compatible public source or optional Adzuna fallback before their listings can be considered covered. The company-by-company table in `COMPANIES.md` records the exact result and current blocker. This is not yet a claim of complete 53-company listing coverage.
+The previous audit validated 28 direct sources in the original 53-company list. This update adds 51 distinct companies (duplicates such as Dell, SAP, Adobe, and Nutanix were consolidated) and retains those prior results. The 51 additions are configured for official career-page discovery, but have **not** been individually feed-validated in this package update. Therefore this is a 104-company watchlist, not a promise of complete listing coverage. Run the included self-test after deployment; resolve each `❌`/`⚪` result or add a verified ATS adapter before relying on that employer's automated listings. The three ambiguous names are included with best-match interpretations, labeled provisional in `COMPANIES.md`.
 
 ## Set up Telegram and GitHub
 
@@ -50,7 +50,7 @@ Configure that scheduler for every 10 minutes. The GitHub workflow still needs t
 
 ## Files
 
-- `companies.yaml` — all 53 companies, careers URLs, filters, and explicit source overrides.
+- `companies.yaml` — all 104 company entries, careers URLs, filters, and explicit source overrides.
 - `watcher.py` — discovery, career feed readers, matching, Telegram notifications, and health state.
 - `.github/workflows/watch.yml` — scheduled and manual workflow.
 - `COMPANIES.md` — numbered employer list and source coverage notes.

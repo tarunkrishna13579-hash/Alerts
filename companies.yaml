@@ -78,7 +78,7 @@ hints:
   Mahindra Comviva:    {type: careerhtml, url: "https://www.comviva.com/careers/explore-opportunity/"}
   Ascendion:           {type: careerhtml, url: "https://careers.ascendion.com/jobposting/region/apac"}
 
-# Your 53 companies (from your Career Hub). Add more lines the same way.
+# Your employer watch list. Add more lines the same way.
 companies:
   - {name: "Salesforce", url: "https://careers.salesforce.com/en/jobs/?country=India", match: "salesforce", tier: "Tier 1"}
   - {name: "ServiceNow", url: "https://careers.servicenow.com/locations/apj/india/", match: "servicenow", tier: "Tier 1"}
@@ -133,3 +133,56 @@ companies:
   - {name: "Samsung R&D (SRI-Bangalore)", url: "https://research.samsung.com/careers", match: "samsung", tier: "Tier 2"}
   - {name: "Mahindra Comviva", url: "https://www.comviva.com/careers/", match: "comviva", tier: "Tier 2"}
   - {name: "Ascendion", url: "https://ascendion.com/careers/", match: "ascendion", tier: "Backup"}
+  # Additional employers requested on 2026-10-23. Existing employers above are not duplicated.
+  - {name: "Barclays", url: "https://search.jobs.barclays/search-jobs/data/", match: "barclays", tier: "Tier 1"}
+  - {name: "Microsoft", url: "https://careers.microsoft.com/v2/global/en/locations/india.html", match: "microsoft", tier: "Tier 1"}
+  - {name: "Google", url: "https://www.google.com/about/careers/applications/locations/india/", match: "google", tier: "Tier 1"}
+  - {name: "Atlassian", url: "https://www.atlassian.com/company/careers/all-jobs", match: "atlassian", tier: "Tier 1"}
+  - {name: "Razorpay", url: "https://razorpay.com/careers/", match: "razorpay", tier: "Tier 1"}
+  - {name: "Zeta", url: "https://www.zeta.tech/in/careers", match: "zeta", tier: "Tier 1"}
+  - {name: "Zoho", url: "https://www.zoho.com/careers/", match: "zoho", tier: "Tier 1"}
+  - {name: "DE Shaw", url: "https://www.deshawindia.com/careers/work-with-us", match: "de shaw", tier: "Tier 1"}
+  - {name: "Snowflake", url: "https://careers.snowflake.com/us/en", match: "snowflake", tier: "Tier 1"}
+  - {name: "Expedia Group", url: "https://careers.expediagroup.com/jobs/country/India/", match: "expedia", tier: "Tier 1"}
+  - {name: "eBay", url: "https://jobs.ebayinc.com/us/en/home", match: "ebay", tier: "Tier 1"}
+  - {name: "Airbnb", url: "https://careers.airbnb.com/positions", match: "airbnb", tier: "Tier 1"}
+  - {name: "Morgan Stanley", url: "https://www.morganstanley.com/careers/career-opportunities-search/", match: "morgan stanley", tier: "Tier 1"}
+  - {name: "Deloitte (Global)", url: "https://apply.deloitte.com/careers", match: "deloitte", tier: "Tier 1"}
+  - {name: "Sprinklr", url: "https://www.sprinklr.com/careers/", match: "sprinklr", tier: "Tier 1"}
+  - {name: "Agoda", url: "https://careersatagoda.com/vacancies/", match: "agoda", tier: "Tier 1"}
+  - {name: "Meesho", url: "https://www.meesho.io/jobs", match: "meesho", tier: "Tier 1"}
+  - {name: "Rubrik", url: "https://www.rubrik.com/company/careers", match: "rubrik", tier: "Tier 1"}
+  - {name: "Media.net", url: "https://www.media.net/careers", match: "media.net", tier: "Tier 1"}
+  - {name: "Databricks", url: "https://www.databricks.com/company/careers", match: "databricks", tier: "Tier 1"}
+  - {name: "Zomato", url: "https://www.zomato.com/careers", match: "zomato", tier: "Tier 1"}
+  - {name: "Rippling", url: "https://www.rippling.com/careers", match: "rippling", tier: "Tier 1"}
+  - {name: "Paytm", url: "https://paytm.com/careers/", match: "paytm", tier: "Tier 1"}
+  - {name: "Ola Cabs", url: "https://www.olacabs.com/careers", match: "ola", tier: "Tier 1"}
+  - {name: "Dropbox", url: "https://jobs.dropbox.com/", match: "dropbox", tier: "Tier 1"}
+  - {name: "Intel", url: "https://jobs.intel.com/en", match: "intel", tier: "Tier 1"}
+  - {name: "Juspay", url: "https://juspay.io/careers", match: "juspay", tier: "Tier 1"}
+  - {name: "Myntra", url: "https://careers.myntra.com/", match: "myntra", tier: "Tier 1"}
+  - {name: "Aqualite", url: "https://www.aqualiteindia.com/careers/", match: "aqualite", tier: "Backup"}
+  - {name: "MakeMyTrip", url: "https://careers.makemytrip.com/", match: "makemytrip", tier: "Tier 1"}
+  - {name: "HCLTech", url: "https://www.hcltech.com/careers", match: "hcl", tier: "Tier 1"}
+  - {name: "Okta", url: "https://www.okta.com/company/careers/", match: "okta", tier: "Tier 1"}
+  - {name: "Booking.com", url: "https://jobs.booking.com/booking/jobs", match: "booking.com", tier: "Tier 1"}
+  - {name: "HP", url: "https://jobs.hp.com/", match: "hp", tier: "Tier 1"}
+  - {name: "Stripe", url: "https://stripe.com/jobs", match: "stripe", tier: "Tier 1"}
+  - {name: "InMobi", url: "https://www.inmobi.com/company/careers", match: "inmobi", tier: "Tier 1"}
+  - {name: "CrowdStrike", url: "https://www.crowdstrike.com/en-us/careers/", match: "crowdstrike", tier: "Tier 1"}
+  - {name: "Nokia", url: "https://jobs.nokia.com/en/sites/CX_1/jobs", match: "nokia", tier: "Tier 1"}
+  - {name: "VMware (Broadcom)", url: "https://careers.broadcom.com/", match: "vmware", tier: "Tier 1"}
+  - {name: "Groww", url: "https://groww.sensehq.com/careers/jobs?page=0", match: "groww", tier: "Tier 1"}
+  - {name: "Urban Company", url: "https://www.urbancompany.com/careers", match: "urban company", tier: "Tier 1"}
+  - {name: "Optum", url: "https://careers.unitedhealthgroup.com/", match: "optum", tier: "Tier 1"}
+  - {name: "Virtusa", url: "https://www.virtusa.com/careers", match: "virtusa", tier: "Tier 1"}
+  - {name: "HSBC", url: "https://www.hsbc.com/careers", match: "hsbc", tier: "Tier 1"}
+  - {name: "Reddit", url: "https://www.redditinc.com/careers", match: "reddit", tier: "Tier 1"}
+  - {name: "Shopify", url: "https://www.shopify.com/careers", match: "shopify", tier: "Tier 1"}
+  - {name: "Airbus", url: "https://www.airbus.com/en/careers", match: "airbus", tier: "Tier 1"}
+  - {name: "PwC", url: "https://jobs.pwc.com/", match: "pwc", tier: "Tier 1"}
+  # Best-match interpretations of the three unclear names; confirm before relying on them.
+  - {name: "Vision Technology (Vision Technology Services - provisional)", url: "https://careers.smartrecruiters.com/VisionTechnologyServices1", match: "vision technology", tier: "Backup"}
+  - {name: "Drawing Box (DrawBox India - provisional)", url: "https://drawbox.in", match: "drawbox", tier: "Backup"}
+  - {name: "Lovis (LOVIS EOS - provisional)", url: "https://lovis.com", match: "lovis", tier: "Backup"}

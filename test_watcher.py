@@ -148,7 +148,7 @@ print("C unknown/conflicting experience is kept as NEEDS_REVIEW, never alerted a
 
 # ============ D. job-board snippets: full page is fetched; snippets alone are never trusted ============
 for outcome in ("full page", "no page"):
-fresh([co("Zeta")], {"Zeta": {"type": "nofeed"}}); n = Net(); n.install(); w.ADZ_ON = True
+    fresh([co("Zeta")], {"Zeta": {"type": "nofeed"}}); n = Net(); n.install(); w.ADZ_ON = True
     snippet = dict(job("x"), id="55", req="55", url="https://adz/55", desc="Java developer 2-4 years of experience ...", snippet=True, company="Zeta")
     w.adzuna_jobs = lambda: [dict(snippet)]
     if outcome == "full page": w.page_text = lambda url: jd("Java Spring Boot. Requirements: 2-4 years of professional experience. " * 10)

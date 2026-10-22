@@ -648,7 +648,7 @@ def main():
     # If a company exposes a usable feed later, discover it and poll it in this same run.
     todo = [c for c in comps if not has_feed(c["name"])]
     if todo:
-        with ThreadPoolExecutor(3) as ex:
+        with ThreadPoolExecutor(10) as ex:
             for c, conf in zip(todo, ex.map(discover, todo)):
                 resolved[c["name"]] = conf
         save(RES_F, resolved)
@@ -665,7 +665,7 @@ def main():
 
     direct = [c for c in comps if conf_for(c, resolved)["type"] in LIST]
     fallback = [c for c in comps if conf_for(c, resolved)["type"] == "nofeed"]
-    with ThreadPoolExecutor(6) as ex: results = list(ex.map(fetch, direct))
+    with ThreadPoolExecutor(10) as ex: results = list(ex.map(fetch, direct))
 
     # A validated feed that is temporarily failing can use Adzuna as a secondary source.
     # Keep each official-source failure visible even when a secondary source is tried.
@@ -859,7 +859,7 @@ def main():
         if problem_rows:
             health_note += "\nFeed attention:\n" + "\n".join(
                 f"• {n}: {h.get('status')} — {h.get('primary_detail', h.get('secondary_detail', ''))[:110]}" for n, h in problem_rows[:12])
-            if len(problem_rows) > 12: health_note += f"\n• …and {len(problem_rows) - 12} more (see self-test for all 53)"
+            if len(problem_rows) > 12: health_note += f"\n• …and {len(problem_rows) - 12} more (see self-test for the full company list)"
         msg = (f"📊 Job bot report ({due[-1]}:00 IST)\nCompany source reads this run: {live}"
                + health_note + "\nSince the last report:\n"
                f"• new jobs found: {C.get('discovered', 0)}\n• already-known jobs skipped: {C.get('known_skipped', 0)}\n"
