@@ -22,7 +22,9 @@ DRY, SELFTEST = "--dry" in sys.argv, "--selftest" in sys.argv
 MAX_ALERTS, MAX_DETAIL = 20, 12
 
 def get(url, **kw):  return requests.get(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
-def post(url, **kw): return requests.post(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
+def post(url, **kw):
+    headers = dict(UA); headers.update(kw.pop("headers", {}))
+    return requests.post(url, headers=headers, timeout=kw.pop("timeout", 20), **kw)
 
 class FeedReadError(RuntimeError): pass
 class InvalidJSONResponse(FeedReadError): pass
@@ -61,7 +63,10 @@ def epoch_age(t):
     t = float(t); t = t / 1000 if t > 1e12 else t
     return (time.time() - t) / 86400
 def iso_age(s):
-    try: return (dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(s.replace("Z", "+00:00"))).total_seconds() / 86400
+    try:
+        value = dt.datetime.fromisoformat(s.replace("Z", "+00:00"))
+        if value.tzinfo is None: value = value.replace(tzinfo=dt.timezone.utc)
+        return (dt.datetime.now(dt.timezone.utc) - value).total_seconds() / 86400
     except Exception: return None
 def norm(x): return re.sub(r"[^a-z0-9]", "", (x or "").lower())
 def dedupe(jobs):
@@ -404,12 +409,86 @@ def adzuna_jobs():
                                 trust_java=True, snippet=True))
     return dedupe(out)
 
+THEIRSTACK_ON = bool(os.getenv("THEIRSTACK_API_KEY"))
+THEIRSTACK_URL = "https://api.theirstack.com/v1/jobs/search"
+THEIRSTACK_PAGE_SIZE, THEIRSTACK_MAX_PAGES = 500, 2  # at most 1,000 returned jobs/credits per scheduled run
+
+def theirstack_jobs(comps, discovered_since):
+    """Fetch newly indexed India Java jobs for the configured employers in bounded pages."""
+    key = os.getenv("THEIRSTACK_API_KEY")
+    if not key: raise FeedReadError("THEIRSTACK_API_KEY is not configured")
+    names_by_key = {norm(str(v)): str(v).strip() for c in comps for v in (c.get("name"), c.get("match")) if v and str(v).strip()}
+    names = sorted(names_by_key.values(), key=str.casefold)
+    if not names: return {c["name"]: [] for c in comps}
+    out, grouped = [], {c["name"]: [] for c in comps}
+    payload = {
+        "company_name_partial_match_or": names,
+        "job_country_code_or": ["IN"],
+        "job_description_contains_or": [str(SK["must_have"])],
+        "posted_at_max_age_days": max(2, int(F["max_age_days"])),
+        "is_closed": False,
+        "property_exists_and": ["final_url"],
+        "limit": THEIRSTACK_PAGE_SIZE,
+        "offset": 0,
+    }
+    if discovered_since: payload["discovered_at_gte"] = discovered_since
+    for page in range(THEIRSTACK_MAX_PAGES):
+        response = post(THEIRSTACK_URL, json=payload,
+                        headers={"Authorization": f"Bearer {key}", "Accept": "application/json", "Content-Type": "application/json"},
+                        timeout=30)
+        data = response_object(response, "TheirStack job search").get("data")
+        if not isinstance(data, list): raise InvalidFeedShape("TheirStack response has no data array")
+        for item in data:
+            if not isinstance(item, dict): raise InvalidFeedShape("TheirStack returned a non-object job")
+            company = str(item.get("company") or (item.get("company_object") or {}).get("name") or "").strip()
+            company_n = norm(company)
+            candidates = []
+            for c in comps:
+                aliases = {norm(c.get("name", "")), norm(c.get("match", ""))} - {""}
+                if any(company_n == a or company_n.startswith(a) or a.startswith(company_n) for a in aliases if len(a) >= 3):
+                    exact = 0 if norm(c.get("name", "")) == company_n else 1
+                    candidates.append((exact, -max(map(len, aliases)), c))
+            if not candidates: continue
+            candidates.sort(key=lambda row: (row[0], row[1], row[2]["name"].casefold()))
+            # Ambiguous short aliases (for example multiple Deloitte entities) stay unmapped
+            # unless the provider name identifies one configured company more closely.
+            best = candidates[0]
+            tied = [row for row in candidates if row[:2] == best[:2]]
+            if len(tied) != 1: continue
+            target = best[2]["name"]
+            final_url = str(item.get("final_url") or "").strip()
+            if not final_url or "linkedin.com" in (urlparse(final_url).hostname or "").lower(): continue
+            posted = str(item.get("date_posted") or "")
+            ident = str(item.get("id") or "").strip()
+            title = clean(item.get("job_title") or item.get("title") or "")
+            if not ident or not title: continue
+            locs = item.get("locations") or []
+            loc = str(item.get("location") or item.get("long_location") or "")
+            if not loc and isinstance(locs, list):
+                loc = ", ".join(str(x.get("display_name") or x.get("name") or "") for x in locs if isinstance(x, dict))
+            out.append((target, dict(id=f"theirstack:{ident}", req=f"theirstack:{ident}", title=title,
+                                     loc=loc, url=final_url, posted=posted, age=iso_age(posted),
+                                     desc=clean(item.get("description") or ""), company=company,
+                                     snippet=False, aggregator="TheirStack")))
+        if len(data) < THEIRSTACK_PAGE_SIZE: break
+        payload["offset"] += len(data)
+        time.sleep(0.26)  # keep sequential page requests below the provider's documented 4 req/s ceiling
+    else:
+        raise IncompleteFeed(f"TheirStack page cap reached ({THEIRSTACK_MAX_PAGES} x {THEIRSTACK_PAGE_SIZE}); result window may be incomplete")
+    # Deduplicate by provider ID without losing the target company assignment.
+    seen = set()
+    for target, job in out:
+        if job["id"] in seen: continue
+        seen.add(job["id"]); grouped[target].append(job)
+    return grouped
+
 LIST = dict(workday=wd_list, greenhouse=gh_list, lever=lv_list, smartrecruiters=sr_list,
             eightfold=ef_list, oraclehcm=oh_list, careerhtml=careerhtml_list)
 DETAIL = dict(workday=wd_detail, smartrecruiters=sr_detail, oraclehcm=oh_detail,
               careerhtml=careerhtml_detail, adzuna=adz_detail)
 LABEL = dict(workday="Workday", greenhouse="Greenhouse", lever="Lever", smartrecruiters="SmartRecruiters",
              eightfold="Eightfold", oraclehcm="Oracle HCM", careerhtml="Official career page", adzuna="Adzuna job board",
+             theirstack="TheirStack API",
              nofeed="No validated automatic feed")
 
 # ======================= auto-discovery of each company's job feed =======================
@@ -698,7 +777,7 @@ def fmt(name, j, info):
 # ======================= persistent job database =======================
 DB_F = ROOT / "state" / "db.json"
 REPOST_ALERT = bool(CFG.get("repost_alert", False))      # default OFF: a re-listed job is recorded, never re-sent
-NO_REQ_SOURCES = ("adzuna",)                              # secondary job-board listings have no official requisition id
+NO_REQ_SOURCES = ("adzuna", "theirstack")                 # secondary job-board listings have no official requisition id
 
 def load(p, default): return json.load(open(p)) if p.exists() else default
 def save(p, obj):
@@ -768,7 +847,8 @@ def write_coverage_csv(comps, health, resolved):
     path = ROOT / "state" / "source_coverage.csv"
     path.parent.mkdir(exist_ok=True)
     fields = ["company", "official_careers_url", "ats_platform", "adapter", "status", "latest_attempt_utc",
-              "latest_successful_check_utc", "successful_result_count", "failure_reason"]
+              "latest_successful_check_utc", "successful_result_count", "failure_reason",
+              "theirstack_status", "theirstack_last_success_utc", "theirstack_result_count", "theirstack_failure_reason"]
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
@@ -789,6 +869,10 @@ def write_coverage_csv(comps, health, resolved):
                 "latest_successful_check_utc": utc_stamp(row.get("last_success_at")),
                 "successful_result_count": row.get("last_success_count", ""),
                 "failure_reason": row.get("failure_reason", conf.get("why", "")),
+                "theirstack_status": row.get("theirstack_status", "not_configured"),
+                "theirstack_last_success_utc": utc_stamp(row.get("theirstack_last_success_at")),
+                "theirstack_result_count": row.get("theirstack_result_count", ""),
+                "theirstack_failure_reason": row.get("theirstack_failure_reason", ""),
             })
 
 def ordered_companies(companies):
@@ -844,6 +928,20 @@ def main():
             results.append((c, {"type": "adzuna", "fallback_for": conf_for(c, resolved)["type"]}, None if aerr else mine, aerr))
     else:
         results += [(c, conf_for(c, resolved), None, "nofeed") for c in fallback]
+    # Batch-query all configured companies once as a second source. Use provider
+    # discovery time as a checkpoint so an index delay is caught on a later poll.
+    if THEIRSTACK_ON and not SELFTEST:
+        previous = last.get("__theirstack_watermark")
+        since_epoch = float(previous) if previous else now - 15 * 60
+        since = dt.datetime.fromtimestamp(since_epoch, dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        try:
+            ts_by_company = theirstack_jobs(comps, since)
+            ts_error = None
+            last["__theirstack_watermark"] = now
+        except Exception as e:
+            ts_by_company, ts_error = {}, reason(e)
+        for c in comps:
+            results.append((c, {"type": "theirstack"}, ts_by_company.get(c["name"], []) if not ts_error else None, ts_error))
     # Keep direct-source failures visible in self-test if a fallback also ran.
     if SELFTEST:
         for c, r, jobs, err in failed_direct:
@@ -851,6 +949,8 @@ def main():
 
     # Persist cooldowns so a rate-limited/access-restricted source is not hammered every 10 minutes.
     for c, r, jobs, err in results:
+        # Aggregator batch failures must never suppress an employer's official ATS poll.
+        if r["type"] == "theirstack": continue
         if err == "HTTP 429": source_cooldowns[c["name"]] = max(source_cooldowns.get(c["name"], 0), now + 30 * 60)
         elif err in ("HTTP 403", "HTTP 999"): source_cooldowns[c["name"]] = max(source_cooldowns.get(c["name"], 0), now + 6 * 60 * 60)
     # Track the source state for every company. A failed feed is visible immediately
@@ -859,6 +959,18 @@ def main():
     current_health = {}
     for c, r, jobs, err in results:
         name, source = c["name"], r["type"]
+        if source == "theirstack":
+            row = current_health.setdefault(name, {"primary": "no_feed", "primary_detail": "No official feed was checked", "secondary": "not_configured"})
+            old = previous_health.get(name, {})
+            row.update(theirstack_status="failed" if err else "ok",
+                       theirstack_result_count="" if err else len(jobs or []),
+                       theirstack_failure_reason=str(err or ""),
+                       theirstack_last_success_at=old.get("theirstack_last_success_at") if err else int(now))
+            if not err:
+                row["secondary"] = "ok"; row["secondary_detail"] = f"TheirStack: {len(jobs or [])} listings"
+            elif row.get("secondary") != "ok":
+                row["secondary"] = "failed"; row["secondary_detail"] = f"TheirStack: {err}"
+            continue
         if source == "adzuna":
             primary = "no_feed" if r.get("fallback_for") == "nofeed" else "failed"
             detail = resolved.get(name, {}).get("why", "No validated official feed") if primary == "no_feed" else f"Primary {r.get('fallback_for', 'career')} feed failed"
@@ -898,7 +1010,7 @@ def main():
         if old_status != overall and (overall in ("no_feed", "failed", "cooldown", "secondary_only") or
                                       old_status in ("no_feed", "failed", "cooldown", "secondary_only")):
             detail = row.get("primary_detail", "")
-            if overall == "secondary_only": detail += f"; Adzuna: {row.get('secondary_detail', 'read')}"
+            if overall == "secondary_only": detail += f"; secondary source: {row.get('secondary_detail', 'read')}"
             health_events.append((name, old_status or "unverified", overall, detail))
         previous_health[name] = row
     write_coverage_csv(comps, previous_health, resolved)
@@ -909,6 +1021,10 @@ def main():
             send("🚨 Career-feed coverage changed\n" + "\n".join(lines))
     if SELFTEST:
         save_db(db)
+        if THEIRSTACK_ON:
+            send("TheirStack API key is configured. It is not queried in self-test to avoid consuming per-job API credits; the next normal run will query it and record coverage.")
+        else:
+            send("TheirStack API is not configured. Add THEIRSTACK_API_KEY to GitHub Actions secrets to enable the batched secondary source.")
         ok, nofeed, bad, lik = [], [], [], []
         for c, r, jobs, err in results:
             if not err and r["type"] == "adzuna":
@@ -934,9 +1050,18 @@ def main():
 
     # ---------- discovery -> database (every job is looked at once; known jobs are skipped without re-analysis) ----------
     summary, fresh_n, run_seen, per_co = [], 0, set(), {}
+    theirstack_error_handled = False
     for c, r, jobs, err in results:
         n, src = c["name"], r["type"]
         if err in ("skipped", "nofeed"): continue
+        if err and src == "theirstack":
+            if not theirstack_error_handled:
+                fails["__theirstack"] = fails.get("__theirstack", 0) + 1
+                print(f"[TheirStack] FAILED x{fails['__theirstack']}: {err}")
+                if fails["__theirstack"] == 3:
+                    send("⚠️ TheirStack secondary job source failed three runs in a row. Check THEIRSTACK_API_KEY, rate limits, and API credits.")
+                theirstack_error_handled = True
+            continue
         if err and src == "adzuna":
             fails["__adzuna"] = fails.get("__adzuna", 0) + 1; print(f"[Adzuna] FAILED x{fails['__adzuna']}: {err}")
             if fails["__adzuna"] == 12: send("⚠️ Adzuna job-board lookup has failed 12 runs in a row. Check ADZUNA_APP_ID / ADZUNA_APP_KEY secrets.")
@@ -945,8 +1070,10 @@ def main():
             fails[n] = fails.get(n, 0) + 1; print(f"[{n}] FAILED x{fails[n]}: {err}")
             if fails[n] == 12: send(f"⚠️ {n}: career feed failed 12 runs in a row. Run the self-test or fix its entry in companies.yaml.")
             continue
-        fails[n] = 0; last[n] = now
+        if src not in ("adzuna", "theirstack"): fails[n] = 0
+        last[n] = now
         if src == "adzuna": fails["__adzuna"] = 0
+        if src == "theirstack": fails["__theirstack"] = 0
         fresh_n += sum(1 for j in jobs if j.get("age") is None or j["age"] <= F["max_age_days"])
         cap, analysed, line = MAX_DETAIL, 0, dict(new=0, known=0, dup=0)
         for j in jobs:

@@ -318,5 +318,48 @@ finally:
     w.ROOT, w.DRY = old_root, old_dry
 print("G7 coverage CSV records valid zero-job success separately from failure: OK")
 
+# TheirStack second source: one batched, paginated query; no live API calls or credits used.
+old_post, old_page_size, old_max_pages, old_sleep = w.post, w.THEIRSTACK_PAGE_SIZE, w.THEIRSTACK_MAX_PAGES, w.time.sleep
+old_key = os.environ.get("THEIRSTACK_API_KEY")
+os.environ["THEIRSTACK_API_KEY"] = "offline-test-key"
+ts_calls = []
+ts_pages = {
+    0: [
+        {"id": "m1", "company": "Microsoft Corporation", "final_url": "https://careers.microsoft.com/job/1", "job_title": "Java Engineer", "date_posted": "2026-10-23", "description": "Java Spring Boot", "location": "Bengaluru, India"},
+        {"id": "g1", "company": "Google LLC", "final_url": "https://www.linkedin.com/jobs/view/1", "job_title": "Java Engineer", "date_posted": "2026-10-23", "description": "Java Spring Boot"},
+    ],
+    2: [
+        {"id": "m2", "company": "Microsoft Corporation", "final_url": "https://careers.microsoft.com/job/2", "job_title": "Java Backend Engineer", "date_posted": "2026-10-23", "description": "Java Spring Boot", "location": "Hyderabad, India"},
+    ],
+}
+def ts_post(url, **kw):
+    ts_calls.append((url, kw["json"].copy(), kw["headers"].copy()))
+    return FakeResponse(data={"data": ts_pages[kw["json"]["offset"]]})
+w.post, w.THEIRSTACK_PAGE_SIZE, w.THEIRSTACK_MAX_PAGES, w.time.sleep = ts_post, 2, 3, lambda _: None
+try:
+    ts = w.theirstack_jobs([co("Microsoft"), co("Google")], "2026-10-23T10:00:00Z")
+    assert len(ts["Microsoft"]) == 2 and ts["Google"] == [], ts
+    assert [call[1]["offset"] for call in ts_calls] == [0, 2]
+    assert ts_calls[0][1]["discovered_at_gte"] == "2026-10-23T10:00:00Z"
+    assert ts_calls[0][1]["job_country_code_or"] == ["IN"] and ts_calls[0][1]["is_closed"] is False
+    assert ts_calls[0][2]["Authorization"] == "Bearer offline-test-key"
+    assert all("linkedin.com" not in j["url"] for company_jobs in ts.values() for j in company_jobs)
+    ts_pages.clear(); ts_pages[0] = []
+    ts_calls.clear(); assert w.theirstack_jobs([co("Microsoft")], None) == {"Microsoft": []}
+    ts_pages[0] = {"not": "an array"}
+    try: w.theirstack_jobs([co("Microsoft")], None)
+    except w.InvalidFeedShape as exc: assert "data array" in str(exc)
+    else: raise AssertionError("invalid TheirStack response schema was accepted")
+    ts_pages[0] = [{"id": str(i), "company": "Microsoft", "final_url": "https://careers.microsoft.com/x", "job_title": "Java Engineer"} for i in range(2)]
+    ts_pages[2] = ts_pages[0]; ts_pages[4] = ts_pages[0]
+    try: w.theirstack_jobs([co("Microsoft")], None)
+    except w.IncompleteFeed as exc: assert "page cap" in str(exc)
+    else: raise AssertionError("TheirStack page-cap exhaustion was incorrectly reported as complete")
+finally:
+    w.post, w.THEIRSTACK_PAGE_SIZE, w.THEIRSTACK_MAX_PAGES, w.time.sleep = old_post, old_page_size, old_max_pages, old_sleep
+    if old_key is None: os.environ.pop("THEIRSTACK_API_KEY", None)
+    else: os.environ["THEIRSTACK_API_KEY"] = old_key
+print("G8 TheirStack batches companies, follows pagination, rejects invalid/incomplete reads, and excludes LinkedIn: OK")
+
 print("F no-feed state is explicit; Workday 429 stops discovery; Retry-After is bounded: OK")
 print("ALL TESTS PASSED (including targeted source coverage and pagination checks)")

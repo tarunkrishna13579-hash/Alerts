@@ -6,6 +6,8 @@ This is the saved evidence available in the project. It does not claim a live ch
 
 The 45 priority companies are marked ★ and checked first each scheduled pass. “ATS/platform” is only stated when the saved page/feed evidence supports it. “Adapter” names the existing shared reader; unverified entries are not assigned an invented platform. After a deployed run, `state/source_coverage.csv` records the latest attempted check, last successful listing read, result count, and current failure reason for every entry.
 
+An optional TheirStack batch API has been added as a secondary source for all configured companies, without claiming individual company coverage before a successful API run. It requires the GitHub Actions secret `THEIRSTACK_API_KEY`; this package has no credential, so there is no live result or latest-success timestamp yet. See the separate TheirStack columns in the generated CSV after enabling it.
+
 | # | Company | Official careers URL | Detected ATS/platform | Adapter | Latest successful feed check | Current diagnosis |
 |---:|---|---|---|---|---|---|
 | 1 | Salesforce | [https://careers.salesforce.com/en/jobs/?country=India](https://careers.salesforce.com/en/jobs/?country=India) | Unidentified from saved page evidence | None (no verified adapter) | No successful job-feed read recorded | **GAP** — No supported public feed discovered (no supported feed found on the official careers page); page probe: HTTP 200. |

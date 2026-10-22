@@ -14,6 +14,10 @@ This repository checks the configured employers' public career sites and sends m
 
 Adzuna is an optional secondary source for companies whose official page cannot be read. It is queried on each scheduled run only when both `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` are configured. It is not a guarantee that every employer opening appears there.
 
+TheirStack is a second, batched aggregator source. When `THEIRSTACK_API_KEY` is set, one request searches all configured employer names for India-based Java jobs indexed since the prior successful run. Results are paginated up to 1,000 jobs per run; reaching that cap is recorded as incomplete, and the discovery watermark is not advanced. It filters closed jobs and LinkedIn URLs. Provider matching may still miss company-name aliases, so it complements rather than replaces verified official feeds. TheirStack charges one API credit per job returned, including jobs later rejected by the profile filter. Self-test never calls this API; the first normal scheduled or manual run does.
+
+This is polling, so an alert can only arrive after TheirStack has indexed a posting and the next watcher run completes. No API can guarantee discovery at the exact time the employer publishes it. TheirStack recommends webhooks for real-time delivery; that requires a public webhook receiver and hosting, which this GitHub Actions polling workflow does not provide. See [TheirStack's periodic-fetch guidance](https://theirstack.com/en/docs/guides/fetch-jobs-periodically) and [job search API reference](https://theirstack.com/en/docs/api-reference/jobs/search_jobs_v1).
+
 ## Coverage limits
 
 All 107 companies are configured, but a company being listed here does not prove that its live feed is readable. Some career pages block automated requests or do not expose a public listing feed. The watcher reports those companies as failed or no-feed; it does not count them as checked successfully. Run the self-test after deployment and resolve every `❌`/`⚪` row before relying on full coverage. A site can also change its feed without notice.
@@ -25,10 +29,11 @@ The saved audit validated 28 direct sources in the original 53-company list. Thi
 1. Create a Telegram bot with `@BotFather`, start a chat with it, and obtain the bot token and chat ID.
 2. Create a **private** GitHub repository and upload the contents of this folder, preserving `.github/workflows/watch.yml`.
 3. Under **Settings → Secrets and variables → Actions**, add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`.
-4. Optional broader fallback: add `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` from an Adzuna developer account. This remains secondary to official career feeds.
-5. Open **Actions → job-watch → Run workflow**, select `selftest`, and inspect the report. Then run it again in `normal` mode. The schedule runs from the repository's default branch.
+4. Optional aggregator source: create a TheirStack API key and add it as the GitHub Actions secret `THEIRSTACK_API_KEY`. Their API charges credits per returned job; check your plan and balance before enabling it. This remains secondary to official career feeds.
+5. Optional broader fallback: add `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` from an Adzuna developer account. This remains secondary to official career feeds.
+6. Open **Actions → job-watch → Run workflow**, select `selftest`, and inspect the report. Then run it again in `normal` mode. The schedule runs from the repository's default branch.
 
-The package is prepared but not live until you upload it to your GitHub repository and add the Telegram secrets. To cover the remaining sources more broadly, add Adzuna credentials as Actions secrets too. Do not paste any tokens into this project or chat.
+The package is prepared but not live until you upload it to your GitHub repository and add the Telegram secrets. TheirStack is also inactive until its API key is saved as an Actions secret. Do not paste any tokens into this project or chat.
 
 The database in `state/` contains job IDs, URLs, match decisions, and status history, so keep the repository private. GitHub's hosted-runner minutes for private repositories depend on the account plan; public repositories avoid those minute charges but expose the repository contents.
 
@@ -54,7 +59,7 @@ Configure that scheduler for every 10 minutes. The GitHub workflow still needs t
 - `watcher.py` — discovery, career feed readers, matching, Telegram notifications, and health state.
 - `.github/workflows/watch.yml` — scheduled and manual workflow.
 - `COMPANIES.md` — numbered employer list and source coverage notes.
-- `state/source_coverage.csv` — generated after a live run with ATS, adapter, latest attempt, last successful feed check, result count, status, and failure reason for every company.
+- `state/source_coverage.csv` — generated after a live run with official ATS/adapter status and separate TheirStack status, latest success, result count, and failure reason for every company.
 - `test_watcher.py` — offline regression checks; run locally with `python test_watcher.py` when you want to validate code changes.
 
 ## Tune the filters
