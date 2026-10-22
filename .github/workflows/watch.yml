@@ -8,7 +8,7 @@ on:
         description: "selftest = check every company and send a report; normal = look for jobs"
         type: choice
         default: selftest
-        options: [selftest, normal]
+        options: [selftest, normal, theirstack-auth-check]
 permissions:
   contents: write
 concurrency:
@@ -34,7 +34,13 @@ jobs:
           THEIRSTACK_API_KEY: ${{ secrets.THEIRSTACK_API_KEY }}
           MODE: ${{ github.event.inputs.mode }}
         run: |
-          if [ "$MODE" = "selftest" ]; then python watcher.py --selftest; else python watcher.py; fi
+          if [ "$MODE" = "selftest" ]; then
+            python watcher.py --selftest
+          elif [ "$MODE" = "theirstack-auth-check" ]; then
+            python watcher.py --theirstack-auth-check
+          else
+            python watcher.py
+          fi
       - name: Save state (also runs if the watcher failed half-way)
         if: always()
         run: |
