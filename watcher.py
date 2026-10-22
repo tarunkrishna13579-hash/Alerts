@@ -4,7 +4,7 @@
  --selftest : check every company, send a working / not-working report to Telegram
  --dry      : print instead of sending, don't save state
 """
-import json, os, re, sys, time, html, pathlib, datetime as dt, random, email.utils
+import csv, json, os, re, sys, time, html, pathlib, datetime as dt, random, email.utils
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlparse, urljoin, parse_qs
 import requests, yaml
@@ -23,6 +23,27 @@ MAX_ALERTS, MAX_DETAIL = 20, 12
 
 def get(url, **kw):  return requests.get(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
 def post(url, **kw): return requests.post(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
+
+class FeedReadError(RuntimeError): pass
+class InvalidJSONResponse(FeedReadError): pass
+class InvalidFeedShape(FeedReadError): pass
+class IncompleteFeed(FeedReadError): pass
+class NoListingsParsed(FeedReadError): pass
+
+def response_json(resp, source, expected):
+    """Raise explicit read/schema errors; an empty list remains a valid empty result."""
+    resp.raise_for_status()
+    try:
+        data = resp.json()
+    except (ValueError, json.JSONDecodeError) as exc:
+        raise InvalidJSONResponse(f"invalid JSON from {source}") from exc
+    if not isinstance(data, expected):
+        want = "/".join(t.__name__ for t in expected) if isinstance(expected, tuple) else expected.__name__
+        raise InvalidFeedShape(f"expected {want}, received {type(data).__name__} from {source}")
+    return data
+
+def response_object(resp, source): return response_json(resp, source, dict)
+def response_array(resp, source): return response_json(resp, source, list)
 def clean(h):
     h = html.unescape(h or "")
     h = re.sub(r"(?i)</(?:p|div|li|ul|ol|h\d|tr|section)>|<br\s*/?>", "\n", h)
@@ -75,8 +96,10 @@ def wd_ping(api):
                 last = requests.HTTPError("HTTP 429: Workday rate limit", response=r)
                 if attempt < 2: time.sleep(retry_delay(r, attempt)); continue
                 raise last
-            r.raise_for_status()
-            return "jobPostings" in r.json()
+            data = response_object(r, "Workday discovery")
+            if not isinstance(data.get("jobPostings"), list):
+                raise InvalidFeedShape("Workday response has no jobPostings list")
+            return True
         except requests.Timeout:
             if attempt == 2: raise
     if last: raise last
@@ -89,8 +112,7 @@ def wd_req(api, body):
             if attempt < 2:
                 time.sleep(retry_delay(resp, attempt)); continue
             resp.raise_for_status()
-        resp.raise_for_status()
-        return resp.json()
+        return response_object(resp, "Workday job list")
     raise RuntimeError("Workday request exhausted retries")
 def wd_location_facets(facets):
     """find the ids of the Hyderabad / Bangalore filters inside Workday's own facet list"""
@@ -115,13 +137,15 @@ def wd_list(r):
     try: facets = wd_location_facets(first.get("facets"))
     except Exception: facets = {}
     out, page = [], 0
-    while page < 15:
+    page_size, max_pages = 20, 50
+    while page < max_pages:
         body = {"appliedFacets": facets, "limit": 20, "offset": page * 20, "searchText": ""}
         try: data = first if (page == 0 and not facets) else wd_req(r["api"], body)
         except requests.HTTPError:
             if facets: facets = {}; page = 0; out = []; continue     # facet filter rejected -> plain newest-first scan
             raise
-        posts = data.get("jobPostings", [])
+        posts = data.get("jobPostings")
+        if not isinstance(posts, list): raise InvalidFeedShape("Workday response has no jobPostings list")
         ages = []
         for j in posts:
             p = j.get("externalPath")
@@ -129,67 +153,108 @@ def wd_list(r):
             ag = age_days(j.get("postedOn", "")); ages.append(ag)
             out.append(dict(id=p, req=wd_req_id(j, p), title=j.get("title", ""),
                             loc=j.get("locationsText", ""), url=r["web"] + p, posted=j.get("postedOn", ""), age=ag))
-        if len(posts) < 20 or (ages and all(a is not None and a > F["max_age_days"] for a in ages)): break
+        total = data.get("total")
+        if isinstance(total, int) and (page + 1) * page_size >= total: break
+        if len(posts) < page_size or (ages and all(a is not None and a > F["max_age_days"] for a in ages)): break
         page += 1
+    else:
+        raise IncompleteFeed(f"Workday exceeded {max_pages} pages before reaching older postings or the feed end")
     return dedupe(out)
 def wd_detail(r, j):
-    d = get(r["api"] + j["id"]).json()["jobPostingInfo"]
+    d = response_object(get(r["api"] + j["id"]), "Workday job detail").get("jobPostingInfo")
+    if not isinstance(d, dict): raise InvalidFeedShape("Workday detail has no jobPostingInfo object")
     loc = " ".join([d.get("location", "")] + (d.get("additionalLocations") or []))
     return clean(d.get("jobDescription", "")), loc
 
 def gh_list(r):
-    d = get(f"https://boards-api.greenhouse.io/v1/boards/{r['board']}/jobs?content=true", timeout=40).json()["jobs"]
+    data = response_object(get(f"https://boards-api.greenhouse.io/v1/boards/{r['board']}/jobs?content=true", timeout=40), "Greenhouse job list")
+    d = data.get("jobs")
+    if not isinstance(d, list): raise InvalidFeedShape("Greenhouse response has no jobs list")
     return [dict(id=str(j["id"]), req=str(j["id"]), title=j["title"], loc=(j.get("location") or {}).get("name", ""),
                  url=j["absolute_url"], posted=(j.get("updated_at") or "")[:10], age=iso_age(j.get("updated_at") or ""),
                  desc=clean(j.get("content", ""))) for j in d]
 
 def lv_list(r):
-    d = get(f"https://api.lever.co/v0/postings/{r['slug']}?mode=json").json()
-    return [dict(id=j["id"], req=j["id"][:8], title=j["text"], loc=(j.get("categories") or {}).get("location", ""),
-                 url=j["hostedUrl"], posted="", age=epoch_age(j.get("createdAt")),
-                 desc=clean(j.get("descriptionPlain", "") + " " + " ".join(l.get("content", "") for l in j.get("lists", [])))) for j in d]
+    out, offset, page_size = [], 0, 100
+    for _ in range(25):
+        d = response_array(get(f"https://api.lever.co/v0/postings/{r['slug']}",
+                               params={"mode": "json", "skip": offset, "limit": page_size}), "Lever job list")
+        for j in d:
+            out.append(dict(id=j["id"], req=j["id"][:8], title=j["text"], loc=(j.get("categories") or {}).get("location", ""),
+                            url=j["hostedUrl"], posted="", age=epoch_age(j.get("createdAt")),
+                            desc=clean(j.get("descriptionPlain", "") + " " + " ".join(l.get("content", "") for l in j.get("lists", [])))))
+        if len(d) < page_size: return dedupe(out)
+        offset += len(d)
+    raise IncompleteFeed("Lever exceeded 25 pages (2,500 postings)")
 
 def sr_list(r):
-    out = []
-    for q in F["search_terms"]:
-        d = get(f"https://api.smartrecruiters.com/v1/companies/{r['company_id']}/postings", params={"q": q, "limit": 100}).json()
-        for j in d.get("content", []):
+    out, offset, page_size = [], 0, 100
+    for _ in range(25):
+        d = response_object(get(f"https://api.smartrecruiters.com/v1/companies/{r['company_id']}/postings", params={"country": "IN", "limit": page_size, "offset": offset}), "SmartRecruiters job list")
+        content = d.get("content")
+        total = d.get("totalFound")
+        if not isinstance(content, list) or not isinstance(total, int):
+            raise InvalidFeedShape("SmartRecruiters response requires content[] and integer totalFound")
+        for j in content:
             l = j.get("location") or {}
             out.append(dict(id=j["id"], req=j["id"], title=j["name"], loc=f"{l.get('city','')} {l.get('country','')}",
                             url=f"https://jobs.smartrecruiters.com/{r['company_id']}/{j['id']}",
                             posted=(j.get("releasedDate") or "")[:10], age=iso_age(j.get("releasedDate") or "")))
+        if not content or offset + len(content) >= total: return dedupe(out)
+        offset += len(content)
+    if total > offset: raise IncompleteFeed("SmartRecruiters exceeded 25 pages (2,500 postings)")
     return dedupe(out)
 def sr_detail(r, j):
-    d = get(f"https://api.smartrecruiters.com/v1/companies/{r['company_id']}/postings/{j['id']}").json()
+    d = response_object(get(f"https://api.smartrecruiters.com/v1/companies/{r['company_id']}/postings/{j['id']}"), "SmartRecruiters job detail")
     secs = (d.get("jobAd") or {}).get("sections") or {}
     return clean(" ".join((v or {}).get("text", "") for v in secs.values())), None
 
 def ef_list(r):
     out = []
     for q in F["search_terms"]:
-        d = get(f"https://{r['sub']}.eightfold.ai/api/apply/v2/jobs",
-                params={"domain": r["domain"], "start": 0, "num": 50, "query": q, "location": "India", "sort_by": "timestamp"}).json()
-        for p in d.get("positions", []):
-            out.append(dict(id=str(p["id"]), req=str(p.get("display_job_id") or p["id"]), title=p["name"], loc=p.get("location", ""),
-                            url=p.get("canonicalPositionUrl") or f"https://{r['sub']}.eightfold.ai/careers/job/{p['id']}",
-                            posted="", age=epoch_age(p.get("t_create")), desc=clean(p.get("job_description", ""))))
+        start, page_size, seen = 0, 50, set()
+        for _ in range(20):
+            d = response_object(get(f"https://{r['sub']}.eightfold.ai/api/apply/v2/jobs", params={"domain": r["domain"], "start": start, "num": page_size, "query": q, "location": "India", "sort_by": "timestamp"}), "Eightfold job list")
+            positions = d.get("positions")
+            if not isinstance(positions, list): raise InvalidFeedShape("Eightfold response has no positions list")
+            ids = [str(p.get("id")) for p in positions]
+            if positions and all(i in seen for i in ids): raise IncompleteFeed("Eightfold pagination did not advance")
+            seen.update(ids)
+            for p in positions:
+                out.append(dict(id=str(p["id"]), req=str(p.get("display_job_id") or p["id"]), title=p["name"], loc=p.get("location", ""),
+                                url=p.get("canonicalPositionUrl") or f"https://{r['sub']}.eightfold.ai/careers/job/{p['id']}",
+                                posted="", age=epoch_age(p.get("t_create")), desc=clean(p.get("job_description", ""))))
+            if len(positions) < page_size: break
+            start += len(positions)
+        else:
+            raise IncompleteFeed("Eightfold exceeded 20 pages (1,000 postings) for a search term")
     return dedupe(out)
 
 def oh_list(r):
     out = []
     for q in F["search_terms"]:
-        d = get(f"https://{r['host']}/hcmRestApi/resources/latest/recruitingCEJobRequisitions",
-                params={"onlyData": "true", "expand": "requisitionList.secondaryLocations",
-                        "finder": f"findReqs;siteNumber={r['site']},limit=50,keyword={q},sortBy=POSTING_DATES_DESC"}).json()
-        items = d.get("items") or [{}]
-        for j in items[0].get("requisitionList", []):
-            out.append(dict(id=str(j["Id"]), req=str(j["Id"]), title=j["Title"], loc=j.get("PrimaryLocation", ""),
-                            url=f"https://{r['host']}/hcmUI/CandidateExperience/en/sites/{r['site']}/job/{j['Id']}",
-                            posted=(j.get("PostedDate") or "")[:10], age=iso_age((j.get("PostedDate") or "") + "T00:00:00+00:00")))
+        offset, page_size = 0, 50
+        for _ in range(25):
+            finder = f"findReqs;siteNumber={r['site']},limit={page_size},offset={offset},keyword={q},sortBy=POSTING_DATES_DESC"
+            d = response_object(get(f"https://{r['host']}/hcmRestApi/resources/latest/recruitingCEJobRequisitions", params={"onlyData": "true", "expand": "requisitionList.secondaryLocations", "finder": finder}), "Oracle HCM job list")
+            items = d.get("items")
+            if not isinstance(items, list) or not items or not isinstance(items[0], dict):
+                raise InvalidFeedShape("Oracle HCM response has no items collection")
+            reqs = items[0].get("requisitionList")
+            if not isinstance(reqs, list): raise InvalidFeedShape("Oracle HCM response has no requisitionList")
+            for j in reqs:
+                out.append(dict(id=str(j["Id"]), req=str(j["Id"]), title=j["Title"], loc=j.get("PrimaryLocation", ""),
+                                url=f"https://{r['host']}/hcmUI/CandidateExperience/en/sites/{r['site']}/job/{j['Id']}",
+                                posted=(j.get("PostedDate") or "")[:10], age=iso_age((j.get("PostedDate") or "") + "T00:00:00+00:00")))
+            has_more = d.get("hasMore", items[0].get("hasMore"))
+            total = d.get("totalResults", items[0].get("totalResults"))
+            if has_more is False or not reqs or len(reqs) < page_size or (isinstance(total, int) and offset + len(reqs) >= total): break
+            offset += len(reqs)
+        else:
+            raise IncompleteFeed("Oracle HCM exceeded 25 pages (1,250 postings) for a search term")
     return dedupe(out)
 def oh_detail(r, j):
-    d = get(f"https://{r['host']}/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails",
-            params={"expand": "all", "onlyData": "true", "finder": f'ById;Id="{j["id"]}",siteNumber={r["site"]}'}).json()
+    d = response_object(get(f"https://{r['host']}/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails", params={"expand": "all", "onlyData": "true", "finder": f'ById;Id="{j["id"]}",siteNumber={r["site"]}'}), "Oracle HCM job detail")
     it = (d.get("items") or [{}])[0]
     return clean(it.get("ExternalDescriptionStr", "") + " " + it.get("ExternalQualificationsStr", "")), None
 
@@ -230,10 +295,9 @@ def ld_location(j):
             out += [str(addr.get(k, "")) for k in ("addressLocality", "addressRegion", "addressCountry")]
     return " ".join(v for v in out if v)
 
-def careerhtml_list(r):
-    """Extract job cards or JobPosting JSON-LD from a public employer career listing."""
-    resp = get(r["url"], timeout=35, allow_redirects=True); resp.raise_for_status()
-    body, base, out = resp.text, resp.url, []
+def careerhtml_page(body, base):
+    """Extract job cards or JobPosting JSON-LD from one public career page."""
+    out = []
     for j in ld_job_posts(body):
         url = urljoin(base, j.get("url") or j.get("sameAs") or "")
         if not url: continue
@@ -274,8 +338,33 @@ def careerhtml_list(r):
             if age is None and re.fullmatch(r"\d{4}-\d{2}-\d{2}", posted): age = iso_age(posted + "T00:00:00+00:00")
             out.append(dict(id=req, req=req, title=title, loc=loc, url=url, posted=posted, age=age))
     out = dedupe(out)
-    if not out: raise ValueError("no public job cards found on the employer's career listing")
     return out
+
+def careerhtml_next(body, base):
+    for m in re.finditer(r"<(?:a|link)\b[^>]*>", body, re.I):
+        attrs = {key.lower(): html.unescape(value) for key, _, value in
+                 re.findall(r"([\w:-]+)\s*=\s*([\"'])(.*?)\2", m.group(0), re.S)}
+        if "next" in attrs.get("rel", "").lower().split() and attrs.get("href"):
+            return urljoin(base, attrs["href"])
+    return None
+
+def careerhtml_list(r):
+    """Follow only same-site rel=next pages, up to a fixed cap."""
+    url, seen_pages, out, max_pages = r["url"], set(), [], 20
+    for _ in range(max_pages):
+        if url in seen_pages: raise IncompleteFeed("career-page pagination loop detected")
+        seen_pages.add(url)
+        resp = get(url, timeout=35, allow_redirects=True); resp.raise_for_status()
+        out.extend(careerhtml_page(resp.text, resp.url))
+        nxt = careerhtml_next(resp.text, resp.url)
+        if not nxt:
+            out = dedupe(out)
+            if not out: raise NoListingsParsed("no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed")
+            return out
+        if urlparse(nxt).netloc.lower() != urlparse(resp.url).netloc.lower():
+            raise IncompleteFeed("career-page next link points to a different host; not followed")
+        url = nxt
+    raise IncompleteFeed(f"career-page pagination exceeded {max_pages} pages")
 
 def careerhtml_detail(r, j):
     resp = get(j["url"], timeout=35, allow_redirects=True); resp.raise_for_status()
@@ -304,8 +393,10 @@ def adzuna_jobs():
             r = get(f"https://api.adzuna.com/v1/api/jobs/in/search/{page}",
                     params=dict(app_id=os.getenv("ADZUNA_APP_ID"), app_key=os.getenv("ADZUNA_APP_KEY"), what="java", where=city,
                                 results_per_page=50, sort_by="date", max_days_old=max(1, int(F["max_age_days"]))))
-            r.raise_for_status()
-            for x in r.json().get("results", []):
+            d = response_object(r, "Adzuna job list")
+            results = d.get("results")
+            if not isinstance(results, list): raise InvalidFeedShape("Adzuna response has no results list")
+            for x in results:
                 out.append(dict(id=str(x["id"]), req=str(x["id"]), title=clean(x.get("title", "")),
                                 loc=(x.get("location") or {}).get("display_name", ""), url=x.get("redirect_url", ""),
                                 posted=(x.get("created") or "")[:10], age=iso_age(x.get("created") or ""),
@@ -347,15 +438,38 @@ def scan_page(blob):
     for m in re.finditer(r"https?://([a-z0-9\-]+\.fa\.[a-z0-9\-]+\.oraclecloud\.com)/hcmUI/CandidateExperience/[A-Za-z\-]+/sites/([A-Za-z0-9_\-]+)", blob):
         yield dict(type="oraclehcm", host=m.group(1), site=m.group(2))
 
+DISCOVERED_PLATFORMS = {}
+PLATFORM_MARKERS = (
+    ("Workday", r"myworkdayjobs\.com|myworkdaysite\.com"),
+    ("Greenhouse", r"greenhouse\.io|greenhouse\.com"),
+    ("Lever", r"jobs\.lever\.co|api\.lever\.co"),
+    ("SmartRecruiters", r"smartrecruiters\.com|api\.smartrecruiters\.com"),
+    ("Eightfold", r"eightfold\.ai"),
+    ("Oracle HCM", r"oraclecloud\.com|oracle hcm"),
+    ("Phenom", r"phenompeople|phenom\.com|phenompeople\.com"),
+    ("iCIMS", r"icims\.com|\bicims\b"),
+    ("SAP SuccessFactors", r"successfactors\.(?:com|eu)|jobs\.sap\.com"),
+    ("TurboHire", r"turbohire\.(?:co|com)"),
+    ("Sense", r"sensehq\.com"),
+)
+
+def platform_markers(blob):
+    text = (blob or "").lower()
+    return [name for name, pattern in PLATFORM_MARKERS if re.search(pattern, text)]
+
 def candidates(c):
     h = HINTS.get(c["name"])
     if h:
         for hh in (h if isinstance(h, list) else [h]):
             if hh["type"] == "workday": yield from wd_confs(hh["tenant"], hh["sites"], hh.get("dc"))
             else: yield dict(hh)
+    DISCOVERED_PLATFORMS[c["name"]] = []
     try:
         resp = get(c["url"], allow_redirects=True)
-        for cand in scan_page(resp.url + " " + resp.text[:600000]):
+        page = resp.url + " " + resp.text[:600000]
+        markers = platform_markers(page)
+        DISCOVERED_PLATFORMS[c["name"]] = markers
+        for cand in scan_page(page):
             if cand["type"] == "eightfold" and not cand.get("domain"):
                 host = re.sub(r"^www\.", "", (urlparse(resp.url).hostname or "").lower())
                 if host.startswith("careers."): host = host[len("careers."):]
@@ -366,6 +480,11 @@ def candidates(c):
         pass
 
 def reason(e):
+    if isinstance(e, InvalidJSONResponse): return str(e)
+    if isinstance(e, InvalidFeedShape): return f"invalid response schema: {e}"
+    if isinstance(e, IncompleteFeed): return f"incomplete retrieval: {e}"
+    if isinstance(e, NoListingsParsed): return f"unsupported career-page structure: {e}"
+    if isinstance(e, FeedReadError): return str(e)
     if isinstance(e, requests.HTTPError): return f"HTTP {e.response.status_code}"
     if isinstance(e, requests.Timeout): return "timeout"
     if isinstance(e, requests.ConnectionError): return "no such host"
@@ -391,7 +510,10 @@ def discover(c):
                 break
     real = {k: v for k, v in why.items() if k != "no such host"}
     detail = ", ".join(f"{k} x{v}" for k, v in sorted(real.items(), key=lambda x: -x[1])[:3]) or "no supported feed found on the official careers page"
-    return dict(type="nofeed", why=detail, careers_url=c.get("url", ""))
+    platforms = DISCOVERED_PLATFORMS.get(c["name"], [])
+    if not real and platforms:
+        detail = "detected platform(s) " + ", ".join(platforms) + "; no validated adapter available"
+    return dict(type="nofeed", why=detail, careers_url=c.get("url", ""), detected_platforms=platforms)
 
 # ======================= fit logic =======================
 def loc_ok(s): return any(k in (s or "").lower() for k in F["locations"])
@@ -555,7 +677,9 @@ def send(text):
                           json={"chat_id": chat, "text": text[:4000], "disable_web_page_preview": True})
         if r.ok: time.sleep(1.1); return True
         if r.status_code == 429:
-            time.sleep(r.json().get("parameters", {}).get("retry_after", 5) + 1); continue
+            try: delay = float(r.json().get("parameters", {}).get("retry_after", 5))
+            except (ValueError, TypeError, json.JSONDecodeError): delay = retry_delay(r, 0)
+            time.sleep(min(30, max(0, delay)) + 1); continue
         print("telegram error", r.status_code, r.text); return False
     return False
 def fmt(name, j, info):
@@ -634,13 +758,51 @@ def conf_for(c, resolved):
         r.update(name=c["match"], match=c["match"])
     return r
 
+def utc_stamp(value):
+    if not value: return ""
+    return dt.datetime.fromtimestamp(value, dt.timezone.utc).isoformat(timespec="seconds")
+
+def write_coverage_csv(comps, health, resolved):
+    """Persist the last runtime evidence per company; never infer a successful check."""
+    if DRY: return
+    path = ROOT / "state" / "source_coverage.csv"
+    path.parent.mkdir(exist_ok=True)
+    fields = ["company", "official_careers_url", "ats_platform", "adapter", "status", "latest_attempt_utc",
+              "latest_successful_check_utc", "successful_result_count", "failure_reason"]
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fields)
+        writer.writeheader()
+        for c in comps:
+            name = c["name"]
+            conf = resolved.get(name, {})
+            row = health.get(name, {})
+            source = conf.get("type", "nofeed")
+            platforms = conf.get("detected_platforms") or []
+            ats = LABEL.get(source, source) if source in LIST else (", ".join(platforms) if platforms else "Unconfirmed")
+            writer.writerow({
+                "company": name,
+                "official_careers_url": c.get("url", ""),
+                "ats_platform": ats,
+                "adapter": source if source in LIST else "none",
+                "status": row.get("status", "not_checked"),
+                "latest_attempt_utc": utc_stamp(row.get("last_attempt_at")),
+                "latest_successful_check_utc": utc_stamp(row.get("last_success_at")),
+                "successful_result_count": row.get("last_success_count", ""),
+                "failure_reason": row.get("failure_reason", conf.get("why", "")),
+            })
+
+def ordered_companies(companies):
+    ranks = {name: i for i, name in enumerate(CFG.get("priority_companies", []))}
+    return sorted(companies, key=lambda c: (c["name"] not in ranks, ranks.get(c["name"], 0)))
+
 def main():
     db = load_db(); jobs_db, meta = db["jobs"], db["meta"]
     last = meta.setdefault("last_run", {}); fails = meta.setdefault("fails", {})
     source_cooldowns = meta.setdefault("source_cooldowns", {})
     C = meta.setdefault("counters", {})                   # counts since the last report
     def bump(k, n=1): C[k] = C.get(k, 0) + n
-    resolved = load(RES_F, {}); now = time.time(); comps = CFG["companies"]
+    resolved = load(RES_F, {}); now = time.time()
+    comps = ordered_companies(CFG["companies"])
     lreqs = legacy_reqs(db)
 
     def has_feed(n): return resolved.get(n, {}).get("type") in LIST
@@ -661,7 +823,7 @@ def main():
             stamp = dt.datetime.fromtimestamp(until, dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
             return c, r, None, f"cooldown until {stamp}"
         try: return c, r, LIST[r["type"]](r), None
-        except Exception as e: return c, r, None, (reason(e) if isinstance(e, requests.RequestException) else str(e)[:100])
+        except Exception as e: return c, r, None, reason(e)
 
     direct = [c for c in comps if conf_for(c, resolved)["type"] in LIST]
     fallback = [c for c in comps if conf_for(c, resolved)["type"] == "nofeed"]
@@ -670,16 +832,13 @@ def main():
     # A validated feed that is temporarily failing can use Adzuna as a secondary source.
     # Keep each official-source failure visible even when a secondary source is tried.
     failed_direct = [x for x in results if x[3] and x[3] not in ("skipped", "nofeed")]
-    empty = [x for x in results if x[3] is None and not x[2] and
-             (x[1]["type"] == "eightfold" or (x[1].get("api") and not TOTALS.get(x[1].get("api"))))]
-    if empty:
-        results = [x for x in results if x not in empty]
-    fallback += [x[0] for x in failed_direct + empty]
+    # A successfully parsed empty list is a healthy zero-job response; only errors trigger fallback.
+    fallback += [x[0] for x in failed_direct]
 
     # Only fetch Adzuna once per check batch; only use it when credentials are configured.
     if ADZ_ON and fallback:
         try: ajobs, aerr = adzuna_jobs(), None; last["__adzuna"] = now
-        except Exception as e: ajobs, aerr = [], (reason(e) if isinstance(e, requests.RequestException) else str(e)[:80])
+        except Exception as e: ajobs, aerr = [], reason(e)
         for c in fallback:
             mine = [j for j in ajobs if norm(j["company"]).startswith(norm(c["match"]))]
             results.append((c, {"type": "adzuna", "fallback_for": conf_for(c, resolved)["type"]}, None if aerr else mine, aerr))
@@ -708,10 +867,23 @@ def main():
             current_health[name]["secondary_detail"] = f"{len(jobs or [])} listings" if not err else str(err)
             continue
         row = current_health.setdefault(name, {"secondary": "not_configured"})
-        if err == "nofeed": row.update(primary="no_feed", primary_detail=resolved.get(name, {}).get("why", "No validated official feed"))
-        elif err and str(err).startswith("cooldown until"): row.update(primary="cooldown", primary_detail=str(err))
-        elif err: row.update(primary="failed", primary_detail=str(err))
-        else: row.update(primary="ok", primary_detail=f"{LABEL.get(source, source)}: {len(jobs or [])} listings")
+        old = previous_health.get(name, {})
+        row.update(official_careers_url=c.get("url", ""), ats_platform=LABEL.get(source, source),
+                   adapter=source if source in LIST else "none", last_attempt_at=int(now))
+        if err == "nofeed":
+            detail = resolved.get(name, {}).get("why", "No validated official feed")
+            row.update(primary="no_feed", primary_detail=detail, failure_reason=detail,
+                       ats_platform=", ".join(resolved.get(name, {}).get("detected_platforms", [])) or "Unconfirmed", adapter="none",
+                       last_success_at=old.get("last_success_at"), last_success_count=old.get("last_success_count", ""))
+        elif err and str(err).startswith("cooldown until"):
+            row.update(primary="cooldown", primary_detail=str(err), failure_reason=str(err),
+                       last_success_at=old.get("last_success_at"), last_success_count=old.get("last_success_count", ""))
+        elif err:
+            row.update(primary="failed", primary_detail=str(err), failure_reason=str(err),
+                       last_success_at=old.get("last_success_at"), last_success_count=old.get("last_success_count", ""))
+        else:
+            row.update(primary="ok", primary_detail=f"{LABEL.get(source, source)}: {len(jobs or [])} listings",
+                       failure_reason="", last_success_at=int(now), last_success_count=len(jobs or []))
     health_events = []
     for c in comps:
         name = c["name"]
@@ -729,6 +901,7 @@ def main():
             if overall == "secondary_only": detail += f"; Adzuna: {row.get('secondary_detail', 'read')}"
             health_events.append((name, old_status or "unverified", overall, detail))
         previous_health[name] = row
+    write_coverage_csv(comps, previous_health, resolved)
     if health_events and not SELFTEST and os.getenv("TELEGRAM_BOT_TOKEN") and os.getenv("TELEGRAM_CHAT_ID"):
         for start in range(0, len(health_events), 18):
             lines = [f"• {n}: {before} → {after}" + (f" ({detail[:130]})" if detail else "")
@@ -746,8 +919,9 @@ def main():
                 nofeed.append(f"⚪ {c['name']} - {why}\n   Official careers page: {c['url']}")
             elif err: bad.append(f"❌ {c['name']} ({LABEL.get(r['type'], r['type'])}): {err}")
             else:
-                tot = TOTALS.get(r.get("api")); mark = "⚠️" if (not jobs and not tot) else "✅"
-                ok.append(f"{mark} {c['name']} [{LABEL[r['type']]}]: {len(jobs)} jobs read" + (f" (site total {tot})" if tot is not None else "")
+                tot = TOTALS.get(r.get("api")); mark = "✅"
+                empty_note = " (valid empty response; zero jobs returned)" if not jobs else ""
+                ok.append(f"{mark} {c['name']} [{LABEL[r['type']]}]: {len(jobs)} jobs read{empty_note}" + (f" (site total {tot})" if tot is not None else "")
                           + f", {sum(quick_ok(j) for j in jobs)} pass title/location/age filter")
         send(f"SELF-TEST: {len(comps)} companies in your list\n• validated official career feeds read: {len(ok)}\n• secondary feeds read (Adzuna): {len(lik)}\n• failed source reads: {len(bad)}\n• no automatic feed / manual careers link: {len(nofeed)}")
         for title, rows in ((f"{len(ok)} companies on official career feeds", ok),

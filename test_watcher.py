@@ -2,6 +2,8 @@
 import sys, json, pathlib, tempfile, os, types, io, contextlib, datetime as dt, time as _time
 sys.argv = [sys.argv[0]]
 import watcher as w
+CONFIG_COMPANIES = list(w.CFG["companies"])
+CONFIG_PRIORITY = list(w.CFG.get("priority_companies", []))
 
 PAD = ("We are looking for a motivated engineer to join our team and build reliable services for our customers. "
        "You will work with product owners and other engineers in an agile environment. ")
@@ -192,6 +194,129 @@ resp = types.SimpleNamespace(headers={"Retry-After": "7"})
 assert 7 <= w.retry_delay(resp, 1) < 7.36
 resp = types.SimpleNamespace(headers={"Retry-After": "9999"})
 assert w.retry_delay(resp, 1) < 31
-print("F no-feed state is explicit; Workday 429 stops discovery; Retry-After is bounded: OK")
+class FakeResponse:
+    def __init__(self, data=None, url="https://careers.example/jobs", text="", error=None):
+        self.data, self.url, self.text, self.error = data, url, text, error
+        self.status_code, self.headers = 200, {}
+    def raise_for_status(self): pass
+    def json(self):
+        if self.error: raise self.error
+        return self.data
 
-print("ALL TESTS PASSED (including source fallback safety)")
+# ============ G. feeds: malformed JSON, valid empty response, schema and parser failures ============
+assert len(CONFIG_COMPANIES) == 107 and len({c["name"] for c in CONFIG_COMPANIES}) == 107
+assert len(CONFIG_PRIORITY) == 45 and all(n in {c["name"] for c in CONFIG_COMPANIES} for n in CONFIG_PRIORITY)
+ordered = w.ordered_companies([co("backup"), co(CONFIG_PRIORITY[0])])
+assert ordered[0]["name"] == CONFIG_PRIORITY[0]
+assert w.response_json(FakeResponse(data=[]), "test", list) == []
+try: w.response_json(FakeResponse(error=json.JSONDecodeError("bad", "{", 1)), "mock ATS", dict)
+except w.InvalidJSONResponse as exc: assert "invalid JSON" in w.reason(exc) and "mock ATS" in str(exc)
+else: raise AssertionError("malformed JSON was not reported as a feed failure")
+try: w.response_json(FakeResponse(data={"oops": []}), "mock ATS", list)
+except w.InvalidFeedShape as exc: assert "invalid response schema" in w.reason(exc)
+else: raise AssertionError("unexpected response shape was accepted")
+print("G1 malformed JSON and invalid schema are explicit failures; empty JSON array is valid: OK")
+
+old_get = w.get
+calls = []
+pages = {
+    "https://careers.example/search": '<a href="/job/1001">Java Engineer</a><a rel="next" href="/search?page=2">Next</a>',
+    "https://careers.example/search?page=2": '<a href="/job/1002">Backend Developer</a>',
+}
+def page_get(url, **kw):
+    calls.append(url)
+    return FakeResponse(text=pages.get(url, ""), url=url)
+w.get = page_get
+try:
+    jobs = w.careerhtml_list({"url": "https://careers.example/search"})
+    assert {j["req"] for j in jobs} == {"1001", "1002"} and len(calls) == 2
+    try: w.careerhtml_list({"url": "https://careers.example/empty"})
+    except w.NoListingsParsed as exc: assert "zero jobs is not confirmed" in str(exc)
+    else: raise AssertionError("a page without listings was incorrectly called a successful zero-job feed")
+finally: w.get = old_get
+print("G2 official career-page rel=next pagination retrieves all pages within the cap: OK")
+
+old_get = w.get; sr_calls = []
+def sr_get(url, **kw):
+    sr_calls.append(kw["params"]["offset"])
+    offset = kw["params"]["offset"]
+    content = ([{"id": str(i), "name": "Java Engineer", "location": {"city": "Hyderabad", "country": "India"}}
+                for i in range(offset, min(offset + 100, 101))])
+    return FakeResponse(data={"content": content, "totalFound": 101})
+w.get = sr_get
+try:
+    jobs = w.sr_list({"company_id": "mockco"})
+    assert len(jobs) == 101 and sr_calls == [0, 100], (len(jobs), sr_calls)
+    sr_calls.clear()
+    w.get = lambda url, **kw: FakeResponse(data={"content": [], "totalFound": 0})
+    assert w.sr_list({"company_id": "emptyco"}) == []
+finally: w.get = old_get
+print("G3 SmartRecruiters uses documented offset/limit paging and recognizes a valid zero-job result: OK")
+
+old_get, old_search = w.get, w.F["search_terms"]
+lever_calls = []
+def lever_get(url, **kw):
+    skip = kw["params"]["skip"]; lever_calls.append(skip)
+    size = 100 if skip == 0 else 1 if skip == 100 else 0
+    data = [{"id": f"L{i}", "text": "Java Engineer", "hostedUrl": f"https://jobs.example/{i}", "categories": {}}
+            for i in range(skip, skip + size)]
+    return FakeResponse(data=data)
+w.get, w.F["search_terms"] = lever_get, ["java"]
+try:
+    jobs = w.lv_list({"slug": "mockco"})
+    assert len(jobs) == 101 and lever_calls == [0, 100], (len(jobs), lever_calls)
+finally: w.get, w.F["search_terms"] = old_get, old_search
+print("G4 Lever's documented skip/limit pagination retrieves the next page: OK")
+
+old_post = w.post; wd_calls = []
+def wd_post(url, **kw):
+    offset = kw["json"]["offset"]; wd_calls.append(offset)
+    lo, hi = (0, 20) if offset == 0 else (20, 25)
+    postings = [{"externalPath": f"/job/Java-{i}", "title": "Java Engineer", "locationsText": "Hyderabad", "postedOn": "Today"}
+                for i in range(lo, hi)]
+    return FakeResponse(data={"jobPostings": postings, "total": 25})
+w.post = wd_post
+try:
+    jobs = w.wd_list({"api": "https://tenant.example/api", "web": "https://jobs.example"})
+    assert len(jobs) == 25 and wd_calls == [0, 20], (len(jobs), wd_calls)
+finally: w.post = old_post
+print("G5 Workday offset paging follows the feed total beyond its former 15-page cap: OK")
+
+old_get, old_terms = w.get, w.F["search_terms"]
+oracle_calls = []
+def oracle_get(url, **kw):
+    finder = kw["params"]["finder"]
+    offset = int(finder.split("offset=")[1].split(",")[0]); oracle_calls.append(offset)
+    n = 50 if offset == 0 else 1
+    reqs = [{"Id": str(i), "Title": "Java Engineer", "PrimaryLocation": "Hyderabad", "PostedDate": "2026-10-23"}
+            for i in range(offset, offset + n)]
+    return FakeResponse(data={"items": [{"requisitionList": reqs}], "hasMore": offset == 0})
+w.get, w.F["search_terms"] = oracle_get, ["java"]
+try:
+    jobs = w.oh_list({"host": "tenant.fa.oraclecloud.com", "site": "CX_1"})
+    assert len(jobs) == 51 and oracle_calls == [0, 50], (len(jobs), oracle_calls)
+finally: w.get, w.F["search_terms"] = old_get, old_terms
+print("G6 Oracle HCM uses documented offset paging and follows hasMore: OK")
+
+# Runtime coverage export preserves a successful empty result and keeps failures explicit.
+old_root, old_dry = w.ROOT, w.DRY
+try:
+    with tempfile.TemporaryDirectory() as temp:
+        w.ROOT, w.DRY = pathlib.Path(temp), False
+        coverage_companies = [co("EmptyCo"), co("FailCo")]
+        coverage_health = {
+            "EmptyCo": {"status": "ok", "last_attempt_at": 1792713600, "last_success_at": 1792713600, "last_success_count": 0},
+            "FailCo": {"status": "failed", "last_attempt_at": 1792713600, "failure_reason": "invalid JSON"},
+        }
+        coverage_resolved = {"EmptyCo": {"type": "smartrecruiters"}, "FailCo": {"type": "nofeed", "why": "invalid JSON"}}
+        w.write_coverage_csv(coverage_companies, coverage_health, coverage_resolved)
+        with open(pathlib.Path(temp) / "state" / "source_coverage.csv", newline="", encoding="utf-8") as f:
+            coverage_rows = list(w.csv.DictReader(f))
+        assert len(coverage_rows) == 2 and coverage_rows[0]["status"] == "ok" and coverage_rows[0]["successful_result_count"] == "0"
+        assert coverage_rows[1]["status"] == "failed" and coverage_rows[1]["failure_reason"] == "invalid JSON"
+finally:
+    w.ROOT, w.DRY = old_root, old_dry
+print("G7 coverage CSV records valid zero-job success separately from failure: OK")
+
+print("F no-feed state is explicit; Workday 429 stops discovery; Retry-After is bounded: OK")
+print("ALL TESTS PASSED (including targeted source coverage and pagination checks)")

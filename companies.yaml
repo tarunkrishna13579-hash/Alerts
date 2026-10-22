@@ -46,6 +46,55 @@ skills:
   must_have: Java
   min_other_hits: 0         # 0 = any job that asks for Java is OK (set 1 to also require Spring/REST/etc.)
 
+# These are the user's current priority employers. The watcher starts each 10-minute
+# pass with these entries, then checks the rest of the expanded watchlist.
+priority_companies:
+  - Morgan Stanley
+  - PayPal
+  - Qualcomm
+  - Lovis (LOVIS EOS - provisional)
+  - DrawBox (DrawBox India - provisional)
+  - PwC
+  - HSBC
+  - Virtusa
+  - Optum
+  - Groww
+  - VMware (Broadcom)
+  - Stripe
+  - HCLTech
+  - MakeMyTrip
+  - Accolite / Bounteous
+  - Myntra
+  - Juspay
+  - Ola Cabs
+  - Rippling
+  - Zomato
+  - Media.net
+  - Rubrik
+  - Meesho
+  - Agoda
+  - Deloitte (Global)
+  - eBay
+  - Microsoft
+  - Google
+  - Zoho
+  - DE Shaw
+  - Zeta
+  - Atlassian
+  - Mahindra Group
+  - Infosys
+  - American Express
+  - Flipkart
+  - Goldman Sachs
+  - Siemens
+  - ADP
+  - AMD
+  - Informatica
+  - Wells Fargo
+  - Walmart Global Tech
+  - Intuit
+  - ServiceNow
+
 # Feed overrides are used only when a company does not expose its ATS link on the
 # careers page. Prefer exact public endpoints; do not guess Workday tenants/sites.
 hints:
@@ -184,5 +233,8 @@ companies:
   - {name: "PwC", url: "https://jobs.pwc.com/", match: "pwc", tier: "Tier 1"}
   # Best-match interpretations of the three unclear names; confirm before relying on them.
   - {name: "Vision Technology (Vision Technology Services - provisional)", url: "https://careers.smartrecruiters.com/VisionTechnologyServices1", match: "vision technology", tier: "Backup"}
-  - {name: "Drawing Box (DrawBox India - provisional)", url: "https://drawbox.in", match: "drawbox", tier: "Backup"}
-  - {name: "Lovis (LOVIS EOS - provisional)", url: "https://lovis.com", match: "lovis", tier: "Backup"}
+  - {name: "DrawBox (DrawBox India - provisional)", url: "https://drawbox.in", match: "drawbox", tier: "Priority"}
+  - {name: "Lovis (LOVIS EOS - provisional)", url: "https://lovis.com", match: "lovis", tier: "Priority"}
+  - {name: "Accolite / Bounteous", url: "https://www.bounteous.com/careers/", match: "accolite", tier: "Priority"}
+  - {name: "Mahindra Group", url: "https://jobs.mahindracareers.com/viewalljobs/", match: "mahindra", tier: "Priority"}
+  - {name: "Infosys", url: "https://www.infosys.com/careers/apply/", match: "infosys", tier: "Priority"}
