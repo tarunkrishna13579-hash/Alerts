@@ -33,6 +33,8 @@ The saved audit validated 28 direct sources in the original 53-company list. Thi
 5. Optional broader fallback: add `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` from an Adzuna developer account. This remains secondary to official career feeds.
 6. Open **Actions → job-watch → Run workflow**, select `selftest`, and inspect the report. Then run it again in `normal` mode. The schedule runs from the repository's default branch.
 
+For a TheirStack authentication/access diagnostic, manually run the workflow once with mode `theirstack-auth-check`. It sends one GET to the documented credit-balance endpoint, consumes no job-search credits, does not run company feeds, and does not read or write job state. On an error it logs the HTTP status and a sanitized response body; it never prints the API key or authorization header. A 200 verifies that the key is accepted by the account endpoint; a 403 body is needed to distinguish invalid authentication from account/endpoint access restrictions.
+
 The package is prepared but not live until you upload it to your GitHub repository and add the Telegram secrets. TheirStack is also inactive until its API key is saved as an Actions secret. Do not paste any tokens into this project or chat.
 
 The database in `state/` contains job IDs, URLs, match decisions, and status history, so keep the repository private. GitHub's hosted-runner minutes for private repositories depend on the account plan; public repositories avoid those minute charges but expose the repository contents.

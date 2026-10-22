@@ -361,5 +361,36 @@ finally:
     else: os.environ["THEIRSTACK_API_KEY"] = old_key
 print("G8 TheirStack batches companies, follows pagination, rejects invalid/incomplete reads, and excludes LinkedIn: OK")
 
+# The diagnostic mode uses only the documented, no-job-credit account endpoint.
+old_get, old_key = w.get, os.environ.get("THEIRSTACK_API_KEY")
+os.environ["THEIRSTACK_API_KEY"] = "offline-secret-123"
+auth_calls = []
+def auth_get(url, **kw):
+    auth_calls.append((url, kw))
+    return FakeResponse(data={"api_credits": 10, "used_api_credits": 0}, url=url)
+w.get = auth_get
+try:
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output): result = w.theirstack_auth_check()
+    assert result == 0 and len(auth_calls) == 1
+    assert auth_calls[0][0] == "https://api.theirstack.com/v0/billing/credit-balance"
+    assert auth_calls[0][1]["headers"]["Authorization"] == "Bearer offline-secret-123"
+    assert "PASSED: HTTP 200" in output.getvalue() and "10" not in output.getvalue()
+    class ErrorResponse(FakeResponse):
+        def __init__(self):
+            super().__init__(data=None, text='{"detail":"insufficient account access","token":"offline-secret-123","authorization":"Bearer offline-secret-123"}')
+            self.status_code = 403
+    w.get = lambda url, **kw: ErrorResponse()
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output): result = w.theirstack_auth_check()
+    logged = output.getvalue()
+    assert result == 1 and "HTTP 403" in logged and "insufficient account access" in logged
+    assert "offline-secret-123" not in logged and "Bearer [REDACTED]" in logged
+finally:
+    w.get = old_get
+    if old_key is None: os.environ.pop("THEIRSTACK_API_KEY", None)
+    else: os.environ["THEIRSTACK_API_KEY"] = old_key
+print("G9 TheirStack auth check is one no-job-credit request and logs sanitized status/body only: OK")
+
 print("F no-feed state is explicit; Workday 429 stops discovery; Retry-After is bounded: OK")
 print("ALL TESTS PASSED (including targeted source coverage and pagination checks)")

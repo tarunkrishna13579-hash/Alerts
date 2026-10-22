@@ -21,7 +21,9 @@ UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.3
 DRY, SELFTEST = "--dry" in sys.argv, "--selftest" in sys.argv
 MAX_ALERTS, MAX_DETAIL = 20, 12
 
-def get(url, **kw):  return requests.get(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
+def get(url, **kw):
+    headers = dict(UA); headers.update(kw.pop("headers", {}))
+    return requests.get(url, headers=headers, timeout=kw.pop("timeout", 20), **kw)
 def post(url, **kw):
     headers = dict(UA); headers.update(kw.pop("headers", {}))
     return requests.post(url, headers=headers, timeout=kw.pop("timeout", 20), **kw)
@@ -31,6 +33,18 @@ class InvalidJSONResponse(FeedReadError): pass
 class InvalidFeedShape(FeedReadError): pass
 class IncompleteFeed(FeedReadError): pass
 class NoListingsParsed(FeedReadError): pass
+
+def safe_response_diagnostic(resp, source):
+    """Format status/body for diagnosis without logging credentials or auth headers."""
+    body = str(getattr(resp, "text", "") or "")
+    key = os.getenv("THEIRSTACK_API_KEY", "")
+    if key: body = body.replace(key, "[REDACTED]")
+    body = re.sub(r"(?i)bearer\s+[^\s\"'<>]+", "Bearer [REDACTED]", body)
+    body = re.sub(r"(?i)(authorization|api[_-]?key|access[_-]?token|token|secret)(\s*[:=]\s*)(\"[^\"]*\"|'[^']*'|[^,;\s}]+)", r"\1\2[REDACTED]", body)
+    body = re.sub(r"(?i)([?&](?:api[_-]?key|access[_-]?token|token|key)=)[^&\s]+", r"\1[REDACTED]", body)
+    body = re.sub(r"\s+", " ", body).strip()
+    if len(body) > 1200: body = body[:1200] + "…[truncated]"
+    return f"HTTP {getattr(resp, 'status_code', 'unknown')} from {source}" + (f"; response body: {body}" if body else "; response body: <empty>")
 
 def response_json(resp, source, expected):
     """Raise explicit read/schema errors; an empty list remains a valid empty result."""
@@ -436,6 +450,8 @@ def theirstack_jobs(comps, discovered_since):
         response = post(THEIRSTACK_URL, json=payload,
                         headers={"Authorization": f"Bearer {key}", "Accept": "application/json", "Content-Type": "application/json"},
                         timeout=30)
+        if response.status_code >= 400:
+            raise FeedReadError(safe_response_diagnostic(response, "TheirStack job search"))
         data = response_object(response, "TheirStack job search").get("data")
         if not isinstance(data, list): raise InvalidFeedShape("TheirStack response has no data array")
         for item in data:
@@ -481,6 +497,29 @@ def theirstack_jobs(comps, discovered_since):
         if job["id"] in seen: continue
         seen.add(job["id"]); grouped[target].append(job)
     return grouped
+
+def theirstack_auth_check():
+    """Single no-credit account endpoint request; does not run the watcher or change state."""
+    key = os.getenv("THEIRSTACK_API_KEY")
+    if not key:
+        print("TheirStack auth check: THEIRSTACK_API_KEY is missing from this process environment.")
+        return 1
+    response = get("https://api.theirstack.com/v0/billing/credit-balance",
+                   headers={"Authorization": f"Bearer {key}", "Accept": "application/json"}, timeout=20)
+    if response.status_code >= 400:
+        print("TheirStack auth check FAILED: " + safe_response_diagnostic(response, "credit-balance endpoint"))
+        return 1
+    try:
+        data = response_json(response, "TheirStack credit-balance endpoint", dict)
+    except FeedReadError as exc:
+        print(f"TheirStack auth check FAILED: HTTP {response.status_code}; invalid response ({exc})")
+        return 1
+    if not isinstance(data.get("api_credits"), int):
+        print(f"TheirStack auth check FAILED: HTTP {response.status_code}; valid JSON but unexpected schema (api_credits missing)")
+        return 1
+    # Deliberately omit balance values from CI logs; status and schema are enough to verify auth.
+    print(f"TheirStack auth check PASSED: HTTP {response.status_code}; Bearer authentication accepted; credit-balance schema valid. No job-search query or job credits used.")
+    return 0
 
 LIST = dict(workday=wd_list, greenhouse=gh_list, lever=lv_list, smartrecruiters=sr_list,
             eightfold=ef_list, oraclehcm=oh_list, careerhtml=careerhtml_list)
@@ -880,6 +919,8 @@ def ordered_companies(companies):
     return sorted(companies, key=lambda c: (c["name"] not in ranks, ranks.get(c["name"], 0)))
 
 def main():
+    if "--theirstack-auth-check" in sys.argv:
+        raise SystemExit(theirstack_auth_check())
     db = load_db(); jobs_db, meta = db["jobs"], db["meta"]
     last = meta.setdefault("last_run", {}); fails = meta.setdefault("fails", {})
     source_cooldowns = meta.setdefault("source_cooldowns", {})
