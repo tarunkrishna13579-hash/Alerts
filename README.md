@@ -1,73 +1,51 @@
-# Java job alerts for 107 companies
+# Java job-alert bot (career sites only, Telegram, free)
 
-This repository checks the configured employers' public career sites and sends matching roles to Telegram. The company list is in `companies.yaml`; the full numbered list is in `COMPANIES.md`.
-
-## What the watcher does
-
-- Runs on a 10-minute GitHub Actions schedule.
-- Uses public career-site/ATS listings first: Workday, Greenhouse, Lever, SmartRecruiters, Eightfold, Oracle HCM, and readable official career pages.
-- Checks all 107 employers each run. It starts with your 45 priority employers, polls validated feeds where available, then rechecks unresolved official careers pages every pass so newly exposed feeds can be picked up immediately.
-- Tracks each employer's last source status. It sends a Telegram alert when a source starts failing, has no public feed, is available only through the optional secondary feed, or recovers. Scheduled reports also show coverage counts and the companies needing attention.
-- Remembers requisition IDs in `state/db.json` so the same opening is not sent repeatedly.
-- Keeps the existing Java, Bengaluru/Hyderabad, recency, and experience filters.
-- Contains no LinkedIn scraper, endpoint, or fallback.
-
-Adzuna is an optional secondary source for companies whose official page cannot be read. It is queried on each scheduled run only when both `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` are configured. It is not a guarantee that every employer opening appears there.
-
-TheirStack is a second, batched aggregator source. When `THEIRSTACK_API_KEY` is set, one request searches all configured employer names for India-based Java jobs indexed since the prior successful run. Results are paginated up to 1,000 jobs per run; reaching that cap is recorded as incomplete, and the discovery watermark is not advanced. It filters closed jobs and LinkedIn URLs. Provider matching may still miss company-name aliases, so it complements rather than replaces verified official feeds. TheirStack charges one API credit per job returned, including jobs later rejected by the profile filter. Self-test never calls this API; the first normal scheduled or manual run does.
-
-This is polling, so an alert can only arrive after TheirStack has indexed a posting and the next watcher run completes. No API can guarantee discovery at the exact time the employer publishes it. TheirStack recommends webhooks for real-time delivery; that requires a public webhook receiver and hosting, which this GitHub Actions polling workflow does not provide. See [TheirStack's periodic-fetch guidance](https://theirstack.com/en/docs/guides/fetch-jobs-periodically) and [job search API reference](https://theirstack.com/en/docs/api-reference/jobs/search_jobs_v1).
-
-## Coverage limits
-
-All 107 companies are configured, but a company being listed here does not prove that its live feed is readable. Some career pages block automated requests or do not expose a public listing feed. The watcher reports those companies as failed or no-feed; it does not count them as checked successfully. Run the self-test after deployment and resolve every `❌`/`⚪` row before relying on full coverage. A site can also change its feed without notice.
-
-The saved audit validated 28 direct sources in the original 53-company list. This package now has 107 unique entries; duplicate names such as Dell, SAP, Adobe, and Nutanix were consolidated. The 54 additional entries have **not** been individually feed-validated in this update. Your 45 current priority employers are listed in `priority_companies` and are checked first each pass. This is a 107-company watchlist, not a promise of complete listing coverage. Run the included self-test after deployment; resolve each `❌`/`⚪` result or add a verified ATS adapter before relying on that employer's automated listings. DrawBox and LOVIS use provisional best matches, labeled in `COMPANIES.md`.
-
-## Set up Telegram and GitHub
-
-1. Create a Telegram bot with `@BotFather`, start a chat with it, and obtain the bot token and chat ID.
-2. Create a **private** GitHub repository and upload the contents of this folder, preserving `.github/workflows/watch.yml`.
-3. Under **Settings → Secrets and variables → Actions**, add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`.
-4. Optional aggregator source: create a TheirStack API key and add it as the GitHub Actions secret `THEIRSTACK_API_KEY`. Their API charges credits per returned job; check your plan and balance before enabling it. This remains secondary to official career feeds.
-5. Optional broader fallback: add `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` from an Adzuna developer account. This remains secondary to official career feeds.
-6. Open **Actions → job-watch → Run workflow**, select `selftest`, and inspect the report. Then run it again in `normal` mode. The schedule runs from the repository's default branch.
-
-For a TheirStack authentication/access diagnostic, manually run the workflow once with mode `theirstack-auth-check`. It sends one GET to the documented credit-balance endpoint, consumes no job-search credits, does not run company feeds, and does not read or write job state. On an error it logs the HTTP status and a sanitized response body; it never prints the API key or authorization header. A 200 verifies that the key is accepted by the account endpoint; a 403 body is needed to distinguish invalid authentication from account/endpoint access restrictions.
-
-The package is prepared but not live until you upload it to your GitHub repository and add the Telegram secrets. TheirStack is also inactive until its API key is saved as an Actions secret. Do not paste any tokens into this project or chat.
-
-The database in `state/` contains job IDs, URLs, match decisions, and status history, so keep the repository private. GitHub's hosted-runner minutes for private repositories depend on the account plan; public repositories avoid those minute charges but expose the repository contents.
-
-## Ten-minute timing
-
-The workflow cron is set to every 10 minutes, away from the top of the hour. GitHub says scheduled runs can be delayed or dropped during high load, so this is an approximately 10-minute schedule, not a hard real-time guarantee. If you need a second clock to dispatch the workflow, a separate scheduler can POST to:
-
-```text
-https://api.github.com/repos/<OWNER>/<REPO>/actions/workflows/watch.yml/dispatches
-```
-
-Use a narrowly scoped GitHub token with Actions write permission, the `Accept: application/vnd.github+json` and `Content-Type: application/json` headers, and this body:
-
-```json
-{"ref":"main","inputs":{"mode":"normal"}}
-```
-
-Configure that scheduler for every 10 minutes. The GitHub workflow still needs to finish before the next dispatch; overlapping runs are serialized.
+Runs on GitHub Actions (free), reads company career sites, and sends a Telegram alert for a NEW job only when its **verified overall experience requirement fits your 2.2 years**,
+the description asks for Java, and the city is Hyderabad / Bangalore. No LinkedIn. No Indeed (it blocks automated access and its terms forbid it).
 
 ## Files
+| File | Purpose |
+|---|---|
+| `experience.py` | extraction + eligibility engine (data model, statements, conflict resolution, fit rules) |
+| `watcher.py` | adapters for career sites, discovery, database, Telegram, reports |
+| `companies.yaml` | your 105 companies, filters, your profile (`experience:`), hints |
+| `test_experience.py`, `test_pipeline.py`, `evaluate_real.py`, `evaluation/real_labels.json` | tests and measurement |
+| `AUDIT.md`, `COMPANIES.md` | what was wrong before; per-company source and honest status |
+| `.github/workflows/watch.yml` | schedule / manual run; runs the tests first |
 
-- `companies.yaml` — all 107 company entries, the 45 priority names, careers URLs, filters, and explicit source overrides.
-- `watcher.py` — discovery, career feed readers, matching, Telegram notifications, and health state.
-- `.github/workflows/watch.yml` — scheduled and manual workflow.
-- `COMPANIES.md` — numbered employer list and source coverage notes.
-- `state/source_coverage.csv` — generated after a live run with official ATS/adapter status and separate TheirStack status, latest success, result count, and failure reason for every company.
-- `test_watcher.py` — offline regression checks; run locally with `python test_watcher.py` when you want to validate code changes.
+## How a job is decided
+1. **Discovery** - per company the first route that works is used (and remembered): configured hint -> ATS link on the careers page -> Workday site name from the tenant root ->
+   the site's sitemap (`robots.txt`) -> job links on the careers page. Sitemap / page-list routes are accepted only if job pages carry schema.org `JobPosting` data.
+   Workday, Oracle, Greenhouse, Lever, SmartRecruiters, Eightfold use their public job feeds, with paging.
+2. **Known jobs are skipped** (identity = company + official requisition id; cross-site copies matched by company+title+city). Nothing is re-downloaded unless the description changed
+   or a needs-review job is retried (every 6 h, max 5 times).
+3. **Full description** is fetched; status is recorded: `FULL_EMPLOYER`, `FULL_JOBBOARD`, `PARTIAL_SNIPPET`, `INACCESSIBLE`, `EMPTY`. Only FULL_* can verify anything. Length is only a warning.
+4. **Stage 1 - extraction** (`extract_experience_requirements`): every duration becomes a record (raw text, scope, mandatory/preferred, min/max, section, character offsets).
+   Scopes: OVERALL, SKILL_SPECIFIC, ROLE_DOMAIN, EDUCATION, COMPANY_HISTORY, OTHER, UNKNOWN. Education years, company history, time frames and preferred / optional lines never count.
+   Overall statements are combined by interval intersection (`2+` and `min 3` -> 3+, both kept and the derivation written down); disjoint ones (`2-4` vs `min 5`) = conflict.
+5. **Stage 2 - fit** (`evaluate_candidate_fit`): never changes what stage 1 found. Verified overall minimum > 2.2 -> INELIGIBLE; a range such as 2-4 contains 2.2 -> pass;
+   range topping out far below 2.2 -> INELIGIBLE. Skill years (`3+ years Java`) are kept apart and shown **for information only** (`skill_checks: info`); set `strict` to let them decide
+   (then only your recorded skills count, no allowance, unknown skill -> NEEDS_REVIEW).
+6. **Result**: `ELIGIBLE` -> alert once. `INELIGIBLE` -> stored. `NEEDS_REVIEW` (no / conflicting / ambiguous overall statement, partial or missing description) -> stored, listed in the 10:00 / 16:00 / 23:00 IST report, **never** sent as a match.
 
-## Tune the filters
+Alert example: overall range exactly as written, the evidence sentence and section, skill years on a separate line, eligibility reason, and which source supplied the full description.
 
-- `experience.my_years`: current profile experience used by the fit check.
-- `filters.locations`: allowed cities.
-- `filters.max_age_days`: posting recency window.
-- `filters.exclude_title`: titles that should not alert.
-- `skills.must_have`: required skill in the job description.
+## Deploy
+1. Upload every file of this folder (including `.github/workflows/watch.yml`) to your repo. 2. Secrets: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` (optional backup route: `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`).
+3. Actions -> job-watch -> Run workflow -> **selftest**: reports, for each of the 105 companies, the route, jobs read, pagination status, last success, and what failed and why.
+4. Run **normal**. For a reliable 10-minute rhythm use the cron-job.org trigger (below). 5. Tests locally: `python test_experience.py && python test_pipeline.py && python evaluate_real.py all`.
+
+### 10-minute trigger (GitHub's own timer is unreliable)
+Fine-grained GitHub token (only this repo, Actions: read/write) -> cron-job.org POST `https://api.github.com/repos/<user>/Alerts/actions/workflows/watch.yml/dispatches`,
+headers `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`, `Content-Type: application/json`, body `{"ref":"main","inputs":{"mode":"normal"}}`, every 10 minutes (expect HTTP 204).
+
+## Measuring on your own data
+Run the bot locally with `CAPTURE_DIR=captured python watcher.py`; every full description it analyses is saved. Label some and add them to `evaluation/real_labels.json`, then
+`python evaluate_real.py all --captured captured`. A false-eligible item makes the command exit non-zero.
+
+## Known limits (nothing here has been run against the live sites by me)
+- Sites that publish no `JobPosting` data and no usable listing (fully script-rendered, bot-protected) cannot be read; the self-test names them.
+- Postings that state experience only in a table, image, or unusual phrasing become NEEDS_REVIEW instead of being guessed.
+- Workday gives the posting DAY, not the hour; a re-listed requisition is recorded as "re-listed", not as a verified repost.
+- Sites without posting dates use new-URL detection: the first run is a baseline, so jobs already open then are not alerted.
+- A crash between a Telegram send and the next save can in rare cases repeat one alert.

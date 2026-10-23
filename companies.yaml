@@ -32,102 +32,86 @@ experience:
   my_years: 2.2             # your experience (years)
   tolerance: 0              # overall minimum may exceed my_years by this much (0 = "3+ years" is rejected, "2+" accepted)
   range_slack: 0.5          # a range like 0-2 still counts if its top is within this of my_years
-  skill_tolerance: 1.0      # a MANDATORY skill-specific requirement may exceed your years in that skill by this much
-  skill_years:              # your years per skill (from your Oracle FLEXCUBE work); skills not listed are shown but never block a job
-    Java: 2.2
-    Spring Boot: 2.2
+  skill_checks: info        # info = skill years (e.g. "3+ years Java") are shown in the alert but NEVER decide; strict = they can reject a job
+  skill_tolerance: 0.0      # no free allowance: a MANDATORY skill requirement above your recorded years in that skill is rejected
+  skill_years:              # YOUR recorded years per skill. Taken from your Oracle FLEXCUBE role (since Aug 2024) - please confirm or correct each number.
+    Java: 2.2               # A mandatory requirement for a skill that is NOT listed here becomes NEEDS_REVIEW (or ineligible if it is more
+    Spring Boot: 2.2        # than your 2.2 total years). Add skills here (e.g. SQL: 2.0) when you are sure of the years.
     Spring: 2.2
     Microservices: 2.2
     Kafka: 2.2
     Redis: 2.2
-    REST APIs: 2.2
 
 skills:
   must_have: Java
   min_other_hits: 0         # 0 = any job that asks for Java is OK (set 1 to also require Spring/REST/etc.)
 
-# These are the user's current priority employers. The watcher starts each 10-minute
-# pass with these entries, then checks the rest of the expanded watchlist.
-priority_companies:
-  - Morgan Stanley
-  - PayPal
-  - Qualcomm
-  - Lovis (LOVIS EOS - provisional)
-  - DrawBox (DrawBox India - provisional)
-  - PwC
-  - HSBC
-  - Virtusa
-  - Optum
-  - Groww
-  - VMware (Broadcom)
-  - Stripe
-  - HCLTech
-  - MakeMyTrip
-  - Accolite / Bounteous
-  - Myntra
-  - Juspay
-  - Ola Cabs
-  - Rippling
-  - Zomato
-  - Media.net
-  - Rubrik
-  - Meesho
-  - Agoda
-  - Deloitte (Global)
-  - eBay
-  - Microsoft
-  - Google
-  - Zoho
-  - DE Shaw
-  - Zeta
-  - Atlassian
-  - Mahindra Group
-  - Infosys
-  - American Express
-  - Flipkart
-  - Goldman Sachs
-  - Siemens
-  - ADP
-  - AMD
-  - Informatica
-  - Wells Fargo
-  - Walmart Global Tech
-  - Intuit
-  - ServiceNow
-
-# Feed overrides are used only when a company does not expose its ATS link on the
-# careers page. Prefer exact public endpoints; do not guess Workday tenants/sites.
+# Verified automatically on first run (wrong guesses are harmless).
 hints:
-  Dell Technologies:   {type: oraclehcm, host: enterpriseplatform.dell.com, site: CX_1001}
-  Honeywell:           {type: oraclehcm, host: ibqbjb.fa.ocs.oraclecloud.com, site: CX_1}
+  Salesforce:          {type: workday, tenant: salesforce, dc: wd12, sites: [External_Career_Site]}
+  Mastercard:          {type: workday, tenant: mastercard, sites: [CorporateCareers]}
+  Thomson Reuters:     {type: workday, tenant: thomsonreuters, sites: [External_Career_Site]}
+  Target:              {type: workday, tenant: target, dc: wd5, sites: [targetcareers]}
+  Walmart Global Tech: {type: workday, tenant: walmart, dc: wd5, sites: [WalmartExternal, External, Walmart]}
+  Dell Technologies:   {type: workday, tenant: dell, dc: wd1, sites: [External]}
+  Wells Fargo:         {type: workday, tenant: wellsfargo, sites: [WellsFargoJobs]}
+  Adobe:               {type: workday, tenant: adobe, sites: [external_experienced]}
+  Nutanix:             {type: workday, tenant: nutanix, sites: [Nutanix_Careers, External, Careers]}
+  Autodesk:            {type: workday, tenant: autodesk, sites: [Ext]}
+  NetApp:              {type: workday, tenant: netapp, dc: wd1, sites: [NetAppCareers]}
+  Informatica:         {type: workday, tenant: informatica, sites: [External]}
+  Teradata:            {type: workday, tenant: teradata, sites: [Teradata_Careers, External]}
+  Qualcomm:            {type: workday, tenant: qualcomm, sites: [External]}
+  NVIDIA:              {type: workday, tenant: nvidia, sites: [NVIDIAExternalCareerSite]}
+  AMD:                 {type: workday, tenant: amd, dc: wd1, sites: [External]}
+  FIS:                 {type: workday, tenant: fis, sites: [SearchJobs]}
+  State Street:        {type: workday, tenant: statestreet, sites: [Global]}
+  Capital One:         {type: workday, tenant: capitalone, sites: [Capital_One]}
+  Honeywell:           {type: workday, tenant: honeywell, sites: [Honeywell]}
+  Broadridge:          {type: workday, tenant: broadridge, sites: [Careers, External]}
+  Synchrony:           {type: workday, tenant: synchronyfinancial, sites: [careers]}
   Oracle — other engineering teams: {type: oraclehcm, host: eeho.fa.us2.oraclecloud.com, site: CX_45001}
+  ServiceNow:          {type: html_listing, url: "https://careers.servicenow.com/jobs/?orderby=0&pagesize=20&page={page}&radius=100&country=India", link: '/jobs/\d{6,}/', pages: 8}
+  Pegasystems:         {type: workday, tenant: pega, dc: wd3, sites: [PegaCareers, Pega, External]}
+  Commvault:           {type: workday, tenant: commvault, sites: [Commvault, Commvault_Careers, External]}
   JPMorgan Chase:      {type: oraclehcm, host: jpmc.fa.oraclecloud.com, site: CX_1001}
   PayPal:              {type: eightfold, sub: paypal, domain: paypal.com}
   Thoughtworks:        {type: greenhouse, board: thoughtworks}
-  NetApp:              {type: eightfold, sub: netapp, domain: netapp.com}
-  Nutanix:             {type: careerhtml, url: "https://careers.nutanix.com/en/locations/india/"}
-  SAP:                 {type: careerhtml, url: "https://careers.sap.com/go/India/8807201/"}
-  Experian:            {type: careerhtml, url: "https://jobs.experian.com/jobs"}
-  EY GDS:              {type: careerhtml, url: "https://careers.ey.com/ey/search/?createNewAlert=false&q=&locationsearch=India&optionsFacetsDD_country=&optionsFacetsDD_customfield1=&locale=en_US"}
-  Deloitte USI:        {type: careerhtml, url: "https://usijobs.deloitte.com/en_US/careersUSI/SearchJobs/feed/?jobRecordsPerPage=50&"}
-  Infosys Finacle:     {type: careerhtml, url: "https://career.infosys.com/joblist?countrycode=IN&companyhiringtype=IL"}
-  Pegasystems:         {type: careerhtml, url: "https://www.pega.com/about/careers/job-listings"}
-  Intuit:              {type: careerhtml, url: "https://jobs.intuit.com/"}
-  # The official careers page embeds this Greenhouse board; its public API returned 52 listings in validation.
-  Commvault:           {type: greenhouse, board: commvault}
-  Flipkart:            {type: careerhtml, url: "https://flipkart.turbohire.co/careerpage/4d757ba0-3d57-448a-b82c-238ed87ac90f"}
-  Publicis Sapient:    {type: careerhtml, url: "https://careers.publicissapient.com/job-search"}
-  Synchrony:           {type: careerhtml, url: "https://www.synchronycareers.com/search-jobs"}
-  HighRadius:          {type: careerhtml, url: "https://www.highradius.com/about/career/"}
-  Goldman Sachs:       {type: careerhtml, url: "https://higher.gs.com/results"}
-  NVIDIA:              {type: careerhtml, url: "https://jobs.nvidia.com/careers"}
-  Autodesk:            {type: careerhtml, url: "https://jobs.autodesk.com/careers"}
-  Siemens:             {type: careerhtml, url: "https://www.siemens.com/en-us/company/jobs/"}
-  FIS:                 {type: careerhtml, url: "https://careers.fisglobal.com/us/en"}
-  Mahindra Comviva:    {type: careerhtml, url: "https://www.comviva.com/careers/explore-opportunity/"}
-  Ascendion:           {type: careerhtml, url: "https://careers.ascendion.com/jobposting/region/apac"}
 
-# Your employer watch list. Add more lines the same way.
+# Your 53 companies (from your Career Hub). Add more lines the same way.
+  Airbnb: {board: airbnb, type: greenhouse}
+  Databricks: {board: databricks, type: greenhouse}
+  Dropbox: {board: dropbox, type: greenhouse}
+  Okta: {board: okta, type: greenhouse}
+  Reddit: {board: reddit, type: greenhouse}
+  Rubrik: {board: rubrik, type: greenhouse}
+  Stripe: {board: stripe, type: greenhouse}
+  Razorpay: {board: razorpaysoftwareprivatelimited, type: greenhouse}
+  InMobi: {board: inmobi, type: greenhouse}
+  Rippling: {org: rippling, type: ashby}
+  Shopify: [{org: shopify, type: ashby}]
+  Sprinklr: [{slug: sprinklr, type: lever}, {board: sprinklr, type: greenhouse}]
+  Meesho: [{slug: meesho, type: lever}, {board: meesho, type: greenhouse}]
+  Zomato: [{slug: zomato, type: lever}, {board: zomato, type: greenhouse}]
+  Paytm: [{slug: paytm, type: lever}, {board: paytm, type: greenhouse}]
+  Groww: [{slug: groww, type: lever}, {board: groww, type: greenhouse}]
+  "Urban Company": [{slug: urbancompany, type: lever}, {board: urbancompany, type: greenhouse}]
+  Juspay: [{slug: juspay, type: lever}, {board: juspay, type: greenhouse}]
+  Zeta: [{slug: zeta, type: lever}, {board: zeta, type: greenhouse}]
+  Agoda: [{board: agoda, type: greenhouse}, {slug: agoda, type: lever}]
+  "Expedia Group": {dc: wd108, sites: [search], tenant: expedia, type: workday}
+  eBay: {dc: wd5, sites: [apply], tenant: ebay, type: workday}
+  Intel: {dc: wd1, sites: [External], tenant: intel, type: workday}
+  HP: {dc: wd5, sites: [ExternalCareerSite], tenant: hp, type: workday}
+  CrowdStrike: {dc: wd5, sites: [crowdstrikecareers], tenant: crowdstrike, type: workday}
+  Airbus: {dc: wd3, sites: [Airbus], tenant: ag, type: workday}
+  PwC: {dc: wd3, sites: [Global_Experienced_Careers], tenant: pwc, type: workday}
+  "Lowe's (you wrote 'Lowis')": {dc: wd5, sites: [LWS_External_CS], tenant: lowes, type: workday}
+  "VMware (Broadcom)": [{dc: wd1, sites: [External_Career, External, Broadcom], tenant: broadcom, type: workday}, {dc: wd1, sites: [VMware, External], tenant: vmware, type: workday}]
+  Snowflake: [{sites: [Snowflake, External], tenant: snowflake, type: workday}, {board: snowflake, type: greenhouse}]
+  Optum: {dc: wd1, sites: [Optum, UHG_External], tenant: uhg, type: workday}
+
+# Your 53 + 52 added companies. Add more lines the same way.
 companies:
   - {name: "Salesforce", url: "https://careers.salesforce.com/en/jobs/?country=India", match: "salesforce", tier: "Tier 1"}
   - {name: "ServiceNow", url: "https://careers.servicenow.com/locations/apj/india/", match: "servicenow", tier: "Tier 1"}
@@ -182,59 +166,55 @@ companies:
   - {name: "Samsung R&D (SRI-Bangalore)", url: "https://research.samsung.com/careers", match: "samsung", tier: "Tier 2"}
   - {name: "Mahindra Comviva", url: "https://www.comviva.com/careers/", match: "comviva", tier: "Tier 2"}
   - {name: "Ascendion", url: "https://ascendion.com/careers/", match: "ascendion", tier: "Backup"}
-  # Additional employers requested on 2026-10-23. Existing employers above are not duplicated.
-  - {name: "Barclays", url: "https://search.jobs.barclays/search-jobs/data/", match: "barclays", tier: "Tier 1"}
-  - {name: "Microsoft", url: "https://careers.microsoft.com/v2/global/en/locations/india.html", match: "microsoft", tier: "Tier 1"}
-  - {name: "Google", url: "https://www.google.com/about/careers/applications/locations/india/", match: "google", tier: "Tier 1"}
-  - {name: "Atlassian", url: "https://www.atlassian.com/company/careers/all-jobs", match: "atlassian", tier: "Tier 1"}
-  - {name: "Razorpay", url: "https://razorpay.com/careers/", match: "razorpay", tier: "Tier 1"}
-  - {name: "Zeta", url: "https://www.zeta.tech/in/careers", match: "zeta", tier: "Tier 1"}
-  - {name: "Zoho", url: "https://www.zoho.com/careers/", match: "zoho", tier: "Tier 1"}
-  - {name: "DE Shaw", url: "https://www.deshawindia.com/careers/work-with-us", match: "de shaw", tier: "Tier 1"}
-  - {name: "Snowflake", url: "https://careers.snowflake.com/us/en", match: "snowflake", tier: "Tier 1"}
-  - {name: "Expedia Group", url: "https://careers.expediagroup.com/jobs/country/India/", match: "expedia", tier: "Tier 1"}
-  - {name: "eBay", url: "https://jobs.ebayinc.com/us/en/home", match: "ebay", tier: "Tier 1"}
-  - {name: "Airbnb", url: "https://careers.airbnb.com/positions", match: "airbnb", tier: "Tier 1"}
-  - {name: "Morgan Stanley", url: "https://www.morganstanley.com/careers/career-opportunities-search/", match: "morgan stanley", tier: "Tier 1"}
-  - {name: "Deloitte (Global)", url: "https://apply.deloitte.com/careers", match: "deloitte", tier: "Tier 1"}
-  - {name: "Sprinklr", url: "https://www.sprinklr.com/careers/", match: "sprinklr", tier: "Tier 1"}
-  - {name: "Agoda", url: "https://careersatagoda.com/vacancies/", match: "agoda", tier: "Tier 1"}
-  - {name: "Meesho", url: "https://www.meesho.io/jobs", match: "meesho", tier: "Tier 1"}
-  - {name: "Rubrik", url: "https://www.rubrik.com/company/careers", match: "rubrik", tier: "Tier 1"}
-  - {name: "Media.net", url: "https://www.media.net/careers", match: "media.net", tier: "Tier 1"}
-  - {name: "Databricks", url: "https://www.databricks.com/company/careers", match: "databricks", tier: "Tier 1"}
-  - {name: "Zomato", url: "https://www.zomato.com/careers", match: "zomato", tier: "Tier 1"}
-  - {name: "Rippling", url: "https://www.rippling.com/careers", match: "rippling", tier: "Tier 1"}
-  - {name: "Paytm", url: "https://paytm.com/careers/", match: "paytm", tier: "Tier 1"}
-  - {name: "Ola Cabs", url: "https://www.olacabs.com/careers", match: "ola", tier: "Tier 1"}
-  - {name: "Dropbox", url: "https://jobs.dropbox.com/", match: "dropbox", tier: "Tier 1"}
-  - {name: "Intel", url: "https://jobs.intel.com/en", match: "intel", tier: "Tier 1"}
-  - {name: "Juspay", url: "https://juspay.io/careers", match: "juspay", tier: "Tier 1"}
-  - {name: "Myntra", url: "https://careers.myntra.com/", match: "myntra", tier: "Tier 1"}
-  - {name: "Aqualite", url: "https://www.aqualiteindia.com/careers/", match: "aqualite", tier: "Backup"}
-  - {name: "MakeMyTrip", url: "https://careers.makemytrip.com/", match: "makemytrip", tier: "Tier 1"}
-  - {name: "HCLTech", url: "https://www.hcltech.com/careers", match: "hcl", tier: "Tier 1"}
-  - {name: "Okta", url: "https://www.okta.com/company/careers/", match: "okta", tier: "Tier 1"}
-  - {name: "Booking.com", url: "https://jobs.booking.com/booking/jobs", match: "booking.com", tier: "Tier 1"}
-  - {name: "HP", url: "https://jobs.hp.com/", match: "hp", tier: "Tier 1"}
-  - {name: "Stripe", url: "https://stripe.com/jobs", match: "stripe", tier: "Tier 1"}
-  - {name: "InMobi", url: "https://www.inmobi.com/company/careers", match: "inmobi", tier: "Tier 1"}
-  - {name: "CrowdStrike", url: "https://www.crowdstrike.com/en-us/careers/", match: "crowdstrike", tier: "Tier 1"}
-  - {name: "Nokia", url: "https://jobs.nokia.com/en/sites/CX_1/jobs", match: "nokia", tier: "Tier 1"}
-  - {name: "VMware (Broadcom)", url: "https://careers.broadcom.com/", match: "vmware", tier: "Tier 1"}
-  - {name: "Groww", url: "https://groww.sensehq.com/careers/jobs?page=0", match: "groww", tier: "Tier 1"}
-  - {name: "Urban Company", url: "https://www.urbancompany.com/careers", match: "urban company", tier: "Tier 1"}
-  - {name: "Optum", url: "https://careers.unitedhealthgroup.com/", match: "optum", tier: "Tier 1"}
-  - {name: "Virtusa", url: "https://www.virtusa.com/careers", match: "virtusa", tier: "Tier 1"}
-  - {name: "HSBC", url: "https://www.hsbc.com/careers", match: "hsbc", tier: "Tier 1"}
-  - {name: "Reddit", url: "https://www.redditinc.com/careers", match: "reddit", tier: "Tier 1"}
-  - {name: "Shopify", url: "https://www.shopify.com/careers", match: "shopify", tier: "Tier 1"}
-  - {name: "Airbus", url: "https://www.airbus.com/en/careers", match: "airbus", tier: "Tier 1"}
-  - {name: "PwC", url: "https://jobs.pwc.com/", match: "pwc", tier: "Tier 1"}
-  # Best-match interpretations of the three unclear names; confirm before relying on them.
-  - {name: "Vision Technology (Vision Technology Services - provisional)", url: "https://careers.smartrecruiters.com/VisionTechnologyServices1", match: "vision technology", tier: "Backup"}
-  - {name: "DrawBox (DrawBox India - provisional)", url: "https://drawbox.in", match: "drawbox", tier: "Priority"}
-  - {name: "Lovis (LOVIS EOS - provisional)", url: "https://lovis.com", match: "lovis", tier: "Priority"}
-  - {name: "Accolite / Bounteous", url: "https://www.bounteous.com/careers/", match: "accolite", tier: "Priority"}
-  - {name: "Mahindra Group", url: "https://jobs.mahindracareers.com/viewalljobs/", match: "mahindra", tier: "Priority"}
-  - {name: "Infosys", url: "https://www.infosys.com/careers/apply/", match: "infosys", tier: "Priority"}
+  - {name: "Barclays", url: "https://search.jobs.barclays/", match: "barclays", tier: "Added (your 2nd list)"}
+  - {name: "Microsoft", url: "https://jobs.careers.microsoft.com/global/en/search?lc=India", match: "microsoft", tier: "Added (your 2nd list)"}
+  - {name: "Google", url: "https://www.google.com/about/careers/applications/jobs/results?location=India", match: "google", tier: "Added (your 2nd list)"}
+  - {name: "Atlassian", url: "https://www.atlassian.com/company/careers/all-jobs", match: "atlassian", tier: "Added (your 2nd list)"}
+  - {name: "Razorpay", url: "https://razorpay.com/jobs/", match: "razorpay", tier: "Added (your 2nd list)"}
+  - {name: "Zeta", url: "https://www.zeta.tech/in/careers/", match: "zeta", tier: "Added (your 2nd list)"}
+  - {name: "Zoho", url: "https://www.zoho.com/careers/", match: "zoho", tier: "Added (your 2nd list)"}
+  - {name: "DE Shaw", url: "https://www.deshawindia.com/careers", match: "de shaw", tier: "Added (your 2nd list)"}
+  - {name: "Snowflake", url: "https://careers.snowflake.com/", match: "snowflake", tier: "Added (your 2nd list)"}
+  - {name: "Expedia Group", url: "https://careers.expediagroup.com/", match: "expedia group", tier: "Added (your 2nd list)"}
+  - {name: "eBay", url: "https://jobs.ebayinc.com/", match: "ebay", tier: "Added (your 2nd list)"}
+  - {name: "Airbnb", url: "https://careers.airbnb.com/", match: "airbnb", tier: "Added (your 2nd list)"}
+  - {name: "Morgan Stanley", url: "https://www.morganstanley.com/careers", match: "morgan stanley", tier: "Added (your 2nd list)"}
+  - {name: "Deloitte Global", url: "https://www.deloitte.com/global/en/careers.html", match: "deloitte global", tier: "Added (your 2nd list)"}
+  - {name: "Sprinklr", url: "https://www.sprinklr.com/careers/", match: "sprinklr", tier: "Added (your 2nd list)"}
+  - {name: "Agoda", url: "https://careersatagoda.com/", match: "agoda", tier: "Added (your 2nd list)"}
+  - {name: "Meesho", url: "https://careers.meesho.com/", match: "meesho", tier: "Added (your 2nd list)"}
+  - {name: "Rubrik", url: "https://www.rubrik.com/company/careers", match: "rubrik", tier: "Added (your 2nd list)"}
+  - {name: "Media.net", url: "https://www.media.net/careers", match: "media.net", tier: "Added (your 2nd list)"}
+  - {name: "Databricks", url: "https://www.databricks.com/company/careers", match: "databricks", tier: "Added (your 2nd list)"}
+  - {name: "Zomato", url: "https://www.zomato.com/careers", match: "zomato", tier: "Added (your 2nd list)"}
+  - {name: "Rippling", url: "https://www.rippling.com/careers", match: "rippling", tier: "Added (your 2nd list)"}
+  - {name: "Paytm", url: "https://paytm.com/careers", match: "paytm", tier: "Added (your 2nd list)"}
+  - {name: "Ola Cabs", url: "https://www.olacabs.com/careers", match: "ola cabs", tier: "Added (your 2nd list)"}
+  - {name: "Dropbox", url: "https://jobs.dropbox.com/", match: "dropbox", tier: "Added (your 2nd list)"}
+  - {name: "Intel", url: "https://jobs.intel.com/", match: "intel", tier: "Added (your 2nd list)"}
+  - {name: "Juspay", url: "https://juspay.io/careers", match: "juspay", tier: "Added (your 2nd list)"}
+  - {name: "Myntra", url: "https://careers.myntra.com/", match: "myntra", tier: "Added (your 2nd list)"}
+  - {name: "Accolite / Bounteous", url: "https://www.bounteous.com/careers", match: "accolite", tier: "Added (your 2nd list)"}
+  - {name: "MakeMyTrip", url: "https://careers.makemytrip.com/", match: "makemytrip", tier: "Added (your 2nd list)"}
+  - {name: "HCLTech", url: "https://www.hcltech.com/careers", match: "hcltech", tier: "Added (your 2nd list)"}
+  - {name: "Okta", url: "https://www.okta.com/company/careers/", match: "okta", tier: "Added (your 2nd list)"}
+  - {name: "Booking.com", url: "https://jobs.booking.com/", match: "booking.com", tier: "Added (your 2nd list)"}
+  - {name: "HP", url: "https://jobs.hp.com/", match: "hp", tier: "Added (your 2nd list)"}
+  - {name: "Stripe", url: "https://stripe.com/jobs", match: "stripe", tier: "Added (your 2nd list)"}
+  - {name: "InMobi", url: "https://www.inmobi.com/company/careers", match: "inmobi", tier: "Added (your 2nd list)"}
+  - {name: "CrowdStrike", url: "https://www.crowdstrike.com/careers/", match: "crowdstrike", tier: "Added (your 2nd list)"}
+  - {name: "Nokia", url: "https://www.nokia.com/about-us/careers/", match: "nokia", tier: "Added (your 2nd list)"}
+  - {name: "VMware (Broadcom)", url: "https://www.broadcom.com/company/careers", match: "vmware", tier: "Added (your 2nd list)"}
+  - {name: "Groww", url: "https://groww.in/p/careers", match: "groww", tier: "Added (your 2nd list)"}
+  - {name: "Urban Company", url: "https://www.urbancompany.com/careers", match: "urban company", tier: "Added (your 2nd list)"}
+  - {name: "Optum", url: "https://careers.unitedhealthgroup.com/", match: "optum", tier: "Added (your 2nd list)"}
+  - {name: "Virtusa", url: "https://www.virtusa.com/careers", match: "virtusa", tier: "Added (your 2nd list)"}
+  - {name: "HSBC", url: "https://www.hsbc.com/careers", match: "hsbc", tier: "Added (your 2nd list)"}
+  - {name: "Reddit", url: "https://www.redditinc.com/careers", match: "reddit", tier: "Added (your 2nd list)"}
+  - {name: "Shopify", url: "https://www.shopify.com/careers", match: "shopify", tier: "Added (your 2nd list)"}
+  - {name: "Airbus", url: "https://www.airbus.com/en/careers", match: "airbus", tier: "Added (your 2nd list)"}
+  - {name: "PwC", url: "https://www.pwc.in/careers.html", match: "pwc", tier: "Added (your 2nd list)"}
+  - {name: "Wissen Technology Services", url: "https://www.wissen.com/careers", match: "wissen technology services", tier: "Added (your 2nd list)"}
+  - {name: "DrawinBox", url: "https://drawinbox.com/careers", match: "drawinbox", tier: "Added (your 2nd list)"}
+  - {name: "Lowe's (you wrote 'Lowis')", url: "https://talent.lowes.com/in/en", match: "lowe's", tier: "Added (your 2nd list)"}
+  - {name: "Mahindra Group", url: "https://www.mahindra.com/careers", match: "mahindra group", tier: "Added (your 2nd list)"}
