@@ -561,6 +561,11 @@ def load_db():
         if SEEN_F.exists():                               # migrate the older seen.json so nothing already sent is sent again
             old = json.load(open(SEEN_F)); db["legacy_seen"] = old.pop("seen", {}); db["meta"] = old
     for k, v in new_db().items(): db.setdefault(k, v)
+    need = ("company", "title", "url", "first_seen", "last_checked", "eligibility", "publication", "loc", "posted", "req")
+    bad = [k for k, r in db["jobs"].items() if not (isinstance(r, dict) and all(f in r for f in need))]
+    for k in bad: db["jobs"].pop(k)                                   # foreign / damaged records are dropped, never trusted
+    if bad: print(f"dropped {len(bad)} job records with an unknown layout")
+    if not isinstance(db.get("meta"), dict): db["meta"] = {}
     for rec in db["jobs"].values():
         if rec.get("schema") != 2 and rec.get("publication") == "pending":
             rec.update(publication="none", eligibility="needs_review", needs_revalidation=True, reason="created by an older version; will be re-validated")
@@ -614,6 +619,9 @@ def main():
     C = meta.setdefault("counters", {})                   # counts since the last report
     def bump(k, n=1): C[k] = C.get(k, 0) + n
     resolved = load(RES_F, {}); now = time.time(); comps = CFG["companies"]
+    stale = [k for k, v in resolved.items() if not (isinstance(v, dict) and (v.get("type") in LIST or v.get("type") == "none"))]
+    for k in stale: del resolved[k]                                   # written by another version / unknown route type -> discover again
+    if stale: print(f"ignored {len(stale)} unrecognised route entries from an older state file: {stale[:8]}")
     lreqs = legacy_reqs(db)
 
     def has_feed(n): return resolved.get(n, {}).get("type") not in (None, "none")
@@ -662,10 +670,10 @@ def main():
                 lik.append(f"🟣 {c['name']}: {len(jobs)} recent Java jobs in your cities, {sum(quick_ok(j) for j in jobs)} pass filter; "
                            f"Adzuna lists this company: {'YES' if cov else 'NO - not covered' if cov is False else 'unknown'}"); continue
             if err == "nofeed": nofeed.append(f"⚪ {c['name']} - {resolved.get(c['name'], {}).get('why', '')}\n   {c['url']}")
-            elif err: bad.append(f"❌ {c['name']} ({LABEL[r['type']]}): {err}" + (f" · last OK {ist_of(h['ok_ts'])}" if h.get("ok_ts") else " · never read successfully"))
+            elif err: bad.append(f"❌ {c['name']} ({LABEL.get(r['type'], r['type'])}): {err}" + (f" · last OK {ist_of(h['ok_ts'])}" if h.get("ok_ts") else " · never read successfully"))
             else:
                 tot = TOTALS.get(r.get("api")); mark = "⚠️" if (not jobs and not tot) else "✅"
-                ok.append(f"{mark} {c['name']} [{LABEL[r['type']]}]: {len(jobs)} jobs read" + (f" (site total {tot})" if tot is not None else "")
+                ok.append(f"{mark} {c['name']} [{LABEL.get(r['type'], r['type'])}]: {len(jobs)} jobs read" + (f" (site total {tot})" if tot is not None else "")
                           + f", {sum(quick_ok(j) for j in jobs)} pass filter\n   pagination: {PAGES.get(feed_key(r), 'n/a')}")
         save_db(db)
         send(f"SELF-TEST: {len(comps)} companies in your list\n• direct career feeds: {len(ok)}\n• via Adzuna job board: {len(lik)}\n• failed to read: {len(bad)}\n• no automatic feed: {len(nofeed)}")
