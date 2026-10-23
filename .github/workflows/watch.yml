@@ -8,7 +8,7 @@ on:
         description: "selftest = check every company and send a report; normal = look for jobs"
         type: choice
         default: selftest
-        options: [selftest, normal, theirstack-auth-check]
+        options: [selftest, normal]
 permissions:
   contents: write
 concurrency:
@@ -17,7 +17,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -25,22 +25,20 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
+      - name: Tests (rules, bot with fake sites, real-wording evaluation)
+        run: |
+          python test_experience.py
+          python test_pipeline.py
+          python evaluate_real.py all
       - name: Run watcher
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
           ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
-          THEIRSTACK_API_KEY: ${{ secrets.THEIRSTACK_API_KEY }}
           MODE: ${{ github.event.inputs.mode }}
         run: |
-          if [ "$MODE" = "selftest" ]; then
-            python watcher.py --selftest
-          elif [ "$MODE" = "theirstack-auth-check" ]; then
-            python watcher.py --theirstack-auth-check
-          else
-            python watcher.py
-          fi
+          if [ "$MODE" = "selftest" ]; then python watcher.py --selftest; else python watcher.py; fi
       - name: Save state (also runs if the watcher failed half-way)
         if: always()
         run: |
