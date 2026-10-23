@@ -1,9 +1,11 @@
 {
 "ADP": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "job pages carry no JobPosting data x1"
 },
 "AMD": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "HTTP 422 x10, fewer than 3 job links x1"
 },
@@ -13,6 +15,7 @@
 "web": "https://accenture.wd103.myworkdayjobs.com/en-US/AccentureCareers"
 },
 "Accolite / Bounteous": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -34,17 +37,75 @@
 "type": "workday",
 "web": "https://ag.wd3.myworkdayjobs.com/en-US/Airbus"
 },
+"Akamai": {
+"tried": 1792786225.6373518,
+"type": "none",
+"why": "HTTP 422 x10, HTTP 403 x1"
+},
+"Amazon": {
+"desc": [
+[
+"",
+"description"
+],
+[
+"Basic qualifications",
+"basic_qualifications"
+],
+[
+"Preferred qualifications",
+"preferred_qualifications"
+]
+],
+"id": "id_icims",
+"job_url": "https://www.amazon.jobs{job_path}",
+"list": "jobs",
+"loc": "normalized_location",
+"page_size": 100,
+"pages": 3,
+"posted": "posted_date",
+"posted_format": "%B %d, %Y",
+"title": "title",
+"tried": 1792786225.6373518,
+"type": "json_api",
+"url": "https://www.amazon.jobs/en/search.json?base_query=java&loc_query=India&country=IND&sort=recent&offset={offset}&result_limit=100"
+},
 "American Express": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "Ascendion": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "Atlassian": {
-"type": "none",
-"why": "fewer than 3 job links x1"
+"desc": [
+[
+"",
+"overview"
+],
+[
+"Responsibilities",
+"responsibilities"
+],
+[
+"Qualifications",
+"qualifications"
+]
+],
+"id": "id",
+"job_url": "{applyUrl}",
+"list": "",
+"loc": "locations",
+"page_size": 100000,
+"pages": 1,
+"posted": "portalJobPost.updatedDate",
+"title": "title",
+"tried": 1792786225.6373518,
+"type": "json_api",
+"url": "https://www.atlassian.com/endpoint/careers/listings"
 },
 "Autodesk": {
 "api": "https://autodesk.wd1.myworkdayjobs.com/wday/cxs/autodesk/Ext",
@@ -61,7 +122,14 @@
 "type": "workday",
 "web": "https://barclays.wd3.myworkdayjobs.com/en-US/External_Career_Site_Barclays"
 },
+"BlackRock": {
+"api": "https://blackrock.wd1.myworkdayjobs.com/wday/cxs/blackrock/BlackRock_Professional",
+"tried": 1792786225.6373518,
+"type": "workday",
+"web": "https://blackrock.wd1.myworkdayjobs.com/en-US/BlackRock_Professional"
+},
 "Booking.com": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -90,8 +158,11 @@
 "web": "https://crowdstrike.wd5.myworkdayjobs.com/en-US/crowdstrikecareers"
 },
 "DE Shaw": {
-"type": "none",
-"why": "fewer than 3 job links x1"
+"sitemaps": [
+"https://www.deshawindia.com/sitemap.xml"
+],
+"tried": 1792786225.6373518,
+"type": "sitemap"
 },
 "Databricks": {
 "board": "databricks",
@@ -103,6 +174,7 @@
 "type": "oraclehcm"
 },
 "Deloitte Global": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -112,7 +184,13 @@
 "type": "html_listing",
 "url": "https://usijobs.deloitte.com/en_US/careersUSI"
 },
+"Docusign": {
+"tried": 1792786225.6373518,
+"type": "none",
+"why": "HTTP 422 x20, 'jobs' x1, fewer than 3 job links x1"
+},
 "DrawinBox": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "no job feed found on its career page"
 },
@@ -121,10 +199,12 @@
 "type": "greenhouse"
 },
 "EPAM Systems": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "HTTP 403 x1"
 },
 "EY GDS": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -152,6 +232,7 @@
 "web": "https://finastra.wd3.myworkdayjobs.com/en-US/FINC"
 },
 "Flipkart": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -160,18 +241,43 @@
 "type": "smartrecruiters"
 },
 "Goldman Sachs": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "HTTP 404 x1"
 },
 "Google": {
-"type": "none",
-"why": "fewer than 3 job links x1"
+"desc": [
+[
+"",
+"description"
+],
+[
+"Minimum qualifications",
+"qualifications"
+],
+[
+"Responsibilities",
+"responsibilities"
+]
+],
+"id": "id",
+"job_url": "{apply_url}",
+"list": "jobs",
+"loc": "locations",
+"page_size": 20,
+"pages": 5,
+"posted": "publish_date",
+"title": "title",
+"tried": 1792786225.6373518,
+"type": "json_api",
+"url": "https://careers.google.com/api/v3/search/?location=India&q=java&sort_by=date&page={page}&page_size=20"
 },
 "Groww": {
 "board": "groww",
 "type": "greenhouse"
 },
 "HCLTech": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -181,6 +287,7 @@
 "web": "https://hp.wd5.myworkdayjobs.com/en-US/ExternalCareerSite"
 },
 "HSBC": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -198,10 +305,12 @@
 "type": "greenhouse"
 },
 "Informatica": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "HTTP 422 x8, HTTP 401 x2, fewer than 3 job links x1"
 },
 "Infosys Finacle": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "HTTP 403 x1"
 },
@@ -211,6 +320,7 @@
 "web": "https://intel.wd1.myworkdayjobs.com/en-US/External"
 },
 "Intuit": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "job pages carry no JobPosting data x1"
 },
@@ -220,6 +330,7 @@
 "type": "oraclehcm"
 },
 "Juspay": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "string indices must be integers, not 'str' x1, 'jobs' x1, fewer than 3 job links x1"
 },
@@ -229,14 +340,17 @@
 "web": "https://lowes.wd5.myworkdayjobs.com/en-US/LWS_External_CS"
 },
 "Mahindra Comviva": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "Mahindra Group": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "MakeMyTrip": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -246,6 +360,7 @@
 "web": "https://mastercard.wd1.myworkdayjobs.com/en-US/CorporateCareers"
 },
 "Media.net": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "HTTP 404 x1"
 },
@@ -254,6 +369,7 @@
 "type": "lever"
 },
 "Microsoft": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "HTTP 404 x1"
 },
@@ -263,6 +379,7 @@
 "type": "eightfold"
 },
 "Myntra": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -276,11 +393,19 @@
 "sub": "netapp",
 "type": "eightfold"
 },
+"Nike": {
+"api": "https://nike.wd1.myworkdayjobs.com/wday/cxs/nike/nke",
+"tried": 1792786225.6373518,
+"type": "workday",
+"web": "https://nike.wd1.myworkdayjobs.com/en-US/nke"
+},
 "Nokia": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "Nutanix": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "HTTP 422 x24, HTTP 401 x6, job pages carry no JobPosting data x2"
 },
@@ -289,6 +414,7 @@
 "type": "greenhouse"
 },
 "Ola Cabs": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "HTTP 403 x1"
 },
@@ -313,10 +439,12 @@
 "type": "lever"
 },
 "Pegasystems": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "HTTP 422 x30, job pages carry no JobPosting data x1"
 },
 "Publicis Sapient": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "job pages carry no JobPosting data x1"
 },
@@ -334,11 +462,18 @@
 "board": "razorpaysoftwareprivatelimited",
 "type": "greenhouse"
 },
+"Red Hat": {
+"api": "https://redhat.wd5.myworkdayjobs.com/wday/cxs/redhat/Jobs",
+"tried": 1792786225.6373518,
+"type": "workday",
+"web": "https://redhat.wd5.myworkdayjobs.com/en-US/Jobs"
+},
 "Reddit": {
 "board": "reddit",
 "type": "greenhouse"
 },
 "Rippling": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "JSONDecodeError x1, fewer than 3 job links x1"
 },
@@ -347,6 +482,7 @@
 "type": "greenhouse"
 },
 "SAP": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1, job pages carry no JobPosting data x1"
 },
@@ -361,14 +497,17 @@
 "web": "https://sec.wd3.myworkdayjobs.com/en-US/Samsung_Careers"
 },
 "ServiceNow": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "job pages carry no JobPosting data x3"
 },
 "Shopify": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "JSONDecodeError x1, fewer than 3 job links x1"
 },
 "Siemens": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1, job pages carry no JobPosting data x1"
 },
@@ -390,6 +529,11 @@
 },
 "Stripe": {
 "board": "stripe",
+"type": "greenhouse"
+},
+"Sumo Logic": {
+"board": "sumologic",
+"tried": 1792786225.6373518,
 "type": "greenhouse"
 },
 "Synchrony": {
@@ -423,6 +567,7 @@
 "type": "greenhouse"
 },
 "Urban Company": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "string indices must be integers, not 'str' x1, 'jobs' x1, fewer than 3 job links x1"
 },
@@ -432,6 +577,7 @@
 "web": "https://broadcom.wd1.myworkdayjobs.com/en-US/External_Career"
 },
 "Virtusa": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "HTTP 403 x1"
 },
@@ -445,6 +591,7 @@
 "type": "smartrecruiters"
 },
 "Walmart Global Tech": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "HTTP 422 x30, job pages carry no JobPosting data x1"
 },
@@ -455,6 +602,7 @@
 "type": "sitemap"
 },
 "Wissen Technology Services": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "HTTP 404 x1"
 },
@@ -463,10 +611,12 @@
 "type": "lever"
 },
 "Zoho": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "Zomato": {
+"tried": 1792786225.6373518,
 "type": "none",
 "why": "string indices must be integers, not 'str' x1, 'jobs' x1, HTTP 404 x1"
 },
