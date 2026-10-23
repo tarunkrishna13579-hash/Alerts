@@ -141,6 +141,10 @@
 "type": "nofeed",
 "why": "no supported feed found on the official careers page"
 },
+"Deloitte Global": {
+"type": "none",
+"why": "fewer than 3 job links x1"
+},
 "Deloitte USI": {
 "careers_url": "https://usijobs.deloitte.com/",
 "detected_platforms": [],
@@ -152,6 +156,10 @@
 "detected_platforms": [],
 "type": "nofeed",
 "why": "no supported feed found on the official careers page"
+},
+"DrawinBox": {
+"type": "none",
+"why": "no job feed found on its career page"
 },
 "Drawing Box (DrawBox India - provisional)": {
 "careers_url": "https://drawbox.in",
@@ -308,6 +316,11 @@
 "detected_platforms": [],
 "type": "nofeed",
 "why": "no supported feed found on the official careers page"
+},
+"Lowe's (you wrote 'Lowis')": {
+"api": "https://lowes.wd5.myworkdayjobs.com/wday/cxs/lowes/LWS_External_CS",
+"type": "workday",
+"web": "https://lowes.wd5.myworkdayjobs.com/en-US/LWS_External_CS"
 },
 "Mahindra Comviva": {
 "careers_url": "https://www.comviva.com/careers/",
@@ -582,6 +595,10 @@
 "detected_platforms": [],
 "type": "nofeed",
 "why": "no supported feed found on the official careers page"
+},
+"Wissen Technology Services": {
+"type": "none",
+"why": "HTTP 404 x1"
 },
 "Zeta": {
 "careers_url": "https://www.zeta.tech/in/careers",
