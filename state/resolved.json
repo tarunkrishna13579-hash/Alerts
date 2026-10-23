@@ -1,17 +1,11 @@
 {
 "ADP": {
-"careers_url": "https://jobs.adp.com/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "job pages carry no JobPosting data x1"
 },
 "AMD": {
-"careers_url": "https://careers.amd.com/",
-"detected_platforms": [
-"iCIMS"
-],
-"type": "nofeed",
-"why": "detected platform(s) iCIMS; no validated adapter available"
+"type": "none",
+"why": "HTTP 422 x10, fewer than 3 job links x1"
 },
 "Accenture": {
 "api": "https://accenture.wd103.myworkdayjobs.com/wday/cxs/accenture/AccentureCareers",
@@ -19,10 +13,8 @@
 "web": "https://accenture.wd103.myworkdayjobs.com/en-US/AccentureCareers"
 },
 "Accolite / Bounteous": {
-"careers_url": "https://www.bounteous.com/careers/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "Adobe": {
 "api": "https://adobe.wd5.myworkdayjobs.com/wday/cxs/adobe/external_experienced",
@@ -30,46 +22,29 @@
 "web": "https://adobe.wd5.myworkdayjobs.com/en-US/external_experienced"
 },
 "Agoda": {
-"careers_url": "https://careersatagoda.com/vacancies/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"board": "agoda",
+"type": "greenhouse"
 },
 "Airbnb": {
-"careers_url": "https://careers.airbnb.com/positions",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"board": "airbnb",
+"type": "greenhouse"
 },
 "Airbus": {
-"careers_url": "https://www.airbus.com/en/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"api": "https://ag.wd3.myworkdayjobs.com/wday/cxs/ag/Airbus",
+"type": "workday",
+"web": "https://ag.wd3.myworkdayjobs.com/en-US/Airbus"
 },
 "American Express": {
-"careers_url": "https://www.americanexpress.com/en-in/careers/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
-},
-"Aqualite": {
-"careers_url": "https://www.aqualiteindia.com/careers/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "Ascendion": {
-"careers_url": "https://ascendion.com/careers/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "Atlassian": {
-"careers_url": "https://www.atlassian.com/company/careers/all-jobs",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "Autodesk": {
 "api": "https://autodesk.wd1.myworkdayjobs.com/wday/cxs/autodesk/Ext",
@@ -87,12 +62,8 @@
 "web": "https://barclays.wd3.myworkdayjobs.com/en-US/External_Career_Site_Barclays"
 },
 "Booking.com": {
-"careers_url": "https://jobs.booking.com/booking/jobs",
-"detected_platforms": [
-"iCIMS"
-],
-"type": "nofeed",
-"why": "detected platform(s) iCIMS; no validated adapter available"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "Broadridge": {
 "api": "https://broadridge.wd5.myworkdayjobs.com/wday/cxs/broadridge/Careers",
@@ -119,68 +90,43 @@
 "web": "https://crowdstrike.wd5.myworkdayjobs.com/en-US/crowdstrikecareers"
 },
 "DE Shaw": {
-"careers_url": "https://www.deshawindia.com/careers/work-with-us",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "Databricks": {
-"careers_url": "https://www.databricks.com/company/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"board": "databricks",
+"type": "greenhouse"
 },
 "Dell Technologies": {
 "host": "enterpriseplatform.dell.com",
 "site": "CX_1001",
 "type": "oraclehcm"
 },
-"Deloitte (Global)": {
-"careers_url": "https://apply.deloitte.com/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
-},
 "Deloitte Global": {
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "Deloitte USI": {
-"careers_url": "https://usijobs.deloitte.com/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1"
-},
-"DrawBox (DrawBox India - provisional)": {
-"careers_url": "https://drawbox.in",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"link": "/jobdetail|/job-detail|/jobs/view",
+"pages": 1,
+"type": "html_listing",
+"url": "https://usijobs.deloitte.com/en_US/careersUSI"
 },
 "DrawinBox": {
 "type": "none",
 "why": "no job feed found on its career page"
 },
-"Drawing Box (DrawBox India - provisional)": {
-"careers_url": "https://drawbox.in",
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
-},
 "Dropbox": {
-"careers_url": "https://jobs.dropbox.com/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"board": "dropbox",
+"type": "greenhouse"
 },
 "EPAM Systems": {
-"careers_url": "https://www.epam.com/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "HTTP 403 x1"
 },
 "EY GDS": {
-"type": "careerhtml",
-"url": "https://careers.ey.com/ey/search/?createNewAlert=false&q=&locationsearch=India&optionsFacetsDD_country=&optionsFacetsDD_customfield1=&locale=en_US"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "Expedia Group": {
 "api": "https://expedia.wd108.myworkdayjobs.com/wday/cxs/expedia/search",
@@ -188,8 +134,12 @@
 "web": "https://expedia.wd108.myworkdayjobs.com/en-US/search"
 },
 "Experian": {
-"type": "careerhtml",
-"url": "https://jobs.experian.com/jobs"
+"sitemaps": [
+"https://jobs.experian.com/sitemap.xml",
+"https://jobs.experian.com/contentsitemap.xml",
+"https://jobs.experian.com/vacanciessitemap.xml"
+],
+"type": "sitemap"
 },
 "FIS": {
 "api": "https://fis.wd5.myworkdayjobs.com/wday/cxs/fis/SearchJobs",
@@ -202,58 +152,37 @@
 "web": "https://finastra.wd3.myworkdayjobs.com/en-US/FINC"
 },
 "Flipkart": {
-"careers_url": "https://www.flipkartcareers.com/",
-"detected_platforms": [
-"TurboHire"
-],
-"type": "nofeed",
-"why": "unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "Freshworks": {
 "company_id": "Freshworks",
 "type": "smartrecruiters"
 },
 "Goldman Sachs": {
-"careers_url": "https://higher.gs.com/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1"
-},
-"Google": {
-"careers_url": "https://www.google.com/about/careers/applications/locations/india/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
-},
-"Groww": {
-"careers_url": "https://groww.sensehq.com/careers/jobs?page=0",
-"detected_platforms": [
-"Sense"
-],
-"type": "nofeed",
-"why": "detected platform(s) Sense; no validated adapter available"
-},
-"HCLTech": {
-"careers_url": "https://www.hcltech.com/careers",
-"detected_platforms": [
-"SAP SuccessFactors"
-],
-"type": "nofeed",
-"why": "detected platform(s) SAP SuccessFactors; no validated adapter available"
-},
-"HP": {
-"careers_url": "https://jobs.hp.com/",
-"detected_platforms": [
-"Eightfold"
-],
-"type": "nofeed",
+"type": "none",
 "why": "HTTP 404 x1"
 },
+"Google": {
+"type": "none",
+"why": "fewer than 3 job links x1"
+},
+"Groww": {
+"board": "groww",
+"type": "greenhouse"
+},
+"HCLTech": {
+"type": "none",
+"why": "fewer than 3 job links x1"
+},
+"HP": {
+"api": "https://hp.wd5.myworkdayjobs.com/wday/cxs/hp/ExternalCareerSite",
+"type": "workday",
+"web": "https://hp.wd5.myworkdayjobs.com/en-US/ExternalCareerSite"
+},
 "HSBC": {
-"careers_url": "https://www.hsbc.com/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "HighRadius": {
 "board": "highradius",
@@ -265,40 +194,25 @@
 "type": "oraclehcm"
 },
 "InMobi": {
-"careers_url": "https://www.inmobi.com/company/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"board": "inmobi",
+"type": "greenhouse"
 },
 "Informatica": {
-"careers_url": "https://www.informatica.com/careers.html",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
-},
-"Infosys": {
-"careers_url": "https://www.infosys.com/careers/apply/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "HTTP 422 x8, HTTP 401 x2, fewer than 3 job links x1"
 },
 "Infosys Finacle": {
-"careers_url": "https://www.infosys.com/careers/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1"
+"type": "none",
+"why": "HTTP 403 x1"
 },
 "Intel": {
-"careers_url": "https://jobs.intel.com/en",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"api": "https://intel.wd1.myworkdayjobs.com/wday/cxs/intel/External",
+"type": "workday",
+"web": "https://intel.wd1.myworkdayjobs.com/en-US/External"
 },
 "Intuit": {
-"careers_url": "https://www.intuit.com/in/careers/software-engineering/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1"
+"type": "none",
+"why": "job pages carry no JobPosting data x1"
 },
 "JPMorgan Chase": {
 "host": "jpmc.fa.oraclecloud.com",
@@ -306,16 +220,8 @@
 "type": "oraclehcm"
 },
 "Juspay": {
-"careers_url": "https://juspay.io/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
-},
-"Lovis (LOVIS EOS - provisional)": {
-"careers_url": "https://lovis.com",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "string indices must be integers, not 'str' x1, 'jobs' x1, fewer than 3 job links x1"
 },
 "Lowe's (you wrote 'Lowis')": {
 "api": "https://lowes.wd5.myworkdayjobs.com/wday/cxs/lowes/LWS_External_CS",
@@ -323,24 +229,16 @@
 "web": "https://lowes.wd5.myworkdayjobs.com/en-US/LWS_External_CS"
 },
 "Mahindra Comviva": {
-"careers_url": "https://www.comviva.com/careers/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "Mahindra Group": {
-"careers_url": "https://jobs.mahindracareers.com/viewalljobs/",
-"detected_platforms": [
-"SAP SuccessFactors"
-],
-"type": "nofeed",
-"why": "detected platform(s) SAP SuccessFactors; no validated adapter available"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "MakeMyTrip": {
-"careers_url": "https://careers.makemytrip.com/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "Mastercard": {
 "api": "https://mastercard.wd1.myworkdayjobs.com/wday/cxs/mastercard/CorporateCareers",
@@ -348,22 +246,16 @@
 "web": "https://mastercard.wd1.myworkdayjobs.com/en-US/CorporateCareers"
 },
 "Media.net": {
-"careers_url": "https://www.media.net/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "HTTP 404 x1"
 },
 "Meesho": {
-"careers_url": "https://www.meesho.io/jobs",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"slug": "meesho",
+"type": "lever"
 },
 "Microsoft": {
-"careers_url": "https://careers.microsoft.com/v2/global/en/locations/india.html",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "HTTP 404 x1"
 },
 "Morgan Stanley": {
 "domain": "morganstanley.com",
@@ -371,10 +263,8 @@
 "type": "eightfold"
 },
 "Myntra": {
-"careers_url": "https://careers.myntra.com/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "NVIDIA": {
 "api": "https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite",
@@ -387,34 +277,26 @@
 "type": "eightfold"
 },
 "Nokia": {
-"careers_url": "https://jobs.nokia.com/en/sites/CX_1/jobs",
-"detected_platforms": [
-"Oracle HCM"
-],
-"type": "nofeed",
-"why": "detected platform(s) Oracle HCM; no validated adapter available"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "Nutanix": {
-"type": "careerhtml",
-"url": "https://careers.nutanix.com/en/locations/india/"
+"type": "none",
+"why": "HTTP 422 x24, HTTP 401 x6, job pages carry no JobPosting data x2"
 },
 "Okta": {
-"careers_url": "https://www.okta.com/company/careers/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"board": "okta",
+"type": "greenhouse"
 },
 "Ola Cabs": {
-"careers_url": "https://www.olacabs.com/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "HTTP 403 x1"
 },
 "Optum": {
-"careers_url": "https://careers.unitedhealthgroup.com/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"sitemaps": [
+"https://careers.unitedhealthgroup.com/sitemap.xml"
+],
+"type": "sitemap"
 },
 "Oracle \u2014 other engineering teams": {
 "host": "eeho.fa.us2.oraclecloud.com",
@@ -431,20 +313,17 @@
 "type": "lever"
 },
 "Pegasystems": {
-"type": "careerhtml",
-"url": "https://www.pega.com/about/careers/job-listings"
+"type": "none",
+"why": "HTTP 422 x30, job pages carry no JobPosting data x1"
 },
 "Publicis Sapient": {
-"careers_url": "https://www.publicissapient.com/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1"
+"type": "none",
+"why": "job pages carry no JobPosting data x1"
 },
 "PwC": {
-"careers_url": "https://jobs.pwc.com/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"api": "https://pwc.wd3.myworkdayjobs.com/wday/cxs/pwc/Global_Experienced_Careers",
+"type": "workday",
+"web": "https://pwc.wd3.myworkdayjobs.com/en-US/Global_Experienced_Careers"
 },
 "Qualcomm": {
 "api": "https://qualcomm.wd12.myworkdayjobs.com/wday/cxs/qualcomm/External",
@@ -460,20 +339,16 @@
 "type": "greenhouse"
 },
 "Rippling": {
-"careers_url": "https://www.rippling.com/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "JSONDecodeError x1, fewer than 3 job links x1"
 },
 "Rubrik": {
-"careers_url": "https://www.rubrik.com/company/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"board": "rubrik",
+"type": "greenhouse"
 },
 "SAP": {
-"type": "careerhtml",
-"url": "https://careers.sap.com/go/India/8807201/"
+"type": "none",
+"why": "fewer than 3 job links x1, job pages carry no JobPosting data x1"
 },
 "Salesforce": {
 "api": "https://salesforce.wd12.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site",
@@ -486,30 +361,22 @@
 "web": "https://sec.wd3.myworkdayjobs.com/en-US/Samsung_Careers"
 },
 "ServiceNow": {
-"careers_url": "https://careers.servicenow.com/locations/apj/india/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "job pages carry no JobPosting data x3"
 },
 "Shopify": {
-"careers_url": "https://www.shopify.com/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "JSONDecodeError x1, fewer than 3 job links x1"
 },
 "Siemens": {
-"careers_url": "https://www.siemens.com/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "unsupported career-page structure: no supported job-card or JobPosting JSON-LD pattern found; zero jobs is not confirmed x1"
+"type": "none",
+"why": "fewer than 3 job links x1, job pages carry no JobPosting data x1"
 },
 "Snowflake": {
-"careers_url": "https://careers.snowflake.com/us/en",
-"detected_platforms": [
-"Phenom"
+"sitemaps": [
+"https://careers.snowflake.com/us/en/sitemap.xml"
 ],
-"type": "nofeed",
-"why": "detected platform(s) Phenom; no validated adapter available"
+"type": "sitemap"
 },
 "Sprinklr": {
 "api": "https://sprinklr.wd1.myworkdayjobs.com/wday/cxs/sprinklr/careers",
@@ -522,10 +389,8 @@
 "web": "https://statestreet.wd1.myworkdayjobs.com/en-US/Global"
 },
 "Stripe": {
-"careers_url": "https://stripe.com/jobs",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"board": "stripe",
+"type": "greenhouse"
 },
 "Synchrony": {
 "api": "https://synchronyfinancial.wd5.myworkdayjobs.com/wday/cxs/synchronyfinancial/careers",
@@ -543,10 +408,10 @@
 "web": "https://temenos.wd103.myworkdayjobs.com/en-US/Temenoscareers"
 },
 "Teradata": {
-"careers_url": "https://careers.teradata.com/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"sitemaps": [
+"https://careers.teradata.com/sitemap.xml"
+],
+"type": "sitemap"
 },
 "Thomson Reuters": {
 "api": "https://thomsonreuters.wd5.myworkdayjobs.com/wday/cxs/thomsonreuters/External_Career_Site",
@@ -558,22 +423,17 @@
 "type": "greenhouse"
 },
 "Urban Company": {
-"careers_url": "https://www.urbancompany.com/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "string indices must be integers, not 'str' x1, 'jobs' x1, fewer than 3 job links x1"
 },
 "VMware (Broadcom)": {
-"careers_url": "https://careers.broadcom.com/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"api": "https://broadcom.wd1.myworkdayjobs.com/wday/cxs/broadcom/External_Career",
+"type": "workday",
+"web": "https://broadcom.wd1.myworkdayjobs.com/en-US/External_Career"
 },
 "Virtusa": {
-"careers_url": "https://www.virtusa.com/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "HTTP 403 x1"
 },
 "Visa": {
 "api": "https://visa.wd5.myworkdayjobs.com/wday/cxs/visa/Visa",
@@ -585,45 +445,34 @@
 "type": "smartrecruiters"
 },
 "Walmart Global Tech": {
-"careers_url": "https://careers.walmart.com/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "HTTP 422 x30, job pages carry no JobPosting data x1"
 },
 "Wells Fargo": {
-"careers_url": "https://www.wellsfargojobs.com/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"sitemaps": [
+"https://www.wellsfargojobs.com/sitemap.xml"
+],
+"type": "sitemap"
 },
 "Wissen Technology Services": {
 "type": "none",
 "why": "HTTP 404 x1"
 },
 "Zeta": {
-"careers_url": "https://www.zeta.tech/in/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"slug": "zeta",
+"type": "lever"
 },
 "Zoho": {
-"careers_url": "https://www.zoho.com/careers/",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "fewer than 3 job links x1"
 },
 "Zomato": {
-"careers_url": "https://www.zomato.com/careers",
-"detected_platforms": [],
-"type": "nofeed",
-"why": "no supported feed found on the official careers page"
+"type": "none",
+"why": "string indices must be integers, not 'str' x1, 'jobs' x1, HTTP 404 x1"
 },
 "eBay": {
-"careers_url": "https://jobs.ebayinc.com/us/en/home",
-"detected_platforms": [
-"Phenom"
-],
-"type": "nofeed",
-"why": "detected platform(s) Phenom; no validated adapter available"
+"api": "https://ebay.wd5.myworkdayjobs.com/wday/cxs/ebay/apply",
+"type": "workday",
+"web": "https://ebay.wd5.myworkdayjobs.com/en-US/apply"
 }
 }
