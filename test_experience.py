@@ -121,6 +121,12 @@ case("20 0-2 years: your 2.2 is above the top of the range", "0-2 years of profe
 case("20 0-1 years fails", "0-1 years of professional experience.", V.INELIGIBLE, None, ["RANGE_BELOW_PROFILE"])
 case("20 fresher wording", "Freshers can apply for this role. Java.", V.ELIGIBLE, ("fresher / entry-level", 0.0, None))
 
+# employer phrasings seen on big career sites
+case("A1 Amazon-style basic qualification", "Basic qualifications:\n- 2+ years of non-internship professional software development experience\nPreferred qualifications:\n- 5+ years of experience with AWS", V.ELIGIBLE, ("2+ years", 2.0, None), skills={("AWS", 5.0, PF)})
+case("A2 Amazon-style 3+", "Basic qualifications:\n- 3+ years of non-internship professional software development experience", V.INELIGIBLE, ("3+ years", 3.0, None), ["OVERALL_ABOVE_PROFILE"])
+case("A3 full-time industry experience", "Qualifications:\n- 2 years of full-time industry experience in building backend services", V.NEEDS_REVIEW, None, ["AMBIGUOUS_STATEMENT"])
+case("A4 experience in software engineering", "Minimum qualifications:\n- 2-4 years of experience in software engineering", V.ELIGIBLE, ("2-4 years", 2.0, 4.0))
+
 # negatives: misleading wording, unrelated numbers, tables, nested bullets, duplicated text, unknown scope
 case("N1 'within 3-5 years' is not a requirement", "Join us and grow within 3-5 years with the company. Java.", V.NEEDS_REVIEW, None, ["NO_OVERALL_STATEMENT"])
 case("N2 company plans", "In 5 years we plan to double our team. Java developer role.", V.NEEDS_REVIEW, None, ["NO_OVERALL_STATEMENT"])

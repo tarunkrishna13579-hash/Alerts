@@ -18,6 +18,7 @@ UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.3
       "Accept-Language": "en-US,en;q=0.9"}
 DRY, SELFTEST = "--dry" in sys.argv, "--selftest" in sys.argv
 MAX_ALERTS, MAX_DETAIL = 20, 12
+DISCOVERY_BUDGET = 1500                      # seconds of route discovery per run before it carries on next time
 
 def get(url, **kw):  return requests.get(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
 def post(url, **kw): return requests.post(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
@@ -56,7 +57,8 @@ def wd_ping(api):
             r = post(api + "/jobs", json={"appliedFacets": {}, "limit": 1, "offset": 0, "searchText": ""}, timeout=25)
             if r.status_code == 429 and attempt < 3: time.sleep(6 * attempt); continue
             r.raise_for_status()
-            return "jobPostings" in r.json()
+            d = r.json()
+            return "jobPostings" in d and d.get("total", 1) > 0
         except requests.Timeout:
             if attempt == 3: raise
 TOTALS = {}
@@ -328,10 +330,58 @@ def hl_list(r):
     return dedupe(out)
 
 
-LIST = dict(workday=wd_list, ashby=ab_list, greenhouse=gh_list, lever=lv_list, smartrecruiters=sr_list,
+def _path(d, p):
+    if p in ("", None): return d
+    for k in str(p).split("."):
+        if isinstance(d, list):
+            try: d = d[int(k)]
+            except Exception: return None
+        elif isinstance(d, dict): d = d.get(k)
+        else: return None
+        if d is None: return None
+    return d
+def _loc_text(v):
+    if v is None: return ""
+    if isinstance(v, str): return v
+    if isinstance(v, dict): return str(v.get("display") or v.get("name") or v.get("city") or "")
+    return " | ".join(x for x in (_loc_text(i) for i in v) if x)
+def _when(v, fmt):
+    if not v: return None
+    try:
+        if fmt: t = dt.datetime.strptime(str(v).strip(), fmt).replace(tzinfo=dt.timezone.utc); return (dt.datetime.now(dt.timezone.utc) - t).total_seconds() / 86400
+    except Exception: return None
+    v = str(v); return iso_age(v if "T" in v else v + "T00:00:00+00:00")
+def _desc(x, parts):
+    out = []
+    for label, p in parts:
+        t = clean(str(_path(x, p) or ""))
+        if t: out.append((label + ":\n" if label else "") + t)
+    return "\n".join(out)
+def ja_list(r):
+    out, size, p0 = [], int(r.get("page_size", 20)), int(r.get("start_page", 1))
+    for page in range(p0, p0 + int(r.get("pages", 5))):
+        data = get(r["url"].format(page=page, offset=(page - p0) * size, size=size), timeout=40).json()
+        rows = _path(data, r.get("list", "")) or []
+        for x in rows:
+            jid = str(_path(x, r["id"]) or "")
+            if not jid: continue
+            posted = _path(x, r.get("posted"))
+            j = dict(id=jid, req=jid, title=clean(str(_path(x, r["title"]) or "")), loc=_loc_text(_path(x, r.get("loc"))),
+                     url=re.sub(r"\{([^}]+)\}", lambda m: str(_path(x, m.group(1)) or ""), r["job_url"]),
+                     posted=str(posted or "")[:10], age=_when(posted, r.get("posted_format")))
+            if r.get("desc"): j["desc"] = _desc(x, r["desc"])
+            out.append(j)
+        if len(rows) < size: break
+    PAGES[feed_key(r)] = f"{len(out)} jobs read from the site's JSON feed"
+    return dedupe(out)
+def ja_detail(r, j):
+    d = get(r["detail_url"].replace("{id}", j["id"]).replace("{jobId}", j["id"]), timeout=30).json()
+    return _desc(d, r["detail_desc"]), None
+
+LIST = dict(workday=wd_list, json_api=ja_list, ashby=ab_list, greenhouse=gh_list, lever=lv_list, smartrecruiters=sr_list,
             eightfold=ef_list, oraclehcm=oh_list, sitemap=sm_list, html_listing=hl_list)
-DETAIL = dict(greenhouse=gh_detail, workday=wd_detail, smartrecruiters=sr_detail, oraclehcm=oh_detail, sitemap=gen_detail, html_listing=gen_detail)
-LABEL = dict(ashby="Ashby", workday="Workday", greenhouse="Greenhouse", lever="Lever", smartrecruiters="SmartRecruiters",
+DETAIL = dict(json_api=ja_detail, greenhouse=gh_detail, workday=wd_detail, smartrecruiters=sr_detail, oraclehcm=oh_detail, sitemap=gen_detail, html_listing=gen_detail)
+LABEL = dict(json_api="Site JSON feed", ashby="Ashby", workday="Workday", greenhouse="Greenhouse", lever="Lever", smartrecruiters="SmartRecruiters",
              eightfold="Eightfold", oraclehcm="Oracle HCM", adzuna="Adzuna job board (optional backup)",
              sitemap="Career-site sitemap + JobPosting data", html_listing="Career-page job list", none="no route")
 
@@ -459,8 +509,10 @@ def discover(c):
 
 # ======================= fit logic =======================
 def loc_ok(s): return any(k in (s or "").lower() for k in F["locations"])
+SKIP_RE = re.compile(r"\b(?:" + "|".join(re.escape(x) for x in F.get("skip_titles", ["qa"])) + r")\b", re.I)
 def reject_reason(j):
     t = j["title"].lower()
+    if F.get("skip_titles") and SKIP_RE.search(j["title"]): return "title (not a backend engineering role)"
     if F.get("use_title_filter", True) and (not any(k in t for k in F["include_title"]) or any(k in t for k in F["exclude_title"])): return "title"
     if j.get("age") is not None and j["age"] > F["max_age_days"]: return "older than %sd" % F["max_age_days"]
     loc = (j["loc"] or "").lower()
@@ -478,7 +530,7 @@ def analyze(j, desc, locfull):
     blob = (j["title"] + " " + (desc.text or "")).lower()
     if desc.complete and not j.get("trust_java") and not re.search(r"\bjava\b(?!\s*script)", blob): return "ineligible", {"why": "no Java in description", "codes": ["NO_JAVA"]}
     hits = [k for k, p in SKILLS if re.search(p, blob)][:14]
-    if desc.complete and len(hits) < SK["min_other_hits"]: return "ineligible", {"why": "skills", "codes": ["SKILLS"]}
+    if desc.complete and len([h for h in hits if h in MY_SKILLS]) < SK["min_other_hits"]: return "ineligible", {"why": "no skills from your resume in the description", "codes": ["SKILLS"]}
     req = E.extract_experience_requirements(desc, PROFILE.total_years, PROFILE.tolerance)
     dec = E.evaluate_candidate_fit(req, PROFILE)
     return dec.verdict.value.lower(), dict(why=dec.explanation, codes=dec.reason_codes, req=req.to_dict(), decision=dec.to_dict(), desc=desc.meta(), skills=["Java"] + hits)
@@ -524,23 +576,16 @@ def send(text):
             time.sleep(r.json().get("parameters", {}).get("retry_after", 5) + 1); continue
         print("telegram error", r.status_code, r.text); return False
     return False
+MY_SKILLS = set(SK.get("profile", [])) | {"Java"}            # skills from your resume (companies.yaml -> skills.profile)
 def fmt(name, j, rq, dec, skills, dm):
-    o = rq["overall"]; full = dm["status"].startswith("FULL")
-    lines = [f"🆕 {name} - {j['title']}", f"📍 {j['loc'] or 'see posting'}",
-             f"🧪 Overall experience (verified): {o['raw_text']}" + (f"  = {o['normalized']}" if o["normalized"].lower() != o["raw_text"].lower() else ""),
-             f"   Evidence: \"{o['sentence'][:170]}\"" + (f"  [{o['section']}]" if o["section"] not in ("", "description") else "")]
-    if "intersection" in o["derivation"]: lines.append("   Derived from: " + o["derivation"].split(": ", 1)[1][:200])
-    mand = [c for c in dec["skill_checks"]]
-    for c in mand: lines.append(f"🔧 Skill years (not overall experience): {c['skill']} {c['required']}" + (f" - you: {c['your_years']:g} yrs" if c["your_years"] is not None else "")
-                                + (" [information only]" if c["result"] in ("NOTE", "PASS") and PROFILE.skill_mode == "info" else f" → {c['result']}"))
-    pref = [s for s in rq["skills"] if s["requirement_type"] != "MANDATORY"][:3]
-    if pref: lines.append("   Preferred (not decisive): " + "; ".join(f"{s['skill']} {s['raw_text']}" for s in pref))
-    lines.append(f"✅ Eligibility: {dec['explanation'][:230]}")
-    lines.append(f"📡 Description: {'full' if full else 'NOT full'} · {dm['source_type']} · {dm['retrieved_at'][:16].replace('T', ' ')} UTC")
-    if skills: lines.append("🛠 Skills asked: " + ", ".join(skills))
-    lines.append(f"🆔 Job ID: {j.get('req') or j['id']}")
-    if j.get("posted"): lines.append(f"🕒 Posted: {j['posted']}")
-    lines.append(f"🔗 Apply: {j['url']}")
+    o = rq["overall"]
+    lines = [f"🆕 {name} — {j['title']}", f"📍 {j['loc'] or 'see posting'}" + (f"  ·  🕒 {j['posted']}" if j.get("posted") else ""),
+             f"🎯 Experience (verified): {o['raw_text']} → fits your {PROFILE.total_years:g} yrs"]
+    if o.get("sentence"): lines.append(f"   “{o['sentence'][:110]}”")
+    notes = [f"{c['skill']} {c['required']}" for c in dec["skill_checks"]][:3]
+    if notes: lines.append("🔧 Skill years in JD (info only): " + "; ".join(notes))
+    if skills: lines.append("🛠 " + " · ".join(x + (" ✅" if x in MY_SKILLS else "") for x in skills[:10]))
+    lines += [f"🆔 {j.get('req') or j['id']}", f"🔗 {j['url']}"]
     return "\n".join(lines)
 
 # ======================= persistent job database =======================
@@ -625,11 +670,23 @@ def main():
     lreqs = legacy_reqs(db)
 
     def has_feed(n): return resolved.get(n, {}).get("type") not in (None, "none")
-    todo = [c for c in comps if not has_feed(c["name"]) and (SELFTEST or c["name"] not in resolved)]
+    tried = lambda n: resolved.get(n, {}).get("tried")
+    def due(c):                                                       # unrouted companies are retried: self-test every 6 h, normal runs every 24 h
+        n_ = c["name"]
+        if n_ not in resolved: return True
+        t_ = tried(n_)
+        return SELFTEST if t_ is None else now - t_ > (6 if SELFTEST else 24) * 3600
+    todo = sorted([c for c in comps if not has_feed(c["name"]) and due(c)], key=lambda c: tried(c["name"]) or 0)
+    if not SELFTEST: todo = todo[:12]                                                                            # a normal run never spends long on discovery
     if todo:
-        with ThreadPoolExecutor(5) as ex:
-            for c, conf in zip(todo, ex.map(discover, todo)): resolved[c["name"]] = conf
-        save(RES_F, resolved)
+        t0 = time.time()
+        for i in range(0, len(todo), 10):                                                                        # saved after every batch: a timeout loses nothing
+            batch = todo[i:i + 10]
+            with ThreadPoolExecutor(5) as ex:
+                for c, conf in zip(batch, ex.map(discover, batch)): conf["tried"] = now; resolved[c["name"]] = conf
+            save(RES_F, resolved)
+            if time.time() - t0 > DISCOVERY_BUDGET and i + 10 < len(todo):
+                print(f"discovery time budget used; {len(todo) - i - 10} companies continue in the next run"); break
 
     def fetch(c):
         r = conf_for(c, resolved)
@@ -821,6 +878,8 @@ def main():
                + ("\nMost new jobs from: " + ", ".join(f"{a} {b}" for a, b in top) if top else ""))
         bad_h = [f"{k} (last OK {ist_of(v['ok_ts']) if v.get('ok_ts') else 'never'})" for k, v in health.items() if v.get("err")]
         if bad_h: msg += "\n⚠️ Not read successfully this run: " + ", ".join(bad_h[:10])
+        manual = [c["name"] for c in comps if conf_for(c, resolved)["type"] == "none"]
+        if manual: msg += "\n\n👀 Check these by hand (no automatic source): " + ", ".join(manual)
         rv = [(k, r) for k, r in jobs_db.items() if r["eligibility"] == "needs_review" and not r.get("review_reported")][:8]
         if rv:
             msg += "\n\n🔎 Needs your review (experience could not be verified - NOT matches):\n" + "\n".join(

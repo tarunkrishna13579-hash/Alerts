@@ -148,6 +148,19 @@ EXPERIENCE_CTX = re.compile(r"experience|\bexp\b|\bworked\b|\bworking\b|hands[- 
 OVERALL_WORDS = re.compile(r"\b(?:overall|total|in total|altogether)\b", re.I)
 
 
+GENERIC_WORDS = set("""non-internship internship professional software development engineering work working industry relevant full-time fulltime hands-on practical technical it related similar
+programming coding prior total overall proven commercial post-graduate post graduate applied backend back-end application web enterprise product production real-world""".split())
+def generic_phrase(x: str) -> bool:
+    toks = re.findall(r"[a-z0-9\-]+", (x or "").lower())
+    return any(t in GENERIC_WORDS for t in toks) and all(t in GENERIC_WORDS or t in ("of", "in", "the", "a", "an", "and", "or", "as", "for", "with") for t in toks)
+
+def _plain_end(rest: str) -> bool:
+    """what follows the word 'experience' is nothing, 'is required', or a generic object - not a domain such as 'in building backend services'"""
+    r = REQ_WORDS.sub("", clip(rest or "")).strip(" .:-)]")
+    if not r: return True
+    cm = CONNECT.match(r)
+    return bool(cm and GENERIC_OBJ.match(cm.group(1).strip()))
+
 def _n(x) -> float: return float(WORDS.get(str(x).lower(), x))
 def clause_at(sent: str, pos: int) -> str:
     """the comma/semicolon/'including' delimited clause that contains position pos"""
@@ -259,7 +272,7 @@ def _classify(c: dict) -> ExperienceStatement:
     else:
         t1 = re.match(r"\s*(?:of\s+)?(?:(?:hands[- ]on|relevant|professional|work|working|practical|proven|strong|solid)\s+)*(?:experience|exp)\s*"
                       r"(?:in|with|using|on|of|working with|developing|building|designing)\s+(.{1,80})", tail, re.I)
-        t2 = re.match(r"\s*(?:of\s+)?(.{1,40}?)\s+(?:experience|exp)\b", tail, re.I)
+        t2 = re.match(r"\s*(?:of\s+)?(.{1,70}?)\s+(?:experience|exp)\b", tail, re.I)
         t3 = re.match(r"\s*(?:in|with|using|on|of)\s+(.{1,60})", tail, re.I)
         explicit_overall = bool(OVERALL_WORDS.search(clause_at(sent, m.start())))
         if explicit_overall:
@@ -270,6 +283,8 @@ def _classify(c: dict) -> ExperienceStatement:
             scope, skill = Scope.SKILL_SPECIFIC, tech_in(clip(t1.group(1)))
         elif t2 and tech_in(t2.group(1)) and not GENERIC_MID.match(t2.group(1)):
             scope, skill = Scope.SKILL_SPECIFIC, tech_in(t2.group(1))
+        elif t2 and not tech_in(t2.group(1)) and generic_phrase(t2.group(1)) and _plain_end(tail[t2.end():]):
+            scope = Scope.OVERALL                                                    # "2+ years of non-internship professional software development experience"
         elif t3 and not re.match(r"experience|exp\b", t3.group(1), re.I) and tech_in(clip(t3.group(1))) and not GENERIC_OBJ.match(clip(t3.group(1))):
             scope, skill = Scope.SKILL_SPECIFIC, tech_in(clip(t3.group(1)))
         elif re.search(r"([A-Za-z+#.\s/]{2,30})\s*[:\-–(|\t]\s*$", head_nb) and tech_in(head_nb[-30:]) and not re.search(r"experience|total|overall", head_nb, re.I):

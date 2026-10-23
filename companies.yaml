@@ -2,6 +2,10 @@
 #  EDIT ONLY THIS FILE. Everything else just runs.
 # =====================================================================
 filters:
+  skip_titles: [qa, sdet, tester, test engineer, quality engineer, frontend, front end, front-end, ui engineer, ui developer, ux, designer, data scientist, machine learning,
+                ml engineer, research scientist, embedded, firmware, hardware, asic, rtl, verification, devops, sre, site reliability, data engineer, data analyst,
+                business analyst, solutions architect, sales, recruiter, marketing, finance, legal, technical writer, support engineer, customer success,
+                project manager, program manager, product manager, engineering manager, director, vice president, vp, head of, intern, network engineer, security engineer]
   use_title_filter: false   # false = ignore job titles; the job qualifies if its description asks for Java (+ city, age, experience checks)
   # Job title must contain one of these (lowercase) ...
   include_title: [java, backend, back end, back-end, software engineer,
@@ -44,7 +48,8 @@ experience:
 
 skills:
   must_have: Java
-  min_other_hits: 0         # 0 = any job that asks for Java is OK (set 1 to also require Spring/REST/etc.)
+  min_other_hits: 1         # at least this many skills from YOUR resume (list below) must appear in the job description
+  profile: [Spring Boot, Spring, Microservices, REST APIs, Multithreading, Kafka, Hibernate/JPA, SQL/DB, Redis, NoSQL, Docker, Kubernetes, AWS, CI/CD, Git, JUnit/Mockito, Python]
 
 # Verified automatically on first run (wrong guesses are harmless).
 hints:
@@ -61,7 +66,7 @@ hints:
   NetApp:              {type: workday, tenant: netapp, dc: wd1, sites: [NetAppCareers]}
   Informatica:         {type: workday, tenant: informatica, sites: [External]}
   Teradata:            {type: workday, tenant: teradata, sites: [Teradata_Careers, External]}
-  Qualcomm:            {type: workday, tenant: qualcomm, sites: [External]}
+  Qualcomm:            [{type: eightfold, sub: qualcomm, domain: qualcomm.com}, {type: workday, tenant: qualcomm, dc: wd5, sites: [External]}]
   NVIDIA:              {type: workday, tenant: nvidia, sites: [NVIDIAExternalCareerSite]}
   AMD:                 {type: workday, tenant: amd, dc: wd1, sites: [External]}
   FIS:                 {type: workday, tenant: fis, sites: [SearchJobs]}
@@ -110,6 +115,17 @@ hints:
   "VMware (Broadcom)": [{dc: wd1, sites: [External_Career, External, Broadcom], tenant: broadcom, type: workday}, {dc: wd1, sites: [VMware, External], tenant: vmware, type: workday}]
   Snowflake: [{sites: [Snowflake, External], tenant: snowflake, type: workday}, {board: snowflake, type: greenhouse}]
   Optum: {dc: wd1, sites: [Optum, UHG_External], tenant: uhg, type: workday}
+  "Microsoft": {"type": "json_api", "url": "https://gcsservices.careers.microsoft.com/search/api/v1/search?lc=India&l=en_us&q=java&pg={page}&pgSz=20&o=Recent&flt=true", "list": "operationResult.result.jobs", "id": "jobId", "title": "title", "loc": "properties.locations", "job_url": "https://jobs.careers.microsoft.com/global/en/job/{jobId}", "posted": "postingDate", "page_size": 20, "pages": 5, "detail_url": "https://gcsservices.careers.microsoft.com/search/api/v1/job/{jobId}?lang=en_us", "detail_desc": [["", "operationResult.result.description"], ["Qualifications", "operationResult.result.qualifications"], ["Responsibilities", "operationResult.result.responsibilities"]]}
+  "Amazon": {"type": "json_api", "url": "https://www.amazon.jobs/en/search.json?base_query=java&loc_query=India&country=IND&sort=recent&offset={offset}&result_limit=100", "list": "jobs", "id": "id_icims", "title": "title", "loc": "normalized_location", "job_url": "https://www.amazon.jobs{job_path}", "posted": "posted_date", "posted_format": "%B %d, %Y", "page_size": 100, "pages": 3, "desc": [["", "description"], ["Basic qualifications", "basic_qualifications"], ["Preferred qualifications", "preferred_qualifications"]]}
+  "Google": {"type": "json_api", "url": "https://careers.google.com/api/v3/search/?location=India&q=java&sort_by=date&page={page}&page_size=20", "list": "jobs", "id": "id", "title": "title", "loc": "locations", "job_url": "{apply_url}", "posted": "publish_date", "page_size": 20, "pages": 5, "desc": [["", "description"], ["Minimum qualifications", "qualifications"], ["Responsibilities", "responsibilities"]]}
+  "Atlassian": {"type": "json_api", "url": "https://www.atlassian.com/endpoint/careers/listings", "list": "", "id": "id", "title": "title", "loc": "locations", "job_url": "{applyUrl}", "posted": "portalJobPost.updatedDate", "page_size": 100000, "pages": 1, "desc": [["", "overview"], ["Responsibilities", "responsibilities"], ["Qualifications", "qualifications"]]}
+  "Morgan Stanley": {"type": "workday", "tenant": "ms", "sites": ["External"], "dc": "wd5"}
+  "Red Hat": {"type": "workday", "tenant": "redhat", "sites": ["Jobs"], "dc": "wd5"}
+  "Nike": {"type": "workday", "tenant": "nike", "sites": ["nke"], "dc": "wd1"}
+  "Akamai": {"type": "workday", "tenant": "akamai", "sites": ["akamaicareers"], "dc": "wd1"}
+  "BlackRock": {"type": "workday", "tenant": "blackrock", "sites": ["BlackRock_Professional"], "dc": "wd1"}
+  "Docusign": [{"type": "greenhouse", "board": "docusign"}, {"type": "workday", "tenant": "docusign", "sites": ["External", "Docusign"], "dc": "wd1"}]
+  "Sumo Logic": {"type": "greenhouse", "board": "sumologic"}
 
 # Your 53 + 52 added companies. Add more lines the same way.
 companies:
@@ -218,3 +234,10 @@ companies:
   - {name: "DrawinBox", url: "https://drawinbox.com/careers", match: "drawinbox", tier: "Added (your 2nd list)"}
   - {name: "Lowe's (you wrote 'Lowis')", url: "https://talent.lowes.com/in/en", match: "lowe's", tier: "Added (your 2nd list)"}
   - {name: "Mahindra Group", url: "https://www.mahindra.com/careers", match: "mahindra group", tier: "Added (your 2nd list)"}
+  - {name: "Amazon", url: "https://www.amazon.jobs/", match: "amazon", tier: "Added (from your dashboard)"}
+  - {name: "Red Hat", url: "https://www.redhat.com/en/jobs", match: "red hat", tier: "Added (from your dashboard)"}
+  - {name: "Nike", url: "https://careers.nike.com/", match: "nike", tier: "Added (from your dashboard)"}
+  - {name: "Akamai", url: "https://www.akamai.com/careers", match: "akamai", tier: "Added (from your dashboard)"}
+  - {name: "BlackRock", url: "https://careers.blackrock.com/", match: "blackrock", tier: "Added (from your dashboard)"}
+  - {name: "Docusign", url: "https://careers.docusign.com/", match: "docusign", tier: "Added (from your dashboard)"}
+  - {name: "Sumo Logic", url: "https://www.sumologic.com/company/careers", match: "sumo logic", tier: "Added (from your dashboard)"}

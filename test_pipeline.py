@@ -94,20 +94,20 @@ ok("C1 no verifiable overall experience = NEEDS_REVIEW: never an alert, listed o
 fresh([co("Accenture")], {"Accenture": WD()}); n = Net(); n.install()
 n.text = jd("Requirements:\n- 2-4 years of professional experience.\n- 6+ years of experience in AWS.\n- 3+ years of experience in Java.\nJava Spring Boot.")
 n.jobs["ACC"] = [job("A1")]; run(1); assert len(n.alerts()) == 1
-msg = n.alerts()[0]; assert "Overall experience (verified): 2-4 years" in msg and "Evidence:" in msg and "information only" in msg and "Description: full" in msg, msg
+msg = n.alerts()[0]; assert "Experience (verified): 2-4 years → fits your 2.2 yrs" in msg and "info only" in msg and len(msg.splitlines()) <= 8, msg
 print(msg)
-n.text = jd("Requirements:\n- 3+ years of professional experience.\nJava."); n.jobs["ACC"] = [job("A2")]; run(1); assert len(n.alerts()) == 1
+n.text = jd("Requirements:\n- 3+ years of professional experience.\nJava, Spring Boot."); n.jobs["ACC"] = [job("A2")]; run(1); assert len(n.alerts()) == 1
 ok("C2 alert shows the verified overall range + evidence; skill years are shown as information and never block; overall 3+ is rejected")
 
 # ---------------------------------------------------------------- D. revalidation (only on a meaningful change) + retrieval retries
 fresh([co("Acme")], {"Acme": {"type": "greenhouse", "board": "x"}}); n = Net(); n.install()
 gh = lambda body: [dict(id="g1", req="g1", title="Java Engineer", loc="Hyderabad", url="https://gh/g1", posted="", age=0, desc=jd(body))]
 w.LIST["greenhouse"] = lambda r: gh(n.text)
-n.text = "Requirements: 6+ years of professional experience. Java."; run(1); assert n.alerts() == [] and n.db()["jobs"]["Acme|g1"]["eligibility"] == "ineligible"
+n.text = "Requirements: 6+ years of professional experience. Java, Spring Boot."; run(1); assert n.alerts() == [] and n.db()["jobs"]["Acme|g1"]["eligibility"] == "ineligible"
 run(2); assert n.alerts() == [] and n.counters().get("revalidated", 0) == 0                    # unchanged text: no re-analysis
-n.text = "Requirements: 2-4 years of professional experience. Java."; run(1)                  # the employer edited the description
+n.text = "Requirements: 2-4 years of professional experience. Java, Spring Boot."; run(1)                  # the employer edited the description
 assert len(n.alerts()) == 1 and n.counters().get("revalidated") == 1; run(2); assert len(n.alerts()) == 1
-n.text = "Requirements: 7+ years of professional experience. Java."; run(1)                  # edited again AFTER we alerted
+n.text = "Requirements: 7+ years of professional experience. Java, Spring Boot."; run(1)                  # edited again AFTER we alerted
 assert len(n.alerts()) == 1 and n.db()["jobs"]["Acme|g1"]["changed_after_publish"] == "ineligible"
 ok("D1 a changed description triggers revalidation: ineligible -> eligible alerts once; after publishing, a later change is recorded, never re-sent")
 
@@ -123,7 +123,7 @@ run(1); d = n.db(); old = d["jobs"]["Accenture|ATCI-1"]
 d["jobs"]["Accenture|ATCI-8"] = dict(old, req="ATCI-8", title="Old pending", publication="pending", eligibility="eligible", paths=["/job/x"])
 for k in ("schema", "requirements", "decision", "description"): d["jobs"]["Accenture|ATCI-8"].pop(k, None)
 json.dump(d, open(w.DB_F, "w")); n.sent.clear(); n.jobs["ACC"] = [job("ATCI-1"), job("ATCI-8", path="/job/x")]
-run(2); assert len(n.alerts()) == 1 and "ATCI-8" in n.alerts()[0] and "Overall experience (verified)" in n.alerts()[0]
+run(2); assert len(n.alerts()) == 1 and "ATCI-8" in n.alerts()[0] and "Experience (verified)" in n.alerts()[0]
 ok("D3 records written by the older version are re-validated before they can be sent")
 
 # ---------------------------------------------------------------- E. job-board snippets are never trusted
@@ -137,7 +137,7 @@ for page in ("structured", "unstructured", "down"):
         def boom(url): raise requests.ConnectionError("down")
         w.page_text = boom
     run(1)
-    if page == "structured": assert len(n.alerts()) == 1 and "FULL_JOBBOARD" not in n.alerts()[0] and "Description: full" in n.alerts()[0]
+    if page == "structured": assert len(n.alerts()) == 1 and "Experience (verified): 2-4 years" in n.alerts()[0]
     else: assert n.alerts() == [] and n.db()["jobs"]["Zeta|adzuna:55"]["eligibility"] == "needs_review"
     w.ADZ_ON = False
 ok("E1 snippet-only job-board jobs are NEEDS_REVIEW; verified only when the full page carries JobPosting data")
@@ -231,14 +231,14 @@ ok("H1 Ashby board is read (unlisted postings ignored) with description and post
 
 fresh([co("Okta")], {"Okta": {"type": "greenhouse", "board": "okta"}}); n = Net(); n.install()
 w.LIST["greenhouse"], w.DETAIL["greenhouse"] = REAL_LIST["greenhouse"], REAL_DETAIL["greenhouse"]
-gh = dict(updated="2026-10-19T01:00:00Z", body=jd("Requirements: 6+ years of professional experience. Java."))
+gh = dict(updated="2026-10-19T01:00:00Z", body=jd("Requirements: 6+ years of professional experience. Java, Spring Boot."))
 def gh_site():
     return site({"https://boards-api.greenhouse.io/v1/boards/okta/jobs": json.dumps({"jobs": [{"id": 7, "title": "Java Engineer", "location": {"name": "Bengaluru"},
                  "absolute_url": "https://gh/7", "first_published": now_iso, "updated_at": gh["updated"]}]}),
                  "https://boards-api.greenhouse.io/v1/boards/okta/jobs/7": json.dumps({"content": gh["body"], "location": {"name": "Bengaluru"}})})
 w.get = gh_site(); run(1); assert n.alerts() == [] and n.db()["jobs"]["Okta|7"]["eligibility"] == "ineligible"
 w.get = gh_site(); run(2); assert n.counters().get("revalidated", 0) == 0                              # nothing changed: no second download
-gh.update(updated="2026-10-20T01:00:00Z", body=jd("Requirements: 2-4 years of professional experience. Java."))
+gh.update(updated="2026-10-20T01:00:00Z", body=jd("Requirements: 2-4 years of professional experience. Java, Spring Boot."))
 w.get = gh_site(); run(1); assert len(n.alerts()) == 1 and n.counters().get("revalidated") == 1
 ok("H2 Greenhouse: list without bulky text, description read only for candidates, an 'updated' stamp triggers revalidation (ineligible -> eligible alerts once)")
 w.LIST["greenhouse"], w.DETAIL["greenhouse"] = REAL_LIST["greenhouse"], REAL_DETAIL["greenhouse"]
@@ -247,10 +247,65 @@ w.LIST["greenhouse"], w.DETAIL["greenhouse"] = REAL_LIST["greenhouse"], REAL_DET
 import yaml
 cfg = yaml.safe_load(open("companies.yaml", encoding="utf-8"))
 names = [c["name"] for c in cfg["companies"]]
-assert len(names) == 105 and len(set(names)) == 105 and all(c["url"].startswith("http") and c["match"] for c in cfg["companies"])
+assert len(names) == 112 and len(set(names)) == 112 and all(c["url"].startswith("http") and c["match"] for c in cfg["companies"])
 assert all(h in names for h in cfg["hints"]), [h for h in cfg["hints"] if h not in names]
 for h in cfg["hints"].values():
-    for hh in (h if isinstance(h, list) else [h]): assert hh["type"] in ("workday", "greenhouse", "lever", "ashby", "html_listing", "sitemap", "oraclehcm", "eightfold", "smartrecruiters"), hh
-ok("H3 companies.yaml: 105 unique companies, every hint belongs to a listed company and uses a supported feed type")
+    for hh in (h if isinstance(h, list) else [h]): assert hh["type"] in ("workday", "greenhouse", "lever", "ashby", "html_listing", "sitemap", "oraclehcm", "eightfold", "smartrecruiters", "json_api"), hh
+ok("H3 companies.yaml: 112 unique companies, every hint belongs to a listed company and uses a supported feed type")
+
+# ---------------------------------------------------------------- I. state files left by ANOTHER version must not crash the bot (real failure seen in your repo)
+fresh([co("Accenture"), co("Nowhere", "https://nowhere.example/")], {"Accenture": WD(), "Nowhere": {"type": "nofeed", "why": "from another version"}, "Ghost": 5})
+n = Net(); n.install(); n.jobs["ACC"] = [job("A1")]; w.get = site({})
+json.dump({"v": 2, "jobs": {"Accenture|OLD": {"company": "Accenture", "weird": True}, "junk": 7}, "meta": {}}, open(w.DB_F, "w"))
+sys.argv = ["x", "--selftest"]; w.SELFTEST = True; run(1)                                      # this raised KeyError: 'nofeed' before the fix
+rep = "\n".join(n.sent); assert "Accenture [Workday]" in rep and "Nowhere" in rep, rep
+w.SELFTEST = False; sys.argv = ["x"]; n.sent.clear(); run(1); assert len(n.alerts()) == 1
+assert "Accenture|OLD" not in n.db()["jobs"] and "junk" not in n.db()["jobs"]
+ok("I1 unknown route types and foreign job records from an older version are ignored/re-discovered; self-test and normal run both complete")
+
+# ---------------------------------------------------------------- J. discovery is saved batch by batch and never loops on the same companies
+names = [f"Co{i}" for i in range(25)]
+fresh([co(n_) for n_ in names], {}); n = Net(); n.install(); calls = []
+w.DISCOVERY_BUDGET = -1                                                      # pretend the time budget is already used after the first batch
+w.discover = lambda c: (calls.append(c["name"]) or {"type": "none", "why": "test"})
+sys.argv = ["x", "--selftest"]; w.SELFTEST = True; w.get = site({}); run(1)
+saved = json.load(open(w.RES_F)); assert len(saved) == 10 and all("tried" in v for v in saved.values()), len(saved)       # first batch kept
+T[0] += 60; run(1); saved = json.load(open(w.RES_F)); assert len(saved) == 20 and len(set(calls)) == 20, (len(saved), len(set(calls)))   # next run continues, no repeats
+w.SELFTEST = False; sys.argv = ["x"]; w.DISCOVERY_BUDGET = 1500
+ok("J1 route discovery saves after every batch of 10 and continues where it stopped (no timeout can lose the work)")
+
+# ---------------------------------------------------------------- K. relevance, JSON feeds, manual-check list
+fresh([co("Accenture")], {"Accenture": WD()}); n = Net(); n.install()
+n.jobs["ACC"] = [job("T1", title="QA Automation Engineer"), job("T2", title="Frontend Developer"), job("T3", title="Java Backend Engineer")]
+run(1); assert len(n.alerts()) == 1 and "Java Backend Engineer" in n.alerts()[0]
+assert n.db()["jobs"]["Accenture|T1"]["reason"].startswith("title") and n.detail_calls == 1
+ok("K1 clearly different roles (QA, frontend ...) are skipped before any description is downloaded")
+n.text = jd("Requirements: 2-4 years of professional experience. Java for embedded devices."); n.jobs["ACC"] = [job("T4", title="Software Engineer")]; run(1)
+assert len(n.alerts()) == 1 and n.db()["jobs"]["Accenture|T4"]["eligibility"] == "ineligible" and "resume" in n.db()["jobs"]["Accenture|T4"]["reason"]
+ok("K2 Java alone is not enough: at least one skill from YOUR resume must appear in the description")
+
+AMZ = json.dumps({"hits": 2, "jobs": [{"id_icims": "3001", "title": "Software Dev Engineer", "normalized_location": "Hyderabad, Telangana, IND", "job_path": "/en/jobs/3001/sde",
+      "posted_date": dt.datetime.now(dt.timezone.utc).strftime("%B %d, %Y"), "description": "Build Java services with Spring Boot.", "basic_qualifications": "2+ years of non-internship professional software development experience",
+      "preferred_qualifications": "5+ years of experience with AWS"}]})
+cfgs = yaml.safe_load(open("companies.yaml", encoding="utf-8"))["hints"]
+w.get = site({"https://www.amazon.jobs/en/search.json?base_query=java&loc_query=India&country=IND&sort=recent&offset=0&result_limit=100": AMZ})
+lst = REAL_LIST["json_api"](cfgs["Amazon"]); assert len(lst) == 1 and lst[0]["url"] == "https://www.amazon.jobs/en/jobs/3001/sde" and lst[0]["age"] < 1.5, lst
+fresh([co("Amazon")], {"Amazon": cfgs["Amazon"]}); n = Net(); n.install(); w.LIST["json_api"] = REAL_LIST["json_api"]; w.get = site({"https://www.amazon.jobs/en/search.json?base_query=java&loc_query=India&country=IND&sort=recent&offset=0&result_limit=100": AMZ})
+run(1); assert len(n.alerts()) == 1 and "Experience (verified): 2+ years" in n.alerts()[0], n.sent
+ok("K3 JSON career feeds (Amazon-style) are read from configuration: basic vs preferred qualifications keep their meaning (2+ mandatory, 5+ preferred ignored)")
+MS_LIST = json.dumps({"operationResult": {"result": {"jobs": [{"jobId": "9001", "title": "Software Engineer II", "postingDate": now_iso, "properties": {"locations": ["India, Karnataka, Bangalore"]}}]}}})
+MS_ONE = json.dumps({"operationResult": {"result": {"description": "<p>Java Spring Boot services.</p>", "qualifications": "<ul><li>2-4 years of professional experience.</li></ul>", "responsibilities": ""}}})
+fresh([co("Microsoft")], {"Microsoft": cfgs["Microsoft"]}); n = Net(); n.install(); w.LIST["json_api"], w.DETAIL["json_api"] = REAL_LIST["json_api"], REAL_DETAIL["json_api"]
+w.get = site({"https://gcsservices.careers.microsoft.com/search/api/v1/search?lc=India&l=en_us&q=java&pg=1&pgSz=20&o=Recent&flt=true": MS_LIST,
+              "https://gcsservices.careers.microsoft.com/search/api/v1/job/9001?lang=en_us": MS_ONE})
+run(1); assert len(n.alerts()) == 1 and "Bangalore" in n.alerts()[0] and "2-4 years" in n.alerts()[0]
+ok("K4 JSON feed with a separate description request (Microsoft-style) works")
+
+fresh([co("Accenture"), co("Nowhere", "https://nowhere.example/")], {"Accenture": WD(), "Nowhere": {"type": "none", "why": "x", "tried": T[0]}}); n = Net(); n.install(); os.environ["TELEGRAM_BOT_TOKEN"] = "t"
+w.time = types.SimpleNamespace(time=lambda: dt.datetime(2026, 10, 19, 5, 0, tzinfo=dt.timezone.utc).timestamp(), sleep=lambda x: None); w.get = site({})
+n.jobs["ACC"] = []; run(1); rep = [m for m in n.sent if m.startswith("📊")]
+assert rep and "Check these by hand" in rep[0] and "Nowhere" in rep[0], n.sent
+del os.environ["TELEGRAM_BOT_TOKEN"]; w.time = types.SimpleNamespace(time=lambda: T[0], sleep=lambda x: None)
+ok("K5 the report names the companies that have no automatic source, so you can check them by hand")
 
 print(f"\n{OK} integration test groups passed")

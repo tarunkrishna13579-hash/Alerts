@@ -8,7 +8,7 @@ the description asks for Java, and the city is Hyderabad / Bangalore. No LinkedI
 |---|---|
 | `experience.py` | extraction + eligibility engine (data model, statements, conflict resolution, fit rules) |
 | `watcher.py` | adapters for career sites, discovery, database, Telegram, reports |
-| `companies.yaml` | your 105 companies, filters, your profile (`experience:`), hints |
+| `companies.yaml` | your 112 companies, filters, your profile (`experience:`), hints |
 | `test_experience.py`, `test_pipeline.py`, `evaluate_real.py`, `evaluation/real_labels.json` | tests and measurement |
 | `AUDIT.md`, `COMPANIES.md` | what was wrong before; per-company source and honest status |
 | `.github/workflows/watch.yml` | schedule / manual run; runs the tests first |
@@ -32,7 +32,7 @@ Alert example: overall range exactly as written, the evidence sentence and secti
 
 ## Deploy
 1. Upload every file of this folder (including `.github/workflows/watch.yml`) to your repo. 2. Secrets: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` (optional backup route: `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`).
-3. Actions -> job-watch -> Run workflow -> **selftest**: reports, for each of the 105 companies, the route, jobs read, pagination status, last success, and what failed and why.
+3. Actions -> job-watch -> Run workflow -> **selftest**: reports, for each of the 112 companies, the route, jobs read, pagination status, last success, and what failed and why.
 4. Run **normal**. For a reliable 10-minute rhythm use the cron-job.org trigger (below). 5. Tests locally: `python test_experience.py && python test_pipeline.py && python evaluate_real.py all`.
 
 ### 10-minute trigger (GitHub's own timer is unreliable)
