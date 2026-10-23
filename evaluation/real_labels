@@ -1,0 +1,204 @@
+{
+ "note": "Excerpts (one short quote per source, transcribed from search results on 2026-10-19) with MY manual labels. They test statement-level wording only: full descriptions are not stored (copyright) - save your own with CAPTURE_DIR and label them with the same format. 'heldout' items were chosen before the final engine run and never used to tune it. Expected verdict = verdict of a job whose only experience statement is the excerpt, for a 2.2-year candidate with skill years informational.",
+ "retrieved": "2026-10-19",
+ "items": [
+  {
+   "id": "r01",
+   "company": "Stellapps (theindiajobs)",
+   "source_url": "https://jobs.theindiajobs.com/c/Stellapps-Technologies-Private-Limited/jobs/Software-Engineer-java-Developer-uCH48hnRf9",
+   "split": "dev",
+   "excerpt": "Experience Required : 2 to 4 Years",
+   "expected_scope": "OVERALL",
+   "expected_min": 2.0,
+   "expected_max": 4.0,
+   "expected_verdict": "ELIGIBLE"
+  },
+  {
+   "id": "r02",
+   "company": "Capgemini",
+   "source_url": "https://careers.capgemini.com/job/Hyderabad-Java-Developer/1367745233",
+   "split": "dev",
+   "excerpt": "Exp: 4-6 Years",
+   "expected_scope": "OVERALL",
+   "expected_min": 4.0,
+   "expected_max": 6.0,
+   "expected_verdict": "INELIGIBLE"
+  },
+  {
+   "id": "r03",
+   "company": "Anblicks (theindiajobs)",
+   "source_url": "https://jobs.theindiajobs.com/c/Anblicks/jobs/Backend-Developer-java-RrH0SU6kwj",
+   "split": "dev",
+   "excerpt": "Experience Required : 5 to 14 Years",
+   "expected_scope": "OVERALL",
+   "expected_min": 5.0,
+   "expected_max": 14.0,
+   "expected_verdict": "INELIGIBLE"
+  },
+  {
+   "id": "r04",
+   "company": "Appzime (weekday)",
+   "source_url": "https://jobs.weekday.works/java-spring-boot-developer-i-hyderabad-i-contractual-at-appzime-technologies-wkdy6iucp6",
+   "split": "dev",
+   "excerpt": "2.5+ years of hands-on experience in Java development.",
+   "expected_scope": "SKILL_SPECIFIC",
+   "expected_min": 2.5,
+   "expected_max": null,
+   "expected_verdict": "NEEDS_REVIEW"
+  },
+  {
+   "id": "r05",
+   "company": "Indeed result page (Kafka)",
+   "source_url": "https://in.indeed.com/q-java-spring-boot-developer-2-year-experience-jobs.html",
+   "split": "dev",
+   "excerpt": "Kafka: Minimum 2-3 years of experience.",
+   "expected_scope": "SKILL_SPECIFIC",
+   "expected_min": 2.0,
+   "expected_max": 3.0,
+   "expected_verdict": "NEEDS_REVIEW"
+  },
+  {
+   "id": "r06",
+   "company": "Indeed result page (3 years')",
+   "source_url": "https://in.indeed.com/q-java-spring-boot-developer-jobs.html?start=420",
+   "split": "heldout",
+   "excerpt": "With a minimum of 3 years’ experience working in a software development role",
+   "expected_scope": "OVERALL",
+   "expected_min": 3.0,
+   "expected_max": null,
+   "expected_verdict": "INELIGIBLE"
+  },
+  {
+   "id": "r07",
+   "company": "Indeed result page (IT industry)",
+   "source_url": "https://in.indeed.com/q-java-spring-boot-developer-jobs.html?start=150",
+   "split": "dev",
+   "excerpt": "Minimum 2+ years experience in the IT industry.",
+   "expected_scope": "OVERALL",
+   "expected_min": 2.0,
+   "expected_max": null,
+   "expected_verdict": "ELIGIBLE"
+  },
+  {
+   "id": "r08",
+   "company": "Indeed result page (total work experience)",
+   "source_url": "https://in.indeed.com/q-java-developer-4-years-experience-jobs.html",
+   "split": "dev",
+   "excerpt": "4 to 5 years of total work experience in Java.",
+   "expected_scope": "OVERALL",
+   "expected_min": 4.0,
+   "expected_max": 5.0,
+   "expected_verdict": "INELIGIBLE"
+  },
+  {
+   "id": "r09",
+   "company": "Indeed result page (Java backend)",
+   "source_url": "https://in.indeed.com/q-java-spring-boot-developer-jobs.html?start=30",
+   "split": "dev",
+   "excerpt": "3+ years of experience in Java backend development.",
+   "expected_scope": "SKILL_SPECIFIC",
+   "expected_min": 3.0,
+   "expected_max": null,
+   "expected_verdict": "NEEDS_REVIEW"
+  },
+  {
+   "id": "r10",
+   "company": "Indeed result page (7 to 10)",
+   "source_url": "https://in.indeed.com/q-java-spring-boot-developer-jobs.html?start=380",
+   "split": "dev",
+   "excerpt": "Candidate should have 7 to 10 years of experience.",
+   "expected_scope": "OVERALL",
+   "expected_min": 7.0,
+   "expected_max": 10.0,
+   "expected_verdict": "INELIGIBLE"
+  },
+  {
+   "id": "r11",
+   "company": "Indeed result page (J2EE)",
+   "source_url": "https://in.indeed.com/q-java-spring-boot-developer-jobs.html?start=100",
+   "split": "heldout",
+   "excerpt": "5+ years of experience in developing Java/J2EE based applications.",
+   "expected_scope": "SKILL_SPECIFIC",
+   "expected_min": 5.0,
+   "expected_max": null,
+   "expected_verdict": "NEEDS_REVIEW"
+  },
+  {
+   "id": "r12",
+   "company": "Indeed result page (more than 3)",
+   "source_url": "https://in.indeed.com/q-java-jobs.html?start=30",
+   "split": "dev",
+   "excerpt": "Experience of more than 3 years in JAVA development is mandatory.",
+   "expected_scope": "SKILL_SPECIFIC",
+   "expected_min": 3.0,
+   "expected_max": null,
+   "expected_verdict": "NEEDS_REVIEW"
+  },
+  {
+   "id": "r13",
+   "company": "Indeed result page (team leader)",
+   "source_url": "https://in.indeed.com/q-java-spring-boot-microservices-jobs.html",
+   "split": "heldout",
+   "excerpt": "Team Leader (7-10 Years Experience).",
+   "expected_scope": "OVERALL",
+   "expected_min": 7.0,
+   "expected_max": 10.0,
+   "expected_verdict": "INELIGIBLE"
+  },
+  {
+   "id": "r14",
+   "company": "Josh Software (theindiajobs)",
+   "source_url": "https://jobs.theindiajobs.com/c/Josh-Software/jobs/Hbk-8-Sr-Java-Developer-THwzuxjREm",
+   "split": "heldout",
+   "excerpt": "Total exp of 4+ years in Java Development.",
+   "expected_scope": "OVERALL",
+   "expected_min": 4.0,
+   "expected_max": null,
+   "expected_verdict": "INELIGIBLE"
+  },
+  {
+   "id": "r15",
+   "company": "Affine (theindiajobs)",
+   "source_url": "https://jobs.theindiajobs.com/c/Affine-Analytics-Pvt-Ltd/jobs/Jr-Spring-Boot-Developer-ass01048-neQY3nFJp1",
+   "split": "heldout",
+   "excerpt": "Experience Required : Minimum 2 Years",
+   "expected_scope": "OVERALL",
+   "expected_min": 2.0,
+   "expected_max": null,
+   "expected_verdict": "ELIGIBLE"
+  },
+  {
+   "id": "r16",
+   "company": "Walkingtree",
+   "source_url": "https://walkingtree.tech/jobs/senior-software-engineer-java/",
+   "split": "heldout",
+   "excerpt": "4 to 7 years of professional experience in Java backend development.",
+   "expected_scope": "AMBIGUOUS",
+   "expected_min": 4.0,
+   "expected_max": 7.0,
+   "expected_verdict": "NEEDS_REVIEW"
+  },
+  {
+   "id": "r17",
+   "company": "Thoughtfocus (Keka)",
+   "source_url": "https://thoughtfocusinc.keka.com/careers/jobdetails/7787",
+   "split": "heldout",
+   "excerpt": "4–8 years of experience in backend development",
+   "expected_scope": "AMBIGUOUS",
+   "expected_min": 4.0,
+   "expected_max": 8.0,
+   "expected_verdict": "NEEDS_REVIEW"
+  },
+  {
+   "id": "r18",
+   "company": "Glassdoor result page (fresher)",
+   "source_url": "https://www.glassdoor.co.in/Job/java-spring-boot-jobs-SRCH_KO0,16.htm",
+   "split": "heldout",
+   "excerpt": "0–3 years of experience (Freshers can apply).",
+   "expected_scope": "OVERALL",
+   "expected_min": 0.0,
+   "expected_max": 3.0,
+   "expected_verdict": "ELIGIBLE"
+  }
+ ]
+}
