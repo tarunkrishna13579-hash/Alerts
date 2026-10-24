@@ -1,13 +1,13 @@
 {
 "ADP": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "job pages carry no JobPosting data x1"
 },
 "AMD": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
-"why": "HTTP 422 x10, fewer than 3 job links x1"
+"why": "HTTP 422 x9, fewer than 3 job links x1"
 },
 "Accenture": {
 "api": "https://accenture.wd103.myworkdayjobs.com/wday/cxs/accenture/AccentureCareers",
@@ -15,7 +15,7 @@
 "web": "https://accenture.wd103.myworkdayjobs.com/en-US/AccentureCareers"
 },
 "Accolite / Bounteous": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -38,9 +38,9 @@
 "web": "https://ag.wd3.myworkdayjobs.com/en-US/Airbus"
 },
 "Akamai": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
-"why": "HTTP 422 x10, HTTP 403 x1"
+"why": "HTTP 422 x9, HTTP 403 x1"
 },
 "Amazon": {
 "desc": [
@@ -71,12 +71,12 @@
 "url": "https://www.amazon.jobs/en/search.json?base_query=java&loc_query=India&country=IND&sort=recent&offset={offset}&result_limit=100"
 },
 "American Express": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "Ascendion": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -129,7 +129,7 @@
 "web": "https://blackrock.wd1.myworkdayjobs.com/en-US/BlackRock_Professional"
 },
 "Booking.com": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -174,7 +174,7 @@
 "type": "oraclehcm"
 },
 "Deloitte Global": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -185,12 +185,12 @@
 "url": "https://usijobs.deloitte.com/en_US/careersUSI"
 },
 "Docusign": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
-"why": "HTTP 422 x20, 'jobs' x1, fewer than 3 job links x1"
+"why": "HTTP 422 x18, 'jobs' x1, fewer than 3 job links x1"
 },
 "DrawinBox": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "no job feed found on its career page"
 },
@@ -199,12 +199,12 @@
 "type": "greenhouse"
 },
 "EPAM Systems": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "HTTP 403 x1"
 },
 "EY GDS": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -232,7 +232,7 @@
 "web": "https://finastra.wd3.myworkdayjobs.com/en-US/FINC"
 },
 "Flipkart": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -241,7 +241,7 @@
 "type": "smartrecruiters"
 },
 "Goldman Sachs": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "HTTP 404 x1"
 },
@@ -277,7 +277,7 @@
 "type": "greenhouse"
 },
 "HCLTech": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -287,7 +287,7 @@
 "web": "https://hp.wd5.myworkdayjobs.com/en-US/ExternalCareerSite"
 },
 "HSBC": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -305,12 +305,12 @@
 "type": "greenhouse"
 },
 "Informatica": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
-"why": "HTTP 422 x8, HTTP 401 x2, fewer than 3 job links x1"
+"why": "HTTP 422 x7, HTTP 401 x2, fewer than 3 job links x1"
 },
 "Infosys Finacle": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "HTTP 403 x1"
 },
@@ -320,7 +320,7 @@
 "web": "https://intel.wd1.myworkdayjobs.com/en-US/External"
 },
 "Intuit": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "job pages carry no JobPosting data x1"
 },
@@ -330,7 +330,7 @@
 "type": "oraclehcm"
 },
 "Juspay": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "string indices must be integers, not 'str' x1, 'jobs' x1, fewer than 3 job links x1"
 },
@@ -340,17 +340,17 @@
 "web": "https://lowes.wd5.myworkdayjobs.com/en-US/LWS_External_CS"
 },
 "Mahindra Comviva": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "Mahindra Group": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "MakeMyTrip": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -360,7 +360,7 @@
 "web": "https://mastercard.wd1.myworkdayjobs.com/en-US/CorporateCareers"
 },
 "Media.net": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "HTTP 404 x1"
 },
@@ -369,7 +369,7 @@
 "type": "lever"
 },
 "Microsoft": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "HTTP 404 x1"
 },
@@ -379,7 +379,7 @@
 "type": "eightfold"
 },
 "Myntra": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -400,21 +400,21 @@
 "web": "https://nike.wd1.myworkdayjobs.com/en-US/nke"
 },
 "Nokia": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "Nutanix": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
-"why": "HTTP 422 x24, HTTP 401 x6, job pages carry no JobPosting data x2"
+"why": "HTTP 422 x21, HTTP 401 x6, job pages carry no JobPosting data x2"
 },
 "Okta": {
 "board": "okta",
 "type": "greenhouse"
 },
 "Ola Cabs": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "HTTP 403 x1"
 },
@@ -439,12 +439,12 @@
 "type": "lever"
 },
 "Pegasystems": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
-"why": "HTTP 422 x30, job pages carry no JobPosting data x1"
+"why": "HTTP 422 x27, job pages carry no JobPosting data x1"
 },
 "Publicis Sapient": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "job pages carry no JobPosting data x1"
 },
@@ -473,7 +473,7 @@
 "type": "greenhouse"
 },
 "Rippling": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "JSONDecodeError x1, fewer than 3 job links x1"
 },
@@ -482,7 +482,7 @@
 "type": "greenhouse"
 },
 "SAP": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1, job pages carry no JobPosting data x1"
 },
@@ -497,17 +497,17 @@
 "web": "https://sec.wd3.myworkdayjobs.com/en-US/Samsung_Careers"
 },
 "ServiceNow": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "job pages carry no JobPosting data x3"
 },
 "Shopify": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "JSONDecodeError x1, fewer than 3 job links x1"
 },
 "Siemens": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1, job pages carry no JobPosting data x1"
 },
@@ -567,7 +567,7 @@
 "type": "greenhouse"
 },
 "Urban Company": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "string indices must be integers, not 'str' x1, 'jobs' x1, fewer than 3 job links x1"
 },
@@ -577,7 +577,7 @@
 "web": "https://broadcom.wd1.myworkdayjobs.com/en-US/External_Career"
 },
 "Virtusa": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "HTTP 403 x1"
 },
@@ -591,9 +591,9 @@
 "type": "smartrecruiters"
 },
 "Walmart Global Tech": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
-"why": "HTTP 422 x30, job pages carry no JobPosting data x1"
+"why": "HTTP 422 x27, job pages carry no JobPosting data x1"
 },
 "Wells Fargo": {
 "sitemaps": [
@@ -602,7 +602,7 @@
 "type": "sitemap"
 },
 "Wissen Technology Services": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "HTTP 404 x1"
 },
@@ -611,12 +611,12 @@
 "type": "lever"
 },
 "Zoho": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "Zomato": {
-"tried": 1792786225.6373518,
+"tried": 1792838858.1435258,
 "type": "none",
 "why": "string indices must be integers, not 'str' x1, 'jobs' x1, HTTP 404 x1"
 },
