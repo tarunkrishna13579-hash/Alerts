@@ -79,7 +79,7 @@ for first in ("board", "official"):
 w.ADZ_ON = False; ok("B1 same vacancy from a job board and the official site: one alert, either order")
 
 # ---------------------------------------------------------------- C. experience gate: needs-review jobs are stored, never alerted
-fresh([co("Accenture")], {"Accenture": WD()}); n = Net(); n.install(); os.environ["TELEGRAM_BOT_TOKEN"] = "t"
+fresh([co("Accenture")], {"Accenture": WD()}); n = Net(); n.install(); os.environ["TELEGRAM_BOT_TOKEN"] = "t"; w.MSG["daily_report"] = True
 n.text = jd("Build services in Java and Spring Boot. Great culture and benefits.")
 n.jobs["ACC"] = [job("ATCI-1"), job("ATCI-2", title="Java Engineer")]
 w.time = types.SimpleNamespace(time=lambda: dt.datetime(2026, 10, 19, 5, 0, tzinfo=dt.timezone.utc).timestamp(), sleep=lambda x: None)
@@ -87,6 +87,7 @@ run(1); jobs = n.db()["jobs"]
 assert all(r["eligibility"] == "needs_review" and r["publication"] == "none" for r in jobs.values()) and n.alerts() == []
 rep = [m for m in n.sent if m.startswith("📊")]; assert len(rep) == 1 and "Needs your review" in rep[0] and "NOT matches" in rep[0]
 run(2); assert len([m for m in n.sent if m.startswith("📊")]) == 1
+w.MSG["daily_report"] = False
 del os.environ["TELEGRAM_BOT_TOKEN"]; w.time = types.SimpleNamespace(time=lambda: T[0], sleep=lambda x: None)
 ok("C1 no verifiable overall experience = NEEDS_REVIEW: never an alert, listed once in the report")
 
@@ -301,11 +302,25 @@ w.get = site({"https://gcsservices.careers.microsoft.com/search/api/v1/search?lc
 run(1); assert len(n.alerts()) == 1 and "Bangalore" in n.alerts()[0] and "2-4 years" in n.alerts()[0]
 ok("K4 JSON feed with a separate description request (Microsoft-style) works")
 
-fresh([co("Accenture"), co("Nowhere", "https://nowhere.example/")], {"Accenture": WD(), "Nowhere": {"type": "none", "why": "x", "tried": T[0]}}); n = Net(); n.install(); os.environ["TELEGRAM_BOT_TOKEN"] = "t"
+fresh([co("Accenture"), co("Nowhere", "https://nowhere.example/")], {"Accenture": WD(), "Nowhere": {"type": "none", "why": "x", "tried": T[0]}}); n = Net(); n.install(); os.environ["TELEGRAM_BOT_TOKEN"] = "t"; w.MSG["daily_report"] = True
 w.time = types.SimpleNamespace(time=lambda: dt.datetime(2026, 10, 19, 5, 0, tzinfo=dt.timezone.utc).timestamp(), sleep=lambda x: None); w.get = site({})
 n.jobs["ACC"] = []; run(1); rep = [m for m in n.sent if m.startswith("📊")]
 assert rep and "Check these by hand" in rep[0] and "Nowhere" in rep[0], n.sent
-del os.environ["TELEGRAM_BOT_TOKEN"]; w.time = types.SimpleNamespace(time=lambda: T[0], sleep=lambda x: None)
+w.MSG["daily_report"] = False; del os.environ["TELEGRAM_BOT_TOKEN"]; w.time = types.SimpleNamespace(time=lambda: T[0], sleep=lambda x: None)
 ok("K5 the report names the companies that have no automatic source, so you can check them by hand")
+
+# ---------------------------------------------------------------- L. Telegram stays clean: only job alerts by default
+fresh([co("Accenture"), co("Broken")], {"Accenture": WD(), "Broken": WD() | {"api": "BROKEN"}}); n = Net(); n.install(); os.environ["TELEGRAM_BOT_TOKEN"] = "t"
+assert w.MSG == dict(job_alerts=True, daily_report=False, no_jobs_notice=False, warnings=False), w.MSG
+def lst(r):
+    if r["api"] == "BROKEN": raise requests.ConnectionError("down")
+    return list(n.jobs.get(r["api"], []))
+w.LIST["workday"] = lst; n.jobs["ACC"] = []
+for hours in range(30):                                                     # 30 runs over many hours: feed fails every time, no jobs
+    advance(1); run(1)
+assert n.sent == [], n.sent
+n.jobs["ACC"] = [job("Z1")]; advance(1); run(1); assert len(n.sent) == 1 and n.sent[0].startswith("🆕")
+del os.environ["TELEGRAM_BOT_TOKEN"]
+ok("L1 default: 30 runs with a permanently failing feed and no jobs send NOTHING; the one real job sends exactly one alert")
 
 print(f"\n{OK} integration test groups passed")

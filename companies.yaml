@@ -26,6 +26,12 @@ filters:
 
 repost_alert: false          # true = also alert when an already-sent job is re-listed (default: never re-send)
 
+messages:                   # what may reach your Telegram. Default: ONLY job alerts.
+  job_alerts: true
+  daily_report: false       # 10:00 / 16:00 / 23:00 summary + "check by hand" list
+  no_jobs_notice: false     # "no new jobs in the last 4 hours"
+  warnings: false           # "feed failed 12 runs in a row"
+
 report:
   digest_hours_ist: [10, 16, 23]   # status report with counts at these hours (IST)
   every_hours: 4        # if no job alert was sent for this long, you get a "no new jobs" message

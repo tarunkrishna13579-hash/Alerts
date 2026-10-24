@@ -17,6 +17,7 @@ F, X, SK, HINTS = CFG["filters"], CFG["experience"], CFG["skills"], CFG.get("hin
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
       "Accept-Language": "en-US,en;q=0.9"}
 DRY, SELFTEST = "--dry" in sys.argv, "--selftest" in sys.argv
+MSG = dict(job_alerts=True, daily_report=False, no_jobs_notice=False, warnings=False); MSG.update(CFG.get("messages") or {})   # default: ONLY job alerts
 MAX_ALERTS, MAX_DETAIL = 20, 12
 DISCOVERY_BUDGET = 1500                      # seconds of route discovery per run before it carries on next time
 
@@ -64,10 +65,16 @@ def wd_ping(api):
 TOTALS = {}
 PAGES = {}                                    # pagination status per feed, shown by the self-test
 def feed_key(r): return r.get("api") or f"{r.get('type')}:{r.get('host') or r.get('board') or r.get('slug') or r.get('company_id') or r.get('sub')}"
+WD_LOCK = __import__("threading").BoundedSemaphore(4)                       # at most 4 Workday requests at once
 def wd_req(api, body):
+    import random
+    with WD_LOCK:
+        time.sleep(random.uniform(0.1, 0.5))
+        return _wd_req(api, body)
+def _wd_req(api, body):
     for attempt in range(4):                       # Workday rate-limits shared servers: wait and retry
         resp = post(api + "/jobs", json=body, timeout=40)
-        if resp.status_code == 429: time.sleep(5 * (attempt + 1)); continue
+        if resp.status_code in (429, 503): time.sleep(8 * (attempt + 1)); continue
         resp.raise_for_status(); return resp.json()
     resp.raise_for_status()
 def wd_location_facets(facets):
@@ -386,7 +393,7 @@ LABEL = dict(json_api="Site JSON feed", ashby="Ashby", workday="Workday", greenh
              sitemap="Career-site sitemap + JobPosting data", html_listing="Career-page job list", none="no route")
 
 # ======================= auto-discovery of each company's job feed =======================
-WD_DCS = ["wd1", "wd5", "wd3", "wd12", "wd2", "wd4", "wd10", "wd103", "wd501"]
+WD_DCS = ["wd1", "wd5", "wd3", "wd12", "wd501", "wd103"]
 def wd_confs(tenant, sites, dc0=None):
     dcs = ([dc0] if dc0 else []) + [d for d in WD_DCS if d != dc0]
     for site in sites:
@@ -423,7 +430,7 @@ def tenant_guesses(c):
     seen, res = set(), []
     for t in out:
         if t and t not in seen and len(t) > 2: seen.add(t); res.append(t)
-    return res[:5]
+    return res[:3]
 
 def wd_root_confs(tenant):
     """a Workday tenant's root address redirects to its public job site - that gives us the real site name"""
@@ -715,7 +722,7 @@ def main():
     def note_health(c, r, jobs, err):
         h = health.setdefault(c["name"], {}); h["route"] = r["type"]
         if err in ("skipped", "nofeed"): return
-        if err: h["err"], h["err_ts"] = err, now
+        if err: h["err"], h["err_ts"] = err, now; print(f"[{c['name']}] feed error: {err}")
         else: h.update(ok_ts=now, jobs=len(jobs or []), pages=PAGES.get(feed_key(r), "n/a"), err=None)
 
     if SELFTEST:
@@ -766,11 +773,11 @@ def main():
         if err in ("skipped", "nofeed"): continue
         if err and src == "adzuna":
             fails["__adzuna"] = fails.get("__adzuna", 0) + 1; print(f"[Adzuna] FAILED x{fails['__adzuna']}: {err}")
-            if fails["__adzuna"] == 12: send("⚠️ Adzuna job-board lookup has failed 12 runs in a row. Check ADZUNA_APP_ID / ADZUNA_APP_KEY secrets.")
+            if fails["__adzuna"] == 12 and MSG["warnings"]: send("⚠️ Adzuna job-board lookup has failed 12 runs in a row. Check ADZUNA_APP_ID / ADZUNA_APP_KEY secrets.")
             continue
         if err:
             fails[n] = fails.get(n, 0) + 1; print(f"[{n}] FAILED x{fails[n]}: {err}")
-            if fails[n] == 12: send(f"⚠️ {n}: career feed failed 12 runs in a row. Run the self-test or fix its entry in companies.yaml.")
+            if fails[n] == 12 and MSG["warnings"]: send(f"⚠️ {n}: career feed failed 12 runs in a row. Run the self-test or fix its entry in companies.yaml.")
             continue
         fails[n] = 0; last[n] = now
         if src == "adzuna": fails["__adzuna"] = 0
@@ -866,10 +873,11 @@ def main():
     # ---------- scheduled reports ----------
     ist = dt.datetime.fromtimestamp(now, dt.timezone.utc) + dt.timedelta(hours=5, minutes=30)
     R = CFG.get("report", {}); tg = bool(os.getenv("TELEGRAM_BOT_TOKEN"))
+    tg_report, tg_notice = tg and MSG["daily_report"], tg and MSG["no_jobs_notice"]
     live = sum(1 for _, _, jb, e in results if jb is not None)
     due = [h for h in R.get("digest_hours_ist", [10, 16, 23]) if ist.hour >= h]            # the latest slot that has passed today
     today, done = ist.strftime("%Y-%m-%d"), meta.setdefault("digests", {})
-    if tg and due and due[-1] not in done.get(today, []):
+    if tg_report and due and due[-1] not in done.get(today, []):
         top = sorted(meta.get("by_company", {}).items(), key=lambda x: -x[1])[:5]
         msg = (f"📊 Job bot report ({due[-1]}:00 IST)\nCompany feeds read this run: {live}\nSince the last report:\n"
                f"• new jobs found: {C.get('discovered', 0)}\n• already-known jobs skipped: {C.get('known_skipped', 0)}\n"
@@ -892,7 +900,7 @@ def main():
     quiet = ist.hour >= R.get("quiet_start", 23) or ist.hour < R.get("quiet_end", 7)
     lr = meta.get("last_report")
     if lr is None: meta["last_report"] = now
-    elif every and now - lr >= every - 120 and not quiet and tg:
+    elif every and now - lr >= every - 120 and not quiet and tg_notice:
         if not any(t > lr for t in meta["sent_ts"]):
             hrs = max(1, round((now - lr) / 3600))
             if send(f"🕓 No new matching jobs in the last {hrs} hours. Bot is running; checked {live} company feeds "
