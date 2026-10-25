@@ -71,12 +71,12 @@
 "url": "https://www.amazon.jobs/en/search.json?base_query=java&loc_query=India&country=IND&sort=recent&offset={offset}&result_limit=100"
 },
 "American Express": {
-"tried": 1792838858.1435258,
+"tried": 1792926084.8448741,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "Ascendion": {
-"tried": 1792838858.1435258,
+"tried": 1792926084.8448741,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -174,7 +174,7 @@
 "type": "oraclehcm"
 },
 "Deloitte Global": {
-"tried": 1792838858.1435258,
+"tried": 1792926084.8448741,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -199,14 +199,14 @@
 "type": "greenhouse"
 },
 "EPAM Systems": {
-"tried": 1792838858.1435258,
+"tried": 1792926084.8448741,
 "type": "none",
 "why": "HTTP 403 x1"
 },
 "EY GDS": {
-"tried": 1792838858.1435258,
+"tried": 1792926084.8448741,
 "type": "none",
-"why": "fewer than 3 job links x1"
+"why": "job pages carry no JobPosting data x1"
 },
 "Expedia Group": {
 "api": "https://expedia.wd108.myworkdayjobs.com/wday/cxs/expedia/search",
@@ -310,7 +310,7 @@
 "why": "HTTP 422 x7, HTTP 401 x2, fewer than 3 job links x1"
 },
 "Infosys Finacle": {
-"tried": 1792838858.1435258,
+"tried": 1792926084.8448741,
 "type": "none",
 "why": "HTTP 403 x1"
 },
@@ -340,7 +340,7 @@
 "web": "https://lowes.wd5.myworkdayjobs.com/en-US/LWS_External_CS"
 },
 "Mahindra Comviva": {
-"tried": 1792838858.1435258,
+"tried": 1792926084.8448741,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -360,7 +360,7 @@
 "web": "https://mastercard.wd1.myworkdayjobs.com/en-US/CorporateCareers"
 },
 "Media.net": {
-"tried": 1792838858.1435258,
+"tried": 1792926084.8448741,
 "type": "none",
 "why": "HTTP 404 x1"
 },
@@ -369,7 +369,7 @@
 "type": "lever"
 },
 "Microsoft": {
-"tried": 1792838858.1435258,
+"tried": 1792926084.8448741,
 "type": "none",
 "why": "HTTP 404 x1"
 },
@@ -444,7 +444,7 @@
 "why": "HTTP 422 x27, job pages carry no JobPosting data x1"
 },
 "Publicis Sapient": {
-"tried": 1792838858.1435258,
+"tried": 1792926084.8448741,
 "type": "none",
 "why": "job pages carry no JobPosting data x1"
 },
@@ -611,12 +611,12 @@
 "type": "lever"
 },
 "Zoho": {
-"tried": 1792838858.1435258,
+"tried": 1792926084.8448741,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
 "Zomato": {
-"tried": 1792838858.1435258,
+"tried": 1792926084.8448741,
 "type": "none",
 "why": "string indices must be integers, not 'str' x1, 'jobs' x1, HTTP 404 x1"
 },
