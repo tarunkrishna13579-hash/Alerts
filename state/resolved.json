@@ -15,7 +15,7 @@
 "web": "https://accenture.wd103.myworkdayjobs.com/en-US/AccentureCareers"
 },
 "Accolite / Bounteous": {
-"tried": 1792926651.2424908,
+"tried": 1793013652.4721658,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -129,7 +129,7 @@
 "web": "https://blackrock.wd1.myworkdayjobs.com/en-US/BlackRock_Professional"
 },
 "Booking.com": {
-"tried": 1792926651.2424908,
+"tried": 1793013652.4721658,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -277,7 +277,7 @@
 "type": "greenhouse"
 },
 "HCLTech": {
-"tried": 1792926651.2424908,
+"tried": 1793013652.4721658,
 "type": "none",
 "why": "job pages carry no JobPosting data x1"
 },
@@ -287,7 +287,7 @@
 "web": "https://hp.wd5.myworkdayjobs.com/en-US/ExternalCareerSite"
 },
 "HSBC": {
-"tried": 1792926651.2424908,
+"tried": 1793013652.4721658,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -330,7 +330,7 @@
 "type": "oraclehcm"
 },
 "Juspay": {
-"tried": 1792926651.2424908,
+"tried": 1793013652.4721658,
 "type": "none",
 "why": "string indices must be integers, not 'str' x1, 'jobs' x1, fewer than 3 job links x1"
 },
@@ -350,7 +350,7 @@
 "why": "fewer than 3 job links x1"
 },
 "MakeMyTrip": {
-"tried": 1792926651.2424908,
+"tried": 1793013652.4721658,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -379,7 +379,7 @@
 "type": "eightfold"
 },
 "Myntra": {
-"tried": 1792926651.2424908,
+"tried": 1793013652.4721658,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -400,7 +400,7 @@
 "web": "https://nike.wd1.myworkdayjobs.com/en-US/nke"
 },
 "Nokia": {
-"tried": 1792926651.2424908,
+"tried": 1793013652.4721658,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -414,7 +414,7 @@
 "type": "greenhouse"
 },
 "Ola Cabs": {
-"tried": 1792926651.2424908,
+"tried": 1793013652.4721658,
 "type": "none",
 "why": "HTTP 403 x1"
 },
@@ -473,7 +473,7 @@
 "type": "greenhouse"
 },
 "Rippling": {
-"tried": 1792926651.2424908,
+"tried": 1793013652.4721658,
 "type": "none",
 "why": "JSONDecodeError x1, fewer than 3 job links x1"
 },
@@ -567,7 +567,7 @@
 "type": "greenhouse"
 },
 "Urban Company": {
-"tried": 1792926651.2424908,
+"tried": 1793013652.4721658,
 "type": "none",
 "why": "string indices must be integers, not 'str' x1, 'jobs' x1, fewer than 3 job links x1"
 },
@@ -577,7 +577,7 @@
 "web": "https://broadcom.wd1.myworkdayjobs.com/en-US/External_Career"
 },
 "Virtusa": {
-"tried": 1792926651.2424908,
+"tried": 1793013652.4721658,
 "type": "none",
 "why": "HTTP 403 x1"
 },
