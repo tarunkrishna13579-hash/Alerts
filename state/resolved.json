@@ -38,7 +38,7 @@
 "web": "https://ag.wd3.myworkdayjobs.com/en-US/Airbus"
 },
 "Akamai": {
-"tried": 1793101253.613455,
+"tried": 1793187654.6594338,
 "type": "none",
 "why": "HTTP 422 x9, HTTP 403 x1"
 },
@@ -185,12 +185,12 @@
 "url": "https://usijobs.deloitte.com/en_US/careersUSI"
 },
 "Docusign": {
-"tried": 1793101253.613455,
+"tried": 1793187654.6594338,
 "type": "none",
 "why": "HTTP 422 x18, 'jobs' x1, fewer than 3 job links x1"
 },
 "DrawinBox": {
-"tried": 1793101253.613455,
+"tried": 1793187654.6594338,
 "type": "none",
 "why": "no job feed found on its career page"
 },
@@ -345,7 +345,7 @@
 "why": "fewer than 3 job links x1"
 },
 "Mahindra Group": {
-"tried": 1793101253.613455,
+"tried": 1793187654.6594338,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -502,7 +502,7 @@
 "why": "job pages carry no JobPosting data x3"
 },
 "Shopify": {
-"tried": 1793101253.613455,
+"tried": 1793187654.6594338,
 "type": "none",
 "why": "JSONDecodeError x1, fewer than 3 job links x1"
 },
@@ -602,7 +602,7 @@
 "type": "sitemap"
 },
 "Wissen Technology Services": {
-"tried": 1793101253.613455,
+"tried": 1793187654.6594338,
 "type": "none",
 "why": "HTTP 404 x1"
 },
