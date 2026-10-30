@@ -1,11 +1,11 @@
 {
 "ADP": {
-"tried": 1793272256.0033782,
+"tried": 1793358656.3369923,
 "type": "none",
 "why": "job pages carry no JobPosting data x1"
 },
 "AMD": {
-"tried": 1793272256.0033782,
+"tried": 1793358656.3369923,
 "type": "none",
 "why": "HTTP 422 x9, fewer than 3 job links x1"
 },
@@ -232,7 +232,7 @@
 "web": "https://finastra.wd3.myworkdayjobs.com/en-US/FINC"
 },
 "Flipkart": {
-"tried": 1793272256.0033782,
+"tried": 1793358656.3369923,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -241,7 +241,7 @@
 "type": "smartrecruiters"
 },
 "Goldman Sachs": {
-"tried": 1793272256.0033782,
+"tried": 1793358656.3369923,
 "type": "none",
 "why": "HTTP 404 x1"
 },
@@ -305,7 +305,7 @@
 "type": "greenhouse"
 },
 "Informatica": {
-"tried": 1793272256.0033782,
+"tried": 1793358656.3369923,
 "type": "none",
 "why": "HTTP 422 x7, HTTP 401 x2, fewer than 3 job links x1"
 },
@@ -320,7 +320,7 @@
 "web": "https://intel.wd1.myworkdayjobs.com/en-US/External"
 },
 "Intuit": {
-"tried": 1793272256.0033782,
+"tried": 1793358656.3369923,
 "type": "none",
 "why": "job pages carry no JobPosting data x1"
 },
@@ -405,7 +405,7 @@
 "why": "fewer than 3 job links x1"
 },
 "Nutanix": {
-"tried": 1793272256.0033782,
+"tried": 1793358656.3369923,
 "type": "none",
 "why": "HTTP 422 x21, HTTP 401 x6, job pages carry no JobPosting data x2"
 },
@@ -439,7 +439,7 @@
 "type": "lever"
 },
 "Pegasystems": {
-"tried": 1793272256.0033782,
+"tried": 1793358656.3369923,
 "type": "none",
 "why": "HTTP 422 x27, job pages carry no JobPosting data x1"
 },
@@ -482,7 +482,7 @@
 "type": "greenhouse"
 },
 "SAP": {
-"tried": 1793272256.0033782,
+"tried": 1793358656.3369923,
 "type": "none",
 "why": "fewer than 3 job links x1, job pages carry no JobPosting data x1"
 },
@@ -497,7 +497,7 @@
 "web": "https://sec.wd3.myworkdayjobs.com/en-US/Samsung_Careers"
 },
 "ServiceNow": {
-"tried": 1793272256.0033782,
+"tried": 1793358656.3369923,
 "type": "none",
 "why": "job pages carry no JobPosting data x3"
 },
@@ -507,7 +507,7 @@
 "why": "JSONDecodeError x1, fewer than 3 job links x1"
 },
 "Siemens": {
-"tried": 1793272256.0033782,
+"tried": 1793358656.3369923,
 "type": "none",
 "why": "fewer than 3 job links x1, job pages carry no JobPosting data x1"
 },
@@ -591,7 +591,7 @@
 "type": "smartrecruiters"
 },
 "Walmart Global Tech": {
-"tried": 1793272256.0033782,
+"tried": 1793358656.3369923,
 "type": "none",
 "why": "HTTP 422 x27, job pages carry no JobPosting data x1"
 },
