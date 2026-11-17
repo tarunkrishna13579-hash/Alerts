@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Free job-alert watcher.
- normal run : find NEW jobs that fit (Java/Spring, ~2 yrs, Bangalore/Hyderabad) -> Telegram, never repeats a job
+ normal run : find NEW India-wide Java backend jobs (2.3 years, <=48h) -> Telegram, never repeats a job
  --selftest : check every company, send a working / not-working report to Telegram
  --dry      : print instead of sending, don't save state
 """
 import json, os, re, sys, time, html, hashlib, pathlib, datetime as dt
 from concurrent.futures import ThreadPoolExecutor
 import urllib.parse as up
+import threading, random, email.utils
 import requests, yaml
 import experience as E
 
@@ -18,11 +19,63 @@ UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.3
       "Accept-Language": "en-US,en;q=0.9"}
 DRY, SELFTEST = "--dry" in sys.argv, "--selftest" in sys.argv
 MSG = dict(job_alerts=True, daily_report=False, no_jobs_notice=False, warnings=False); MSG.update(CFG.get("messages") or {})   # default: ONLY job alerts
-MAX_ALERTS, MAX_DETAIL = 20, 12
-DISCOVERY_BUDGET = 1500                      # seconds of route discovery per run before it carries on next time
+MAX_ALERTS, MAX_DETAIL = 20, 6                 # per company cap; also enforce a global cap below
+MAX_DETAIL_RUN = 180                           # prevent one run from fetching thousands of descriptions
+DISCOVERY_BUDGET = 900                         # discovery yields sooner; saved in batches
 
-def get(url, **kw):  return requests.get(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
-def post(url, **kw): return requests.post(url, headers=UA, timeout=kw.pop("timeout", 20), **kw)
+# One shared, per-host gate prevents ten worker threads from hammering the same ATS.
+# A 429 is retried at most once, and only after Retry-After / a short backoff.
+_HOST_GATES = {}
+_HOST_GATES_LOCK = threading.Lock()
+_HOST_MIN_INTERVAL = 0.45
+_MAX_INLINE_RETRY_WAIT = 20.0
+
+class RateLimitDeferred(requests.RequestException):
+    """Host is rate-limited; skip it until its cooldown instead of retrying every job."""
+
+def _retry_after_seconds(response, fallback):
+    value = response.headers.get("Retry-After") if getattr(response, "headers", None) is not None else None
+    if value:
+        try: return max(0.0, float(value))
+        except (TypeError, ValueError):
+            try:
+                when = email.utils.parsedate_to_datetime(value)
+                if when.tzinfo is None: when = when.replace(tzinfo=dt.timezone.utc)
+                return max(0.0, (when - dt.datetime.now(dt.timezone.utc)).total_seconds())
+            except Exception: pass
+    return fallback
+
+def _host_gate(host):
+    with _HOST_GATES_LOCK:
+        return _HOST_GATES.setdefault(host, {"lock": threading.Lock(), "next": 0.0, "cooldown": 0.0})
+
+def _request(method, url, **kw):
+    host = (up.urlparse(url).netloc or "").lower()
+    gate = _host_gate(host)
+    headers = dict(UA); headers.update(kw.pop("headers", {}) or {})
+    timeout = kw.pop("timeout", 20)
+    with gate["lock"]:
+        for attempt in range(2):
+            now = time.time()
+            wait = max(gate["next"] - now, gate["cooldown"] - now, 0.0)
+            if wait > _MAX_INLINE_RETRY_WAIT:
+                raise RateLimitDeferred(f"HTTP 429 host cooldown active ({int(wait)}s); deferred without another request")
+            if wait: time.sleep(wait + random.uniform(0.05, 0.25))
+            response = requests.request(method, url, headers=headers, timeout=timeout, **kw)
+            gate["next"] = time.time() + _HOST_MIN_INTERVAL
+            if response.status_code not in (429, 503):
+                return response
+            delay = _retry_after_seconds(response, 8.0 * (attempt + 1))
+            # If the server asks us to wait a long time, remember the cooldown and fail fast.
+            if delay > _MAX_INLINE_RETRY_WAIT or attempt == 1:
+                gate["cooldown"] = max(gate["cooldown"], time.time() + delay)
+                raise RateLimitDeferred(f"HTTP {response.status_code}; host deferred for {int(delay)}s")
+            gate["cooldown"] = max(gate["cooldown"], time.time() + delay)
+            time.sleep(delay + random.uniform(0.1, 0.8))
+        return response
+
+def get(url, **kw): return _request("GET", url, **kw)
+def post(url, **kw): return _request("POST", url, **kw)
 def clean(h):
     h = html.unescape(h or "")
     h = re.sub(r"(?i)</(?:p|div|li|ul|ol|h\d|tr|section)>|<br\s*/?>", "\n", h)
@@ -53,32 +106,23 @@ def dedupe(jobs):
 
 # ======================= adapters: LIST[type](conf) -> jobs ; DETAIL[type](conf, job) -> (text, location) =======================
 def wd_ping(api):
-    for attempt in (1, 2, 3):
-        try:
-            r = post(api + "/jobs", json={"appliedFacets": {}, "limit": 1, "offset": 0, "searchText": ""}, timeout=25)
-            if r.status_code == 429 and attempt < 3: time.sleep(6 * attempt); continue
-            r.raise_for_status()
-            d = r.json()
-            return "jobPostings" in d and d.get("total", 1) > 0
-        except requests.Timeout:
-            if attempt == 3: raise
+    r = post(api + "/jobs", json={"appliedFacets": {}, "limit": 1, "offset": 0, "searchText": ""}, timeout=25)
+    r.raise_for_status()
+    d = r.json()
+    return isinstance(d, dict) and "jobPostings" in d and d.get("total", 1) > 0
 TOTALS = {}
 PAGES = {}                                    # pagination status per feed, shown by the self-test
 def feed_key(r): return r.get("api") or f"{r.get('type')}:{r.get('host') or r.get('board') or r.get('slug') or r.get('company_id') or r.get('sub')}"
-WD_LOCK = __import__("threading").BoundedSemaphore(4)                       # at most 4 Workday requests at once
+WD_LOCK = threading.BoundedSemaphore(2)             # Workday host requests are also serialized by _request
 def wd_req(api, body):
-    import random
     with WD_LOCK:
-        time.sleep(random.uniform(0.1, 0.5))
-        return _wd_req(api, body)
-def _wd_req(api, body):
-    for attempt in range(4):                       # Workday rate-limits shared servers: wait and retry
         resp = post(api + "/jobs", json=body, timeout=40)
-        if resp.status_code in (429, 503): time.sleep(8 * (attempt + 1)); continue
-        resp.raise_for_status(); return resp.json()
-    resp.raise_for_status()
+        resp.raise_for_status()
+        data = resp.json()
+        if not isinstance(data, dict): raise ValueError(f"Workday list response was {type(data).__name__}, expected object")
+        return data
 def wd_location_facets(facets):
-    """find the ids of the Hyderabad / Bangalore filters inside Workday's own facet list"""
+    """find India-wide location filters inside Workday's own facet list"""
     found = {}
     def walk(items, param):
         for it in items or []:
@@ -120,9 +164,30 @@ def wd_list(r):
     PAGES[r["api"]] = f"{page + 1} page(s) read; {stop}"
     return dedupe(out)
 def wd_detail(r, j):
-    d = get(r["api"] + j["id"]).json()["jobPostingInfo"]
-    loc = " ".join([d.get("location", "")] + (d.get("additionalLocations") or []))
-    return clean(d.get("jobDescription", "")), loc
+    """Workday detail payloads vary: jobPostingInfo is usually an object, but some tenants wrap it in a list."""
+    payload = get(r["api"] + j["id"], timeout=30).json()
+    if isinstance(payload, list):
+        payload = next((x for x in payload if isinstance(x, dict)), {})
+    if not isinstance(payload, dict):
+        raise ValueError(f"Workday detail root was {type(payload).__name__}, expected object")
+    info = payload.get("jobPostingInfo", payload)
+    if isinstance(info, list):
+        # Select a usable object rather than calling .get() on the list itself.
+        info = next((x for x in info if isinstance(x, dict) and (x.get("jobDescription") or x.get("externalPath"))),
+                    next((x for x in info if isinstance(x, dict)), {}))
+    if not isinstance(info, dict):
+        raise ValueError(f"Workday jobPostingInfo was {type(info).__name__}, expected object/list of objects")
+    def loc_value(value):
+        if value is None: return ""
+        if isinstance(value, str): return value
+        if isinstance(value, dict): return str(value.get("descriptor") or value.get("name") or value.get("location") or "")
+        if isinstance(value, list): return ", ".join(x for x in (loc_value(v) for v in value) if x)
+        return str(value)
+    locations = [loc_value(info.get("location"))]
+    locations.append(loc_value(info.get("additionalLocations") or []))
+    loc = ", ".join(x for x in locations if x)
+    description = info.get("jobDescription") or info.get("externalDescription") or ""
+    return clean(str(description)), loc
 
 def gh_list(r):
     d = get(f"https://boards-api.greenhouse.io/v1/boards/{r['board']}/jobs" + ("?content=true" if r.get("content") else ""), timeout=40).json()["jobs"]
@@ -480,6 +545,7 @@ def candidates(c):
     if rx: yield dict(type="html_listing", url=base, link=rx, pages=1)                 # job links listed right on the careers page
 
 def reason(e):
+    if isinstance(e, RateLimitDeferred): return str(e)
     if isinstance(e, requests.HTTPError): return f"HTTP {e.response.status_code}"
     if isinstance(e, requests.Timeout): return "timeout"
     if isinstance(e, requests.ConnectionError): return "no such host"
@@ -515,27 +581,58 @@ def discover(c):
     return dict(type="none", why=", ".join(f"{k} x{v}" for k, v in sorted(real.items(), key=lambda x: -x[1])[:3]) or "no job feed found on its career page")
 
 # ======================= fit logic =======================
-def loc_ok(s): return any(k in (s or "").lower() for k in F["locations"])
+def loc_ok(s):
+    """Accept India, India-remote, or a recognized Indian city/state/UT in the location field."""
+    value = re.sub(r"\s+", " ", (s or "").lower()).strip()
+    if not value:
+        return False
+    # A bare "Remote" is ambiguous; require India to be stated for remote roles.
+    if re.search(r"\bremote\b", value) and not re.search(r"\bindia\b", value):
+        return False
+    for term in F["locations"]:
+        term = str(term).lower().strip()
+        if term and re.search(r"(?<![a-z])" + re.escape(term) + r"(?![a-z])", value):
+            return True
+    return False
+
+NON_INDIA_MARKERS = ["united states", "usa", "u.s.a.", "canada", "united kingdom", "uk", "england", "scotland",
+                     "ireland", "australia", "new zealand", "singapore", "malaysia", "japan", "germany", "france",
+                     "netherlands", "switzerland", "poland", "spain", "italy", "brazil", "mexico", "philippines",
+                     "indonesia", "thailand", "south korea", "hong kong", "taiwan", "uae", "united arab emirates"]
+def clearly_non_india(s):
+    value = (s or "").lower()
+    return any(re.search(r"(?<![a-z])" + re.escape(x) + r"(?![a-z])", value) for x in NON_INDIA_MARKERS)
 SKIP_RE = re.compile(r"\b(?:" + "|".join(re.escape(x) for x in F.get("skip_titles", ["qa"])) + r")\b", re.I)
 def reject_reason(j):
     t = j["title"].lower()
     if F.get("skip_titles") and SKIP_RE.search(j["title"]): return "title (not a backend engineering role)"
     if F.get("use_title_filter", True) and (not any(k in t for k in F["include_title"]) or any(k in t for k in F["exclude_title"])): return "title"
-    if j.get("age") is not None and j["age"] > F["max_age_days"]: return "older than %sd" % F["max_age_days"]
+    if j.get("age") is not None and j["age"] * 24 > F.get("max_age_hours", 48): return "posted more than %s hours ago" % F.get("max_age_hours", 48)
     loc = (j["loc"] or "").lower()
     if not loc or re.search(r"\d+\s+locations?", loc): return None
-    return None if loc_ok(loc) else "location"
+    if re.search(r"\bremote\b", loc) and not re.search(r"\bindia\b", loc): return None
+    return "location" if clearly_non_india(loc) else None
 def quick_ok(j): return reject_reason(j) is None
 
-PROFILE = E.profile_from_config(X)                     # your 2.2 years and per-skill years (companies.yaml -> experience)
+PROFILE = E.profile_from_config(X)                     # your 2.3 years and per-skill years (companies.yaml -> experience)
 SKILLS = E.SKILLS
 
 def analyze(j, desc, locfull):
     """-> (verdict 'eligible'|'ineligible'|'needs_review', info). Stage 1 extracts what the employer wrote, stage 2 applies my profile."""
-    if locfull and not loc_ok(locfull): return "ineligible", {"why": "location", "codes": ["LOCATION"]}
-    if j.get("age") is not None and j["age"] > F["max_age_days"] + 0.5: return "ineligible", {"why": f"posted more than {F['max_age_days']} days ago", "codes": ["TOO_OLD"]}
-    blob = (j["title"] + " " + (desc.text or "")).lower()
-    if desc.complete and not j.get("trust_java") and not re.search(r"\bjava\b(?!\s*script)", blob): return "ineligible", {"why": "no Java in description", "codes": ["NO_JAVA"]}
+    verified_location = locfull or j.get("loc") or ""
+    if not verified_location or (re.search(r"\bremote\b", verified_location.lower()) and not re.search(r"\bindia\b", verified_location.lower())):
+        return "needs_review", {"why": "India location could not be verified (remote-only location does not specify India)", "codes": ["LOCATION_UNVERIFIED"]}
+    if not loc_ok(verified_location):
+        if clearly_non_india(verified_location): return "ineligible", {"why": "location is outside India", "codes": ["LOCATION"]}
+        return "needs_review", {"why": "location is not specific enough to verify India", "codes": ["LOCATION_UNVERIFIED"]}
+    if j.get("age") is None:
+        return "needs_review", {"why": "posting age could not be verified against the 48-hour limit", "codes": ["POSTING_AGE_UNVERIFIED"]}
+    if j["age"] * 24 > F.get("max_age_hours", 48):
+        return "ineligible", {"why": f"posted more than {F.get('max_age_hours', 48)} hours ago", "codes": ["TOO_OLD"]}
+    # Java must appear in the full job description; a title/search keyword is not sufficient evidence.
+    blob = (desc.text or "").lower()
+    if desc.complete and not re.search(r"\bjava\b(?!\s*script)", blob):
+        return "ineligible", {"why": "no Java in full job description", "codes": ["NO_JAVA"]}
     hits = [k for k, p in SKILLS if re.search(p, blob)][:14]
     if desc.complete and len([h for h in hits if h in MY_SKILLS]) < SK["min_other_hits"]: return "ineligible", {"why": "no skills from your resume in the description", "codes": ["SKILLS"]}
     req = E.extract_experience_requirements(desc, PROFILE.total_years, PROFILE.tolerance)
@@ -558,7 +655,13 @@ def fetch_description(src, r, j, key, meta):
         except Exception as e:
             return E.Description(snippet, E.Retrieval.PARTIAL_SNIPPET, "adzuna:snippet", url, error=(reason(e) if isinstance(e, requests.RequestException) else type(e).__name__)), None
     if src in DETAIL:
-        try: text, locfull = DETAIL[src](r, j)
+        try:
+            text, locfull = DETAIL[src](r, j)
+            meta.get("detail_fail", {}).pop(key, None)  # a successful read resets consecutive detail failures
+        except RateLimitDeferred as e:
+            # Rate limiting is temporary: do not burn the permanent detail-failure budget.
+            print(f"[{j.get('title', '')[:40]}] detail deferred by rate limit: {e}")
+            return None, None
         except Exception as e:
             df = meta.setdefault("detail_fail", {}); df[key] = df.get(key, 0) + 1
             print(f"[{j.get('title', '')[:40]}] detail failed ({df[key]}): {e}")
@@ -701,7 +804,7 @@ def main():
         except Exception as e: return c, r, None, (reason(e) if isinstance(e, requests.RequestException) else str(e)[:100])
     direct = [c for c in comps if conf_for(c, resolved)["type"] != "none"]
     li = sorted([c for c in comps if conf_for(c, resolved)["type"] == "none"], key=lambda c: last.get(c["name"], 0))
-    with ThreadPoolExecutor(10) as ex: results = list(ex.map(fetch, direct))
+    with ThreadPoolExecutor(5) as ex: results = list(ex.map(fetch, direct))
     empty = [x for x in results if x[3] is None and not x[2] and (x[1]["type"] == "eightfold" or not TOTALS.get(x[1].get("api")))]
     if empty:                                # feed answers but is empty/wrong (e.g. wrong site name) -> use the job-board route instead
         results = [x for x in results if x not in empty]; li += [x[0] for x in empty]
@@ -751,6 +854,7 @@ def main():
 
     # ---------- discovery -> database (every job is analysed once; known jobs are skipped without re-analysis) ----------
     summary, fresh_n, run_seen, per_co = [], 0, set(), {}
+    detail_budget_left = MAX_DETAIL_RUN
     def slim(req):
         if not req: return req
         req = dict(req); req["statements"] = [{k: v for k, v in st.items() if k not in ("normalized_text", "source_url", "source_type")} for st in req["statements"]]
@@ -782,7 +886,7 @@ def main():
         fails[n] = 0; last[n] = now
         if src == "adzuna": fails["__adzuna"] = 0
         fresh_n += sum(1 for j in jobs if j.get("age") is None or j["age"] <= F["max_age_days"])
-        cap, analysed, line = MAX_DETAIL, 0, dict(new=0, known=0, dup=0)
+        cap, analysed, line = min(MAX_DETAIL, detail_budget_left), 0, dict(new=0, known=0, dup=0)
         undated = src in ("sitemap", "html_listing") and all(j.get("age") is None for j in jobs)
         first_sight = undated and n not in db.setdefault("baseline_done", {})
         bl = db.setdefault("baseline", {}).setdefault(n, {})
@@ -848,6 +952,7 @@ def main():
             else: print(f"   {verdict.replace('_', ' ')} [{n}] {j['title'][:60]}: {info.get('why', '?')}")
             if kind == "ambiguous": bump("ambiguous_flagged")
         if undated and first_sight: db["baseline_done"][n] = now
+        detail_budget_left = max(0, detail_budget_left - analysed)
         per_co[n] = per_co.get(n, 0) + line["new"]
         summary.append(f"{n}: {len(jobs)} jobs | new {line['new']} | known skipped {line['known']} | cross-site dup {line['dup']}")
     bc = meta.setdefault("by_company", {})
@@ -915,6 +1020,21 @@ def main():
     for k in [k for k, t in db["legacy_seen"].items() if now - t > 120 * 86400]: del db["legacy_seen"][k]
     save_db(db)
     print("\n".join(summary)); print(f"alerts sent: {sent}")
+    failed_feeds = [(name, count, health.get(name, {}).get("err", "unknown"))
+                    for name, count in fails.items() if name != "__adzuna" and count]
+    if failed_feeds:
+        print("\nFEED HEALTH (consecutive failed runs; not retry attempts):")
+        for name, count, error in sorted(failed_feeds, key=lambda x: -x[1]):
+            print(f"  {name}: {count} consecutive failed run(s) | {error}")
+    summary_path = os.getenv("GITHUB_STEP_SUMMARY")
+    if summary_path:
+        lines = ["## Job watcher feed health", "", "| Company | Consecutive failed runs | Last error | Last successful read |", "|---|---:|---|---|"]
+        for name, count, error in sorted(failed_feeds, key=lambda x: -x[1]):
+            ok_ts = health.get(name, {}).get("ok_ts")
+            last_ok = ist_of(ok_ts) if ok_ts else "Never"
+            lines.append(f"| {name} | {count} | {str(error).replace('|', '/')} | {last_ok} |")
+        if not failed_feeds: lines.append("| All configured feeds | 0 | No current feed failures | — |")
+        with open(summary_path, "a", encoding="utf-8") as fh: fh.write("\n".join(lines) + "\n")
 
 if __name__ == "__main__":
     main()

@@ -95,7 +95,7 @@ ok("C1 no verifiable overall experience = NEEDS_REVIEW: never an alert, listed o
 fresh([co("Accenture")], {"Accenture": WD()}); n = Net(); n.install()
 n.text = jd("Requirements:\n- 2-4 years of professional experience.\n- 6+ years of experience in AWS.\n- 3+ years of experience in Java.\nJava Spring Boot.")
 n.jobs["ACC"] = [job("A1")]; run(1); assert len(n.alerts()) == 1
-msg = n.alerts()[0]; assert "Experience (verified): 2-4 years → fits your 2.2 yrs" in msg and "info only" in msg and len(msg.splitlines()) <= 8, msg
+msg = n.alerts()[0]; assert "Experience (verified): 2-4 years → fits your 2.3 yrs" in msg and "info only" in msg and len(msg.splitlines()) <= 8, msg
 print(msg)
 n.text = jd("Requirements:\n- 3+ years of professional experience.\nJava, Spring Boot."); n.jobs["ACC"] = [job("A2")]; run(1); assert len(n.alerts()) == 1
 ok("C2 alert shows the verified overall range + evidence; skill years are shown as information and never block; overall 3+ is rejected")
@@ -282,8 +282,8 @@ run(1); assert len(n.alerts()) == 1 and "Java Backend Engineer" in n.alerts()[0]
 assert n.db()["jobs"]["Accenture|T1"]["reason"].startswith("title") and n.detail_calls == 1
 ok("K1 clearly different roles (QA, frontend ...) are skipped before any description is downloaded")
 n.text = jd("Requirements: 2-4 years of professional experience. Java for embedded devices."); n.jobs["ACC"] = [job("T4", title="Software Engineer")]; run(1)
-assert len(n.alerts()) == 1 and n.db()["jobs"]["Accenture|T4"]["eligibility"] == "ineligible" and "resume" in n.db()["jobs"]["Accenture|T4"]["reason"]
-ok("K2 Java alone is not enough: at least one skill from YOUR resume must appear in the description")
+assert len(n.alerts()) == 2 and n.db()["jobs"]["Accenture|T4"]["eligibility"] == "eligible"
+ok("K2 Java is mandatory; Spring Boot and other resume skills are preferred, not required")
 
 AMZ = json.dumps({"hits": 2, "jobs": [{"id_icims": "3001", "title": "Software Dev Engineer", "normalized_location": "Hyderabad, Telangana, IND", "job_path": "/en/jobs/3001/sde",
       "posted_date": dt.datetime.now(dt.timezone.utc).strftime("%B %d, %Y"), "description": "Build Java services with Spring Boot.", "basic_qualifications": "2+ years of non-internship professional software development experience",

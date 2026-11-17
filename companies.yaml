@@ -2,27 +2,43 @@
 #  EDIT ONLY THIS FILE. Everything else just runs.
 # =====================================================================
 filters:
+  # Include only the Java/backend software titles below. Exclusions remain a second safety net.
   skip_titles: [qa, sdet, tester, test engineer, quality engineer, frontend, front end, front-end, ui engineer, ui developer, ux, designer, data scientist, machine learning,
                 ml engineer, research scientist, embedded, firmware, hardware, asic, rtl, verification, devops, sre, site reliability, data engineer, data analyst,
                 business analyst, solutions architect, sales, recruiter, marketing, finance, legal, technical writer, support engineer, customer success,
                 project manager, program manager, product manager, engineering manager, director, vice president, vp, head of, intern, network engineer, security engineer]
-  use_title_filter: false   # false = ignore job titles; the job qualifies if its description asks for Java (+ city, age, experience checks)
-  # Job title must contain one of these (lowercase) ...
-  include_title: [java, backend, back end, back-end, software engineer,
-                  software development engineer, sde, software developer,
-                  member of technical staff, mts, application developer,
-                  developer, engineer, programmer, consultant]
-  # ... and none of these:
-  exclude_title: [senior, sr., "sr ", lead, principal, staff, architect, manager,
+  use_title_filter: true
+  include_title: [sde1, sde 1, sde-i, sde2, sde 2, sde-ii, software engineer, software developer,
+                  software development engineer, software dev engineer, java developer, java software developer, java software engineer,
+                  java backend developer, java backend engineer, backend engineer, backend developer,
+                  backend software engineer, backend software developer, associate software engineer,
+                  application developer, java application developer, java programmer, member of technical staff,
+                  mts, product engineer, platform engineer, software engineer - backend, software engineer - java,
+                  java full stack developer, full stack developer - java, api developer, microservices developer]
+  exclude_title: [senior, sr., "sr ", lead, principal, "staff engineer", architect, manager,
                   director, head of, intern, "vp ", vice president, distinguished,
                   fellow, frontend, front end, front-end, qa, tester, sdet,
                   test engineer, data scientist, devops, sre, security analyst,
                   business analyst, support engineer, sales, ios, android,
                   mainframe, sap abap, salesforce, .net, python developer,
                   data engineer, machine learning, hardware, firmware, asic, rtl]
-  locations: [bangalore, bengaluru, hyderabad]
-  max_age_days: 2           # only jobs posted today / yesterday / 2 days ago (older ones are ignored)
-  search_terms: [java, java hyderabad, java bengaluru, software engineer hyderabad, software engineer bengaluru, backend]
+  # India-wide: city/state aliases plus country-level and Remote-India postings.
+  locations: [india, remote india, bengaluru, bangalore, hyderabad, pune, mumbai, navi mumbai, thane, delhi, ncr,
+              gurgaon, gurugram, noida, greater noida, chennai, kolkata, kochi, cochin, coimbatore, ahmedabad,
+              jaipur, indore, bhopal, chandigarh, mohali, panchkula, lucknow, kanpur, nagpur, surat, vadodara,
+              visakhapatnam, vizag, vijayawada, tirupati, trivandrum, thiruvananthapuram, mysuru, mysore,
+              mangaluru, mangalore, hubli, dharwad, belgaum, belagavi, warangal, madurai, trichy, tiruchirappalli,
+              gurgaon, faridabad, ghaziabad, dehradun, raipur, ranchi, patna, bhubaneswar, guwahati, amritsar,
+              jalandhar, ludhiana, rajkot, nashik, aurangabad, jamshedpur, pondicherry, puducherry,
+              karnataka, telangana, maharashtra, tamil nadu, kerala, gujarat, rajasthan, uttar pradesh,
+              madhya pradesh, west bengal, haryana, punjab, odisha, orissa, bihar, jharkhand, assam,
+              uttarakhand, goa, andhra pradesh, chhattisgarh, himachal pradesh, jammu, kashmir, jammu and kashmir,
+              ladakh, meghalaya, manipur, mizoram, nagaland, tripura, arunachal pradesh, sikkim,
+              andaman, andaman and nicobar islands, lakshadweep, dadra and nagar haveli, daman and diu,
+              dadra nagar haveli, puducherry, chandigarh]
+  max_age_days: 2
+  max_age_hours: 48
+  search_terms: [java, java backend, java developer, java software engineer, spring boot, sde1 java, sde2 java, backend engineer india]
 
 repost_alert: false          # true = also alert when an already-sent job is re-listed (default: never re-send)
 
@@ -39,22 +55,22 @@ report:
   quiet_end: 7
 
 experience:
-  my_years: 2.2             # your experience (years)
+  my_years: 2.3             # your total professional experience (years)
   tolerance: 0              # overall minimum may exceed my_years by this much (0 = "3+ years" is rejected, "2+" accepted)
   range_slack: 0.5          # a range like 0-2 still counts if its top is within this of my_years
   skill_checks: info        # info = skill years (e.g. "3+ years Java") are shown in the alert but NEVER decide; strict = they can reject a job
   skill_tolerance: 0.0      # no free allowance: a MANDATORY skill requirement above your recorded years in that skill is rejected
   skill_years:              # YOUR recorded years per skill. Taken from your Oracle FLEXCUBE role (since Aug 2024) - please confirm or correct each number.
     Java: 2.2               # A mandatory requirement for a skill that is NOT listed here becomes NEEDS_REVIEW (or ineligible if it is more
-    Spring Boot: 2.2        # than your 2.2 total years). Add skills here (e.g. SQL: 2.0) when you are sure of the years.
+    Spring Boot: 2.2        # than your 2.3 total years). Add skills here (e.g. SQL: 2.0) when you are sure of the years.
     Spring: 2.2
     Microservices: 2.2
     Kafka: 2.2
     Redis: 2.2
 
 skills:
-  must_have: Java
-  min_other_hits: 1         # at least this many skills from YOUR resume (list below) must appear in the job description
+  must_have: Java          # required in the full job description; Spring Boot is preferred
+  min_other_hits: 0         # Java is mandatory; Spring Boot and other resume skills are preferred, not mandatory
   profile: [Spring Boot, Spring, Microservices, REST APIs, Multithreading, Kafka, Hibernate/JPA, SQL/DB, Redis, NoSQL, Docker, Kubernetes, AWS, CI/CD, Git, JUnit/Mockito, Python]
 
 # Verified automatically on first run (wrong guesses are harmless).
