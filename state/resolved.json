@@ -1,11 +1,11 @@
 {
 "ADP": {
-"tried": 1794887992.8657236,
+"tried": 1794974482.830243,
 "type": "none",
 "why": "job pages carry no JobPosting data x1"
 },
 "AMD": {
-"tried": 1794887992.8657236,
+"tried": 1794974482.830243,
 "type": "none",
 "why": "HTTP 429; host deferred for 16s x6, HTTP 422 x3, fewer than 3 job links x1"
 },
@@ -232,7 +232,7 @@
 "web": "https://finastra.wd3.myworkdayjobs.com/en-US/FINC"
 },
 "Flipkart": {
-"tried": 1794887992.8657236,
+"tried": 1794974482.830243,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -241,7 +241,7 @@
 "type": "smartrecruiters"
 },
 "Goldman Sachs": {
-"tried": 1794887992.8657236,
+"tried": 1794974482.830243,
 "type": "none",
 "why": "HTTP 404 x1"
 },
@@ -305,9 +305,9 @@
 "type": "greenhouse"
 },
 "Informatica": {
-"tried": 1794887992.8657236,
+"tried": 1794974482.830243,
 "type": "none",
-"why": "HTTP 429; host deferred for 16s x5, HTTP 422 x3, HTTP 401 x1"
+"why": "HTTP 429; host deferred for 16s x6, HTTP 422 x2, HTTP 401 x1"
 },
 "Infosys Finacle": {
 "tried": 1794887992.8657236,
@@ -320,7 +320,7 @@
 "web": "https://intel.wd1.myworkdayjobs.com/en-US/External"
 },
 "Intuit": {
-"tried": 1794887992.8657236,
+"tried": 1794974482.830243,
 "type": "none",
 "why": "job pages carry no JobPosting data x1"
 },
@@ -405,7 +405,7 @@
 "why": "fewer than 3 job links x1"
 },
 "Nutanix": {
-"tried": 1794887992.8657236,
+"tried": 1794974482.830243,
 "type": "none",
 "why": "HTTP 429; host deferred for 16s x16, HTTP 422 x8, HTTP 401 x3"
 },
@@ -439,9 +439,9 @@
 "type": "lever"
 },
 "Pegasystems": {
-"tried": 1794887992.8657236,
+"tried": 1794974482.830243,
 "type": "none",
-"why": "HTTP 429; host deferred for 16s x17, HTTP 422 x10, job pages carry no JobPosting data x1"
+"why": "HTTP 429; host deferred for 16s x15, HTTP 422 x12, job pages carry no JobPosting data x1"
 },
 "Publicis Sapient": {
 "sitemaps": [
@@ -485,7 +485,7 @@
 "type": "greenhouse"
 },
 "SAP": {
-"tried": 1794887992.8657236,
+"tried": 1794974482.830243,
 "type": "none",
 "why": "fewer than 3 job links x1, job pages carry no JobPosting data x1"
 },
@@ -500,7 +500,7 @@
 "web": "https://sec.wd3.myworkdayjobs.com/en-US/Samsung_Careers"
 },
 "ServiceNow": {
-"tried": 1794887992.8657236,
+"tried": 1794974482.830243,
 "type": "none",
 "why": "job pages carry no JobPosting data x3"
 },
@@ -510,7 +510,7 @@
 "why": "JSONDecodeError x1, fewer than 3 job links x1"
 },
 "Siemens": {
-"tried": 1794887992.8657236,
+"tried": 1794974482.830243,
 "type": "none",
 "why": "fewer than 3 job links x1, job pages carry no JobPosting data x1"
 },
@@ -594,7 +594,7 @@
 "type": "smartrecruiters"
 },
 "Walmart Global Tech": {
-"tried": 1794887992.8657236,
+"tried": 1794974482.830243,
 "type": "none",
 "why": "HTTP 429; host deferred for 16s x17, HTTP 422 x10, job pages carry no JobPosting data x1"
 },
