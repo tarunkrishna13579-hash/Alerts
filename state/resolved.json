@@ -38,9 +38,9 @@
 "web": "https://ag.wd3.myworkdayjobs.com/en-US/Airbus"
 },
 "Akamai": {
-"tried": 1795150877.4463065,
+"tried": 1795237857.1882656,
 "type": "none",
-"why": "HTTP 422 x5, HTTP 429; host deferred for 16s x4, HTTP 403 x1"
+"why": "HTTP 429; host deferred for 16s x5, HTTP 422 x4, HTTP 403 x1"
 },
 "Amazon": {
 "desc": [
@@ -190,7 +190,7 @@
 "why": "HTTP 429; host deferred for 16s x10, HTTP 422 x8, 'jobs' x1"
 },
 "DrawinBox": {
-"tried": 1795150877.4463065,
+"tried": 1795237857.1882656,
 "type": "none",
 "why": "no job feed found on its career page"
 },
@@ -345,7 +345,7 @@
 "why": "fewer than 3 job links x1"
 },
 "Mahindra Group": {
-"tried": 1795150877.4463065,
+"tried": 1795237857.1882656,
 "type": "none",
 "why": "fewer than 3 job links x1"
 },
@@ -605,7 +605,7 @@
 "type": "sitemap"
 },
 "Wissen Technology Services": {
-"tried": 1795150877.4463065,
+"tried": 1795237857.1882656,
 "type": "none",
 "why": "HTTP 404 x1"
 },
