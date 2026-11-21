@@ -185,9 +185,9 @@
 "url": "https://usijobs.deloitte.com/en_US/careersUSI"
 },
 "Docusign": {
-"tried": 1795185657.194195,
+"tried": 1795272656.1726131,
 "type": "none",
-"why": "HTTP 429; host deferred for 16s x10, HTTP 422 x8, 'jobs' x1"
+"why": "HTTP 422 x10, HTTP 429; host deferred for 16s x8, 'jobs' x1"
 },
 "DrawinBox": {
 "tried": 1795237857.1882656,
